@@ -1,0 +1,33 @@
+#canvasId {
+  border: 1px solid red;
+}
+
+.canvasWrapper {
+  position: relative;
+  z-index: 2;
+}
+
+.scale {
+  display: flex;
+  border-radius: 5ex;
+  background: lightgray;
+  cursor: pointer;
+  z-index: 2;
+  padding: 10px;
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+}
+
+.scale__subtitle {
+  margin-right: 10px;
+}
+
+.scale__value,
+.scale__subtitle {
+  font-size: 30px;
+}
+
+.config {
+  display: none;
+}

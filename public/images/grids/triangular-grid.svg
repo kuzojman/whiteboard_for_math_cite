@@ -1,0 +1,13 @@
+<svg width="59" height="100" xmlns="http://www.w3.org/2000/svg" stroke="null" style="vector-effect: non-scaling-stroke;">
+ <title style="vector-effect: non-scaling-stroke;">Drawing</title>
+
+ <g stroke="null" id="Layer_1">
+  <title>Layer 1</title>
+  <line stroke="#000" fill="none" x1="79.01793" y1="14.28082" x2="78.76635" y2="14.65818" id="svg_4" />
+  <line transform="rotate(60 29.5 50)" stroke="#000" stroke-width="2" id="svg_3" y2="49.90653" x2="90.21163" y1="50.09344" x1="-31.21155" fill="none"/>
+  <line transform="rotate(-60 29.5 50)" stroke="#000" id="svg_5" y2="49.99998" x2="90.07628" y1="49.99998" x1="-31.07636" stroke-width="2" fill="none"/>
+  <line stroke="#000" id="svg_6" y2="50" x2="60.99533" y1="50" x1="-1.99533" stroke-width="2" fill="none"/>
+  <line id="svg_7" y2="0" x2="60" y1="0" x1="0" stroke-width="2" stroke="#000" fill="none"/>
+  <line id="svg_8" y2="100" x2="59" y1="100" x1="0" stroke-width="2" stroke="#000" fill="none"/>
+ </g>
+</svg>

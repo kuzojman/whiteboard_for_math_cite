@@ -1,0 +1,16 @@
+{
+  "name": "draw_dynamic_3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server_part.js",
+  "scripts": {
+    "start": "node server_part.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.2",
+    "fabric": "^5.2.1",
+    "socket.io": "^4.4.1"
+  }
+}
