@@ -16,10 +16,38 @@ const selectionButton     = document.querySelector('#selection_button');
 selectionButton.onclick   = enableSelection;
 
 const circleDrawingButton = document.querySelector('#circle_drawing_empty_button');
-circleDrawingButton.onclick =  drawcle("empty");
+circleDrawingButton.addEventListener("click",(e) => 
+{
+  drawcle("empty");
+});
+const circleDrawingButtonDotted = document.querySelector('#circle_with_stroke_line_button');
+circleDrawingButtonDotted.addEventListener("click",(e) => 
+{
+  drawcle("empty_with_stroke_line");
+});
+const circleDrawingButtonFilled = document.querySelector('#circle_filled');
+circleDrawingButtonFilled.addEventListener("click",(e) => 
+{
+  drawcle("filled");
+});
+const rectangleDrawingButton = document.querySelector('#rectangle_drawing_empty_button');
+rectangleDrawingButton.addEventListener("click",(e) => 
+{
+  drawrec("empty");
+});
+const rectangleDrawingButtonDotted = document.querySelector('#rectangle_with_stroke_line_button');
+rectangleDrawingButtonDotted.addEventListener("click",(e) => 
+{
+  drawrec("empty_with_stroke_line");
+});
+const rectangleDrawingButtonFilled = document.querySelector('#rectangle_filled');
+rectangleDrawingButtonFilled.addEventListener("click",(e) => 
+{
+  drawrec("filled");
+});
 
-//const circleDrawingButtonDotted = document.querySelector('#circle_with_stroke_line_button');
-//circleDrawingButtonDotted.onclick =  drawcle("empty_with_stroke_line");
+
+
 
 
 const uploadButton = document.querySelector('.tool-panel__item-button-uploader');
@@ -331,14 +359,110 @@ function enableSelection() {
 }
 
 
-function drawcle(type_of_circle) {
-  //document.querySelectorAll(".config").forEach((item) => {
-  //  item.style.display = "none";
-  //});
-  //document.querySelector(".config_input_1").style.display = "block";
-  colour_inside = '';
+
+function drawrec(type_of_rectangle) {
+
+
+  var rect, isDown, origX, origY;
+  removeEvents();
+  changeObjectSelection(false);
+
+  colour_inside = 'Black';
   let stroke_line   = 0;
-  alert(type_of_circle);
+  drawingColorEl.onchange = function() 
+  {
+    colour_inside = drawingColorEl.value;
+  };
+
+  if (type_of_rectangle == "empty")
+  {
+    colour_inside = hexToRgbA('#000dff',5);
+    stroke_line   = 0;
+  }
+  else if(type_of_rectangle == "empty_with_stroke_line")
+  {
+    colour_inside = hexToRgbA('#000dff',5);
+    stroke_line = 20;
+  }
+  else if (type_of_rectangle == "filled")
+  {
+    colour_inside = drawingColorEl.value;
+    stroke_line = 0;
+  }
+
+
+
+  canvas.on("mouse:down", function (o) {
+    isDown = true;
+    var pointer = canvas.getPointer(o.e);
+    origX = pointer.x;
+    origY = pointer.y;
+    var pointer = canvas.getPointer(o.e);
+    rect = new fabric.Rect({
+      left: origX,
+      top: origY,
+      originX: "left",
+      originY: "top",
+      width: pointer.x - origX,
+      height: pointer.y - origY,
+      angle: 0,
+      selectable: false,
+      
+      fill: colour_inside,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+      stroke: 'Black',//drawing_color_border.value,
+      strokeDashArray: [stroke_line, stroke_line],
+      transparentCorners: false,
+    });
+    canvas.add(rect);
+    socket.emit("rect:add", rect);
+  });
+
+  //strokeWidth: 2,//drawing_figure_width.value,
+
+
+  canvas.on("mouse:move", function (o) {
+    if (!isDown) return;
+    var pointer = canvas.getPointer(o.e);
+
+    if (origX > pointer.x) {
+      rect.set({
+        left: Math.abs(pointer.x),
+      });
+    }
+    if (origY > pointer.y) {
+      rect.set({
+        top: Math.abs(pointer.y),
+      });
+    }
+
+    rect.set({
+      width: Math.abs(origX - pointer.x),
+    });
+    rect.set({
+      height: Math.abs(origY - pointer.y),
+    });
+
+    socket.emit("rect:edit", rect);
+    canvas.renderAll();
+  });
+
+  canvas.on("mouse:up", function (o) {
+    isDown = false;
+    rect.setCoords();
+    socket.emit("canvas_save_to_json", canvas.toJSON());
+  });
+}
+
+
+
+function drawcle(type_of_circle) {
+  
+  colour_inside = 'Black';
+  let stroke_line   = 0;
+  drawingColorEl.onchange = function() 
+  {
+    colour_inside = drawingColorEl.value;
+  };
   if (type_of_circle == "empty")
   {
         colour_inside = hexToRgbA('#000dff',5);//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
@@ -346,9 +470,16 @@ function drawcle(type_of_circle) {
   }
   else if(type_of_circle == "empty_with_stroke_line")
   {
-    colour_inside = hexToRgbA('#000dff',95);
+    colour_inside = hexToRgbA('#000dff',5);
     stroke_line = 20;
   }
+  else if (type_of_circle == "filled")
+  {
+    colour_inside = drawingColorEl.value;
+    stroke_line = 0;
+  }
+
+
 
   var circle, isDown, origX, origY;
   removeEvents();
@@ -541,9 +672,6 @@ function adding_circle_on_the_board(circle_taken) {
 
 
 
-
-
-
 let stroke_line = 0;
 
 var drawing_color_fill = document.getElementById("drawing-color-fill"),
@@ -571,71 +699,6 @@ drawingModeEl.onclick = function () {
 
 
 
-function drawrec() {
-  document.querySelectorAll(".config").forEach((item) => {
-    item.style.display = "none";
-  });
-  document.querySelector(".config_input_1").style.display = "block";
-  var rect, isDown, origX, origY;
-  removeEvents();
-  changeObjectSelection(false);
-
-  canvas.on("mouse:down", function (o) {
-    isDown = true;
-    var pointer = canvas.getPointer(o.e);
-    origX = pointer.x;
-    origY = pointer.y;
-    var pointer = canvas.getPointer(o.e);
-    rect = new fabric.Rect({
-      left: origX,
-      top: origY,
-      originX: "left",
-      originY: "top",
-      width: pointer.x - origX,
-      height: pointer.y - origY,
-      angle: 0,
-      selectable: false,
-      fill: hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
-      stroke: drawing_color_border.value,
-      strokeDashArray: [stroke_line, stroke_line],
-      transparentCorners: false,
-    });
-    canvas.add(rect);
-    socket.emit("rect:add", rect);
-  });
-
-  canvas.on("mouse:move", function (o) {
-    if (!isDown) return;
-    var pointer = canvas.getPointer(o.e);
-
-    if (origX > pointer.x) {
-      rect.set({
-        left: Math.abs(pointer.x),
-      });
-    }
-    if (origY > pointer.y) {
-      rect.set({
-        top: Math.abs(pointer.y),
-      });
-    }
-
-    rect.set({
-      width: Math.abs(origX - pointer.x),
-    });
-    rect.set({
-      height: Math.abs(origY - pointer.y),
-    });
-
-    socket.emit("rect:edit", rect);
-    canvas.renderAll();
-  });
-
-  canvas.on("mouse:up", function (o) {
-    isDown = false;
-    rect.setCoords();
-    socket.emit("canvas_save_to_json", canvas.toJSON());
-  });
-}
 
 function drawLine() {
   document.querySelectorAll(".config").forEach((item) => {
