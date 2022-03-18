@@ -2,12 +2,124 @@
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
 const as = document.querySelector(".scale__value");
 
+let isCursorMove = false;
+
+const buttonCursorMove = document.querySelector('#moving_our_board'); 
+console.log(buttonCursorMove);
+
+const handleDownKeySpace = (event) => {
+  if (event.code === 'Space' && !event.repeat) {
+      event.preventDefault();
+      canvas.toggleDragMode();
+      canvas.isDrawingMode = false;
+      buttonCursorMove.classList.add('settings-panel__button-cursor-move_active');
+      buttonCursorMove.classList.add('settings-panel__button-cursor-move_disabled');
+      isCursorMove = true;
+  }
+}           // Нажатие на пробел
+const handleUpKeySpace = (event) => {
+  if (event.code === 'Space') {
+      event.preventDefault();
+      canvas.toggleDragMode();
+      canvas.isDrawingMode = true;
+      buttonCursorMove.classList.remove('settings-panel__button-cursor-move_active');
+      buttonCursorMove.classList.remove('settings-panel__button-cursor-move_disabled');
+      isCursorMove = false;
+      if(!isCursorMove) {
+          document.body.addEventListener('keydown', handleDownKeySpace)
+      }
+  }
+}             // Отпускание пробела
+
 
 const socket = io();
 
 
 const pathUsualGrid = "./images/grids/usual-grid.svg";
 const pathTriangularGrid = "./images/grids/triangular-grid.svg";
+
+fabric.Canvas.prototype.toggleDragMode = function () {
+  const STATE_IDLE = "idle";
+  const STATE_PANNING = "panning";
+  // Remember the previous X and Y coordinates for delta calculations
+  let lastClientX;
+  let lastClientY;
+  // Keep track of the state
+
+  let deltaX;
+  let deltaY;
+
+  let state = STATE_IDLE;
+  // We're entering dragmode
+  if (canvas.isDrawingMode) {
+      this.off('mouse:move');
+      // Discard any active object
+      canvas.discardActiveObject();
+      // Set the cursor to 'move'
+      this.defaultCursor = "move";
+      // Loop over all objects and disable events / selectable. We remember its value in a temp variable stored on each object
+      this.forEachObject(function (object) {
+          object.prevEvented = object.evented;
+          object.prevSelectable = object.selectable;
+          object.evented = false;
+          object.selectable = false;
+      });
+      // Remove selection ability on the canvas
+      this.selection = false;
+      // // When MouseUp fires, we set the state to idle
+      this.on("mouse:up", function (e) {
+          state = STATE_IDLE;
+
+      });
+      // // When MouseDown fires, we set the state to panning
+      this.on("mouse:down", (e) => {
+          state = STATE_PANNING;
+          lastClientX = e.e.clientX;
+          lastClientY = e.e.clientY;
+      });
+      // When the mouse moves, and we're panning (mouse down), we continue
+      this.on("mouse:move", (e) => {
+          if (state === STATE_PANNING && e && e.e) {
+              // let delta = new fabric.Point(e.e.movementX, e.e.movementY); // No Safari support for movementX and movementY
+              // For cross-browser compatibility, I had to manually keep track of the delta
+              // console.log(e.e)
+              // Calculate deltas
+
+              if (lastClientX) {
+                  deltaX = e.e.clientX - lastClientX; // смещение по оси X
+                                                      // (если вниз передвигаемся, то
+                                                      // это значение уменьшается иначе увеличивается)
+              }
+              if (lastClientY) {
+                  deltaY = e.e.clientY - lastClientY; // смещение по оси Y
+                                                      // (если влево передвигаемся, то
+                                                      // это значение увеличивается иначе уменьшается)
+              }
+              // Update the last X and Y values
+              lastClientX = e.e.clientX;
+              lastClientY = e.e.clientY;
+              let delta = new fabric.Point(deltaX, deltaY);
+              this.relativePan(delta);
+              // this.trigger("moved");
+          }
+      });
+  } else {
+      // When we exit dragmode, we restore the previous values on all objects
+      this.forEachObject(function (object) {
+          object.evented = object.prevEvented !== undefined ? object.prevEvented : object.evented;
+          object.selectable = object.prevSelectable !== undefined ? object.prevSelectable : object.selectable;
+      });
+      // Reset the cursor
+      this.defaultCursor = "default";
+      // Remove the event listeners
+      this.off("mouse:up");
+      this.off("mouse:down");
+      this.off("mouse:move");
+      this.on("mouse:move", (event) => handleMouseMovement(event))
+      // Restore selection ability on the canvas
+      this.selection = true;
+  }
+};
 
 
 const freeDrawingButton   = document.querySelector('#free_drawing_button');
@@ -46,6 +158,24 @@ rectangleDrawingButtonFilled.addEventListener("click",(e) =>
   drawrec("filled");
 });
 
+const lineDrawingButton = document.querySelector('#line_drawing_button');
+lineDrawingButton.addEventListener("click",(e) => 
+{
+  drawLine();
+});
+
+const cylinderAddButton = document.querySelector('#draw_cylinder');
+cylinderAddButton.addEventListener("click",(e) => 
+{
+  add_3d_figure('add_cylinder');
+});
+
+const hexagonAddButton = document.querySelector('#draw_hexagon');
+hexagonAddButton.addEventListener("click",(e) => 
+{
+  add_3d_figure('add_hexagon');
+});
+
 
 
 
@@ -72,17 +202,13 @@ uploadButton.addEventListener("click",(e) => {
         socket.emit('canvas_save_to_json',canvas.toJSON());
         socket.emit("picture:add",canvas.toJSON());
         console.log("picture:add",img);
-        console.log("работает!!!!!!!!!!!!!!!!!!");
+        console.log("работает!!!!!!!!!!!!!!!!!! загружается картинка!");
       }
     }
     reader.readAsDataURL(e.target.files[0]);
   //}
   
 }) 
-
-
-
-
 
 
 socket.on( 'connect', function()
@@ -181,10 +307,10 @@ let circle ;
     {
         console.log('line:add',line_taken)
 
-        line = new fabric.Line(line_taken, {
+        line = new fabric.Line(line_taken.points, {
           strokeWidth: 5,
-          fill: '#07ff11a3',
-          stroke: '#07ff11a3',
+          fill: line_taken.fill,//'#07ff11a3',
+          stroke: line_taken.stroke,//'#07ff11a3',
           originX: 'center',
           originY: 'center',
           selectable: false
@@ -303,20 +429,11 @@ let circle ;
 
 function enableFreeDrawing()
 {
-    console.log('!!!!!!!!!!!!!jshdfjsdfsdhfjsdhfjshdfjhsdjf')
-//  document.querySelectorAll('.config').forEach(item=>{
-//    item.style.display='none';
-//  });
-  
-  //document.querySelector('.config_input_3').style.display='block';
   removeEvents();
   canvas.isDrawingMode = true;
-  
-  //let drawingColorEl = document.querySelector("#drawing-color");
   drawingColorEl.onchange = function() 
   {
     canvas.freeDrawingBrush.color = drawingColorEl.value;
-    //alert('!!!!!!!!!!!!aadad');
     socket.emit("color:change",drawingColorEl.value);
   };
   
@@ -347,6 +464,66 @@ function enableFreeDrawing()
   })
 }
 
+/*
+  
+function drawLine() 
+{
+  console.log('line ,y!!!!!!!!')
+  let line, isDown;
+
+  removeEvents();
+  changeObjectSelection(false);
+  canvas.on('mouse:down', function(o) {
+    isDown = true;
+    let pointer = canvas.getPointer(o.e);
+    let points = [pointer.x, pointer.y, pointer.x, pointer.y];
+    line = new fabric.Line(points, {
+      strokeWidth: drawing_figure_width.value,
+      //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
+      //stroke: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
+      //strokeDashArray: [stroke_line, stroke_line],
+      stroke: '#07ff11a3',
+      originX: 'center',
+      originY: 'center',
+      selectable: false
+    });
+    canvas.add(line);
+    socket.emit("line:add",points);
+    console.log("line:add",points);
+  });
+  canvas.on('mouse:move', function(o) {
+    if (!isDown) return;
+    let pointer = canvas.getPointer(o.e);
+    line.set({
+      x2: pointer.x,
+      y2: pointer.y
+    });
+    canvas.renderAll();
+    socket.emit("line:edit",{x1:line.x1,y1:line.y1,x2:line.x2,y2:line.y2});
+    //socket.emit("line:edit",line);
+    console.log("line:edit",{x1:line.x1,y1:line.y1,x2:line.x2,y2:line.y2},line);
+  });
+
+  canvas.on('mouse:up', function(o) {
+    isDown = false;
+    line.setCoords();
+    socket.emit('canvas_save_to_json',canvas.toJSON());
+  });
+}
+
+
+
+
+*/
+
+
+
+
+
+
+
+
+
 
 function enableSelection() {
   removeEvents();
@@ -357,7 +534,6 @@ function enableSelection() {
     let d = canvas.getActiveObject();
   });
 }
-
 
 
 function drawrec(type_of_rectangle) {
@@ -454,7 +630,6 @@ function drawrec(type_of_rectangle) {
 }
 
 
-
 function drawcle(type_of_circle) {
   
   colour_inside = 'Black';
@@ -521,8 +696,6 @@ function drawcle(type_of_circle) {
     socket.emit("canvas_save_to_json", canvas.toJSON());
   });
 }
-
-
 
 document.getElementById("uploader").onchange = function(e) 
 {
@@ -639,6 +812,8 @@ function editing_added_line_to_board(line_taken) {
     y1: line_taken.y1,
     x2: line_taken.x2,
     y2: line_taken.y2,
+    stroke: line_taken.stroke,
+    fill: line_taken.fill
   });
   canvas.renderAll();
   console.log("line:edit", line_taken.x2, line_taken.y2, line_taken, line);
@@ -679,32 +854,30 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
   drawing_figure_width = document.getElementById("drawing-figure-width"),
   drawing_figure_opacity = document.getElementById("opacity");
 
-var drawingModeEl = document.getElementById("drawing-mode"),
-  drawingOptionsEl = document.getElementById("drawing-mode-options"),
-  drawingColorEl = document.getElementById("drawing-color"),
+// drawingModeEl = document.getElementById("drawing-mode"),
+//  drawingOptionsEl = document.getElementById("drawing-mode-options"),
+  var  drawingColorEl = document.getElementById("drawing-color"),
   drawingLineWidthEl = document.getElementById("drawing-line-width");
+/*
+  drawingModeEl.addEventListener('click',()=>{
+    canvas.isDrawingMode = !canvas.isDrawingMode;
+    if (canvas.isDrawingMode) {
+      drawingModeEl.innerHTML = "Cancel drawing mode";
+      drawingOptionsEl.style.display = "";
+    } else {
+      drawingModeEl.innerHTML = "Enter drawing mode";
+      drawingOptionsEl.style.display = "none";
+    }
+  })  
 
-drawingModeEl.onclick = function () {
-  canvas.isDrawingMode = !canvas.isDrawingMode;
-  if (canvas.isDrawingMode) {
-    drawingModeEl.innerHTML = "Cancel drawing mode";
-    drawingOptionsEl.style.display = "";
-  } else {
-    drawingModeEl.innerHTML = "Enter drawing mode";
-    drawingOptionsEl.style.display = "none";
-  }
-};
-
+*/
 //document.getElementById('drawing-mode-selector-2').addEventListener('change', function()
 
 
 
 
 function drawLine() {
-  document.querySelectorAll(".config").forEach((item) => {
-    item.style.display = "none";
-  });
-  document.querySelector(".config_input_1").style.display = "block";
+
 
   let line, isDown;
 
@@ -715,9 +888,9 @@ function drawLine() {
     let pointer = canvas.getPointer(o.e);
     let points = [pointer.x, pointer.y, pointer.x, pointer.y];
     line = new fabric.Line(points, {
-      strokeWidth: drawing_figure_width.value,
+      strokeWidth: 2,//drawing_figure_width.value,
       //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
-      stroke: hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+      stroke: 'Black',//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
       strokeDashArray: [stroke_line, stroke_line],
       ///stroke: '#07ff11a3',
       originX: "center",
@@ -725,7 +898,10 @@ function drawLine() {
       selectable: false,
     });
     canvas.add(line);
-    socket.emit("line:add", points);
+    socket.emit("line:add", {
+      points: points,
+      fill:line.fill,
+      stroke: line.stroke});
     console.log("line:add", points);
   });
   canvas.on("mouse:move", function (o) {
@@ -741,6 +917,8 @@ function drawLine() {
       y1: line.y1,
       x2: line.x2,
       y2: line.y2,
+      stroke: line.stroke,
+      fill: line.fill
     });
     //socket.emit("line:edit",line);
     console.log(
@@ -797,7 +975,7 @@ function hexToRgbA(hex, figures_opacity) {
 
 
 var drawingOptionsEl = document.getElementById("drawing-mode-options-2");
-
+/*
 document
   .getElementById("drawing-mode-selector-2")
   .addEventListener("change", function () {
@@ -809,7 +987,7 @@ document
       stroke_line = 20;
     }
   });
-
+*/
 document.getElementById("uploader").onchange = function (e) {
   var reader = new FileReader();
   reader.onload = function (e) {
@@ -912,13 +1090,118 @@ function recive_part_of_data(e) {
     }
   } else {
     let d = canvas.item(e.index);
-    d.set(e.object);
+    //d.set(e.object);
+    d.set({
+      top: e.object.top, //+object.object.top,
+      left: e.object.left, //+object.object.left
+      angle: e.object.angle,
+      scaleX: e.object.scaleX,
+      scaleY: e.object.scaleY,
+    });
   }
 
   canvas.renderAll();
   //return d;
 }
 
+document.body.addEventListener('keydown', handleDownKeySpace);
+document.body.addEventListener('keyup', handleUpKeySpace);
+
+
+const handleButtonCursorMoveClick = () => {
+  console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!jdasjdkjdkajsdkajkdjasdkajd')
+  isCursorMove = !isCursorMove;
+  console.log(isCursorMove)
+  if(isCursorMove){
+      document.body.removeEventListener('keydown', handleDownKeySpace);
+  } else {
+      document.body.addEventListener('keydown', handleDownKeySpace);
+  }
+  canvas.toggleDragMode();
+  buttonCursorMove.classList.toggle('settings-panel__button-cursor-move_active');
+  canvas.isDrawingMode = !canvas.isDrawingMode;
+} 
+buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
+
+
+
+
+function add_3d_figure(figure)
+{
+  let width_changed = 4;
+  function draw_l(x_first,y_first,x_last,y_last,dotted_maybe)
+  {
+     function dotted_function(d)
+     {
+        if (d)
+        {
+          return 15;
+        }else
+        {
+          return 0;
+        }
+     }
+     let line = new fabric.Line([ x_first,y_first,x_last,y_last,dotted_maybe ],{
+         strokeWidth: width_changed,
+         fill: 'blue',
+         stroke: 'blue',
+         originX: 'center',
+         originY: 'center',
+         strokeDashArray: [dotted_function(dotted_maybe), dotted_function(dotted_maybe)]
+       });
+     return line;
+  }
+  function draw_el(top_input,left_input)
+  {
+     let elip = new fabric.Ellipse(
+      {
+       top: top_input,
+       left: left_input,
+       rx: 75,
+       ry: 50,
+       fill: '',
+       stroke: 'blue',
+       strokeWidth: width_changed
+      });
+     return elip;
+  }
+  if (figure == 'add_cylinder')
+  {
+    var eli_1  = draw_el(150,400); 
+    var eli_2  = draw_el(350,400);
+    var line_2 = draw_l(402, 200, 402, 400, false);  
+    var line_3 = draw_l(552, 200, 552, 400, false);   
+    let cylinder_added = new fabric.Group([ eli_1,eli_2,line_2,line_3 ]);
+ 
+    cylinder_added.set({left: 100,top: 60});
+    canvas.add(cylinder_added);
+  }else if (figure == 'add_hexagon')
+  {
+    var line_1  = draw_l(402, 200, 402, 400, false) ;
+    var line_2  = draw_l(202, 200, 202, 400, false) ;
+    var line_3  = draw_l(202, 200, 402, 200, false) ;
+    var line_4  = draw_l(202, 400, 402, 400, false) ;
+    var line_5  = draw_l(402, 400, 502, 350, false) ;
+    var line_7  = draw_l(402, 200, 502, 150, false) ;
+    var line_8  = draw_l(202, 200, 302, 150, false) ;
+    var line_9  = draw_l(302, 150, 500, 150, false) ;
+    var line_11 = draw_l(300, 150, 300, 350, false) ;
+    var line_6  = draw_l(202, 400, 302, 350, true) ;
+    var line_10 = draw_l(302, 350, 500, 350, true) ;
+    var line_11 = draw_l(500, 150, 500, 350, false) ;
+    var line_12 = draw_l(300, 150, 300, 350, true) ;
+  
+  var group2 = new fabric.Group([ line_1,line_2,line_3,line_4,line_5,line_6,line_7,line_8,line_9,line_10,line_11,line_12], { left: 200, top: 200 });
+  canvas.add(group2) 
+  }
+  socket.emit('canvas_save_to_json',canvas.toJSON());
+  socket.emit("picture:add",canvas.toJSON());
+  canvas.renderAll();
+}
+
+
+
+// Перемещение с помощью кнопки
 /*
 socket.on('object:modified', e =>
 {
