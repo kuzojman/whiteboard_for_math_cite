@@ -161,8 +161,15 @@ rectangleDrawingButtonFilled.addEventListener("click",(e) =>
 const lineDrawingButton = document.querySelector('#line_drawing_button');
 lineDrawingButton.addEventListener("click",(e) => 
 {
-  drawLine();
+  drawLine('trivial');
 });
+
+const lineDrawingButtonDOtted = document.querySelector('#line_drawing_button_dotted');
+lineDrawingButtonDOtted.addEventListener("click",(e) => 
+{
+  drawLine('dotted');
+});
+
 
 const cylinderAddButton = document.querySelector('#draw_cylinder');
 cylinderAddButton.addEventListener("click",(e) => 
@@ -876,10 +883,32 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
 
 
 
-function drawLine() {
-
-
+function drawLine(type_of_line) {
+  drawingLineWidthEl.onchange = function() 
+  {
+    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
+    socket.emit("width:change", canvas.freeDrawingBrush.width);
+  };
   let line, isDown;
+
+  drawingColorEl.onchange = function() 
+  {
+    canvas.freeDrawingBrush.color = drawingColorEl.value;
+    socket.emit("color:change",drawingColorEl.value);
+  };
+
+  if (type_of_line == "trival")
+  {
+    colour_inside = hexToRgbA('#000dff',5);
+    stroke_line   = 0;
+  }
+  else if(type_of_line == "dotted")
+  {
+    colour_inside = hexToRgbA('#000dff',5);
+    stroke_line = 20;
+  }
+
+
 
   removeEvents();
   changeObjectSelection(false);
@@ -888,9 +917,9 @@ function drawLine() {
     let pointer = canvas.getPointer(o.e);
     let points = [pointer.x, pointer.y, pointer.x, pointer.y];
     line = new fabric.Line(points, {
-      strokeWidth: 2,//drawing_figure_width.value,
+      strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
       //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
-      stroke: 'Black',//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+      stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
       strokeDashArray: [stroke_line, stroke_line],
       ///stroke: '#07ff11a3',
       originX: "center",
