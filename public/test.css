@@ -34,6 +34,7 @@ body {
     align-items: center;
     background-color: white;
     border-radius: 15px;
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
 }
 
 .top-panel__logo {
@@ -143,6 +144,7 @@ body {
     top: 200px;
     left: 20px;
     z-index: 3;
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
 }
 
 .tool-panel__list {
@@ -338,7 +340,9 @@ body {
     font-size: 2.5rem;
 }
 
-
+.settings-panel__button_active {
+    background-color: yellow;
+  }
 
 
 

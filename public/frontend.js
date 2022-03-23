@@ -4,6 +4,14 @@ const as = document.querySelector(".scale__value");
 
 let isCursorMove = false;
 
+function get_board_id() {
+  const board_id =  document.getElementById("board_id").attributes["board"].value;
+  console.log('>>>>>>' + board_id);
+  return board_id;
+}
+
+let board_id = get_board_id();
+
 const buttonCursorMove = document.querySelector('#moving_our_board'); 
 console.log(buttonCursorMove);
 
@@ -206,7 +214,9 @@ uploadButton.addEventListener("click",(e) => {
         });
         img.scaleToWidth(600);
         canvas.add(img).setActiveObject(img).renderAll();
-        socket.emit('canvas_save_to_json',canvas.toJSON());
+        //socket.emit('canvas_save_to_json',canvas.toJSON());
+        // let board_id = get_board_id();
+        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
         socket.emit("picture:add",canvas.toJSON());
         console.log("picture:add",img);
         console.log("работает!!!!!!!!!!!!!!!!!! загружается картинка!");
@@ -220,6 +230,9 @@ uploadButton.addEventListener("click",(e) => {
 
 socket.on( 'connect', function()
 {
+    socket.emit("board:board_id",board_id);
+
+
     socket.on('mouse:move', function(e)
     {
       canvas.freeDrawingBrush._points = e.map(item => 
@@ -357,7 +370,9 @@ let circle ;
 
     canvas.on('object:modified', e =>
     {
-      socket.emit('canvas_save_to_json',canvas.toJSON());
+      //socket.emit('canvas_save_to_json',canvas.toJSON());
+      // let board_id = get_board_id();
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       send_part_of_data(e);
       //socket.emit('object:modified', canvas.toJSON())
     });
@@ -366,7 +381,9 @@ let circle ;
 
     canvas.on('object:moving',e =>
     {
-      socket.emit('canvas_save_to_json',canvas.toJSON());
+      //socket.emit('canvas_save_to_json',canvas.toJSON());
+      // let board_id = get_board_id();
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       send_part_of_data(e);
     });
 
@@ -392,7 +409,9 @@ let circle ;
     canvas.on('object:scaling',e =>
     {
 
-      socket.emit('canvas_save_to_json',canvas.toJSON());
+      //socket.emit('canvas_save_to_json',canvas.toJSON());
+      // let board_id = get_board_id();
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       send_part_of_data(e);
     });
 
@@ -404,7 +423,9 @@ let circle ;
 
     canvas.on('object:rotating',e =>
     {
-      socket.emit('canvas_save_to_json',canvas.toJSON());
+      //socket.emit('canvas_save_to_json',canvas.toJSON());
+      // let board_id = get_board_id();
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       send_part_of_data(e);
     });
 
@@ -459,8 +480,9 @@ function enableFreeDrawing()
   canvas.on('mouse:up', e => 
   {
     isDrawing = false;
-    socket.emit('canvas_save_to_json',canvas.toJSON());
-
+    //socket.emit('canvas_save_to_json',canvas.toJSON());
+    // let board_id = get_board_id();
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
   })
   canvas.on('mouse:move', function (e)
   {
@@ -632,7 +654,9 @@ function drawrec(type_of_rectangle) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     rect.setCoords();
-    socket.emit("canvas_save_to_json", canvas.toJSON());
+    //socket.emit("canvas_save_to_json", canvas.toJSON());
+    // let board_id = get_board_id();
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
   });
 }
 
@@ -700,7 +724,9 @@ function drawcle(type_of_circle) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     circle.setCoords();
-    socket.emit("canvas_save_to_json", canvas.toJSON());
+    //socket.emit("canvas_save_to_json", canvas.toJSON());
+    // let board_id = get_board_id();
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
   });
 }
 
@@ -721,7 +747,9 @@ document.getElementById("uploader").onchange = function(e)
       });
       img.scaleToWidth(600);
       canvas.add(img).setActiveObject(img).renderAll();
-      socket.emit('canvas_save_to_json',canvas.toJSON());
+      //socket.emit('canvas_save_to_json',canvas.toJSON());
+      // let board_id = get_board_id();
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       socket.emit("picture:add",canvas.toJSON());
       console.log("picture:add",img);
       console.log("работает!!!!!!!!!!!!!!!!!!");
@@ -960,7 +988,9 @@ function drawLine(type_of_line) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     line.setCoords();
-    socket.emit("canvas_save_to_json", canvas.toJSON());
+    //socket.emit("canvas_save_to_json", canvas.toJSON());
+    // let board_id = get_board_id();
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
   });
 }
 
@@ -1030,7 +1060,9 @@ document.getElementById("uploader").onchange = function (e) {
       });
       img.scaleToWidth(600);
       canvas.add(img).setActiveObject(img).renderAll();
-      socket.emit("canvas_save_to_json", canvas.toJSON());
+      //socket.emit("canvas_save_to_json", canvas.toJSON());
+      // let board_id = get_board_id();
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       socket.emit("picture:add", canvas.toJSON());
       console.log("picture:add", img);
     };
@@ -1048,7 +1080,9 @@ function print_Text() {
   });
 
   canvas.add(textbox);
-  socket.emit("canvas_save_to_json", canvas.toJSON());
+  //socket.emit("canvas_save_to_json", canvas.toJSON());
+  // let board_id = get_board_id();
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
   socket.emit("text:add", canvas.toJSON());
 }
 
@@ -1223,10 +1257,57 @@ function add_3d_figure(figure)
   var group2 = new fabric.Group([ line_1,line_2,line_3,line_4,line_5,line_6,line_7,line_8,line_9,line_10,line_11,line_12], { left: 200, top: 200 });
   canvas.add(group2) 
   }
-  socket.emit('canvas_save_to_json',canvas.toJSON());
+  //socket.emit('canvas_save_to_json',canvas.toJSON());
+  // let board_id = get_board_id();
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
   socket.emit("picture:add",canvas.toJSON());
   canvas.renderAll();
 }
+
+const toolPanelList = document.querySelector('.tool-panel__list');
+
+let selectedButton;
+
+toolPanelList.addEventListener('click', (event) => {
+    let currentButton = event.target.closest('.tool-panel__item-button');
+    if(selectedButton === currentButton) {
+        selectedButton.classList.toggle('settings-panel__button_active');
+    } else {
+        currentButton.classList.toggle('settings-panel__button_active');
+        if(selectedButton) {
+            selectedButton.classList.remove('settings-panel__button_active');
+        }
+        selectedButton = currentButton;
+    }
+})
+
+const buttonNoGrid = document.querySelector('.grid-panel__item-no-grid');
+const buttonUsualGrid = document.querySelector('.grid-panel__item-usual-grid');
+const buttonTriangularGrid = document.querySelector('.grid-panel__item-triangular-grid');
+
+
+buttonNoGrid.addEventListener('click', () => {
+  canvas.setBackgroundColor(null, canvas.renderAll.bind(canvas))
+})
+
+buttonUsualGrid.addEventListener('click', () => {
+  canvas.setBackgroundColor({
+      source: pathUsualGrid,
+      repeat: 'repeat',
+      scaleX: 1,
+      scaleY: 1
+  }, canvas.renderAll.bind(canvas));
+})
+
+buttonTriangularGrid.addEventListener('click', () => {
+  canvas.setBackgroundColor({
+      source: pathTriangularGrid,
+      repeat: 'repeat',
+      scaleX: 1,
+      scaleY: 1
+  }, canvas.renderAll.bind(canvas));
+})
+
 
 
 

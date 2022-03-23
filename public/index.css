@@ -10,9 +10,11 @@
 .scale {
   display: flex;
   border-radius: 5ex;
-  background: lightgray;
+  background: rgb(255, 252, 252);
+  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+  padding: 5px 10px;
   cursor: pointer;
-  z-index: 2;
+  z-index: 3;
   padding: 10px;
   position: fixed;
   right: 10px;
@@ -30,4 +32,62 @@
 
 .config {
   display: none;
+}
+
+.settings-panel__button_active {
+  background-color: yellow;
+}
+
+
+.grid-panel {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  width: 170px;
+  z-index: 3;
+}
+
+.grid-panel__title {
+  padding: 10px;
+  z-index: 2;
+  cursor: pointer;
+  background-color: white;
+  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+  border-radius: 15px;
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.grid-panel__list-wrapper {
+  display: none;
+  padding-top: 5px;
+}
+
+.grid-panel:hover .grid-panel__list-wrapper {
+  display: block;
+}
+
+
+.grid-panel__list {
+  background-color: white;
+  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+  font-size: 16px;
+  padding: 5px;
+  border-radius: 15px;
+}
+
+.grid-panel__item {
+  padding: 5px;
+  border-bottom: 1px solid black;
+}
+
+
+.grid-panel__item:last-child {
+  border-bottom: none;
+}
+
+.grid-panel__item:hover {
+  cursor: pointer;
+  background-color: rgba(161, 157, 157, 0.31);
 }

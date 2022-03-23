@@ -7,6 +7,7 @@
 </head>
 
 <body>
+<div id="board_id" board="{{ board_id }}" hidden></div>
 <!--<a-->
 <!--        class="thmb"-->
 <!--        href="#"-->
@@ -415,6 +416,17 @@
   <span class="scale__value">100%</span>
 </div>
 
+<div class="grid-panel">
+  <p class="grid-panel__title">Сетка</p>
+  <div class="grid-panel__list-wrapper">
+      <ul class="grid-panel__list">
+          <li class="grid-panel__item grid-panel__item-no-grid">без сетки</li>
+          <li class="grid-panel__item grid-panel__item-usual-grid">обычная (в клеточку)</li>
+          <li class="grid-panel__item grid-panel__item-triangular-grid">треугольная</li>
+      </ul>
+  </div>
+</div>
+
 <div class="canvasWrapper">
     <canvas id="canvasId"></canvas>
 </div>
@@ -427,15 +439,16 @@
         crossorigin="anonymous"
 ></script>
 
+<script src="config.js" ></script>
 <script src="https://unpkg.com/fabric@4.6.0/dist/fabric.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
 <script src="./fabric_plugin_undo_redo.js"></script>
 
 <!--- <script src="./some_functions.js" type="module"></script> -->
-<script src="frontend.js"></script>
+<script src="frontend.js" ></script>
 
-<script src="pin_and_rotate.js"></script>
-<script src="copy_paste_and_other_commands.js"></script>
+<script src="pin_and_rotate.js" ></script>
+<script src="copy_paste_and_other_commands.js" ></script>
 </body>
 </html>

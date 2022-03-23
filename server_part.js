@@ -3,25 +3,86 @@ const { Server } = require("socket.io");
 const http = require("http");
 const path = require("path");
 const fs = require("fs");
+const mustacheExpress = require('mustache-express');
+
+require('dotenv').config()
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
+
+////////////////////work with postresql start
+const { Client } = require('pg');
+const { Console } = require("console");
+const client = new Client({
+  user: process.env.DB_USER, 
+  host: process.env.DB_HOST,
+  database: process.env.DB_DB,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+})
+
+async function initdb(){
+  await client.connect()
+  const res = await client.query('SELECT * from boards')
+  //console.log(res.rows[0]) // Hello world!
+  //await client.end()  
+}
+initdb()
+////////////////////////work with postresql end
+
+
+
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) => {
-  res.sendfile("/index.html");
+
+// Register '.html' extension with The Mustache Express
+app.engine('html', mustacheExpress());
+
+app.set('view engine', 'mustache');
+app.set('views', __dirname + '/public');
+
+app.get("/a", (req, res) => {
+  let board_id = req.query.board_id;
+  if (!board_id) {
+    board_id = 1;
+  }
+  let role = req.query.role;
+  res.render(path.join(__dirname,"public/index.html"), {board_id: board_id});
 });
 
-io.on("connection", (socket) => {
+
+io.on("connection", async socket => {
   //array_all_users.push(socket.id);
+
+  
+  //var board_id = 1;
+  
+
+
+  socket.on("board:board_id",async (e) => {
+    board_id = e;
+    console.log('>>', board_id, e);
+    console.log('>>', 'before select -- board_id = ' + board_id);
+    const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
+    socket.emit("take_data_from_json_file", res.rows[0].board_stack);
+  });
+
+
+//  console.log('>>', 'before select -- board_id = ' + board_id);
+//  const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
+
+//  socket.emit("take_data_from_json_file", res.rows[0].board_stack);
+
+  /*
   fs.readFile("saved_data.json", "utf-8", (err, data) => {
     if (err) throw err;
     socket.emit("take_data_from_json_file", data);
   });
+*/
 
   socket.on("mouse:move", (e) => {
     socket.broadcast.emit("mouse:move", e);
@@ -45,10 +106,12 @@ io.on("connection", (socket) => {
 
   socket.on("rect:edit", (rect_pass) => {
     socket.broadcast.emit("rect:edit", rect_pass);
+    console.log(rect_pass);
   });
 
   socket.on("rect:add", (rect_pass) => {
     socket.broadcast.emit("rect:add", rect_pass);
+    console.log(rect_pass);
   });
 
   socket.on("line:edit", (line_pass) => {
@@ -95,10 +158,19 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("text:add", object_pass);
   });
 
-  socket.on("canvas_save_to_json", (canvas_pass) => {
+  socket.on("canvas_save_to_json", async canvas_pass => {
+
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
     const data_saved = JSON.stringify(canvas_pass, null, "\t");
+//    console.log(canvas_pass);
+    //await client.connect()
+    //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
+    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[canvas_pass["canvas"],canvas_pass["board_id"]]);
+    //console.log(res) // Hello world!
+    //await client.end()  
+   // done()
 
+/*
     fs.writeFile("saved_data.json", data_saved, (err) => {
       if (err) {
         console.log(err);
@@ -106,6 +178,8 @@ io.on("connection", (socket) => {
         console.log("saved");
       }
     });
+*/
+
   });
 
   socket.on("disconnect", () => {
