@@ -364,7 +364,50 @@
       </div>
     </li>
 
-
+    <li class="tool-panel__item">
+      <button class="tool-panel__item-button tool-panel__item-button-text">
+          <svg class="tool-panel__item-icon-button">
+              <use xlink:href="../icons/sprite.svg#icon-text"></use>
+          </svg>
+      </button>
+    
+      <div class="text-settings">
+          <div class="text-settings__font-family">
+              <p class="text-settings__font-family-selected">Open Sans</p>
+              <button class="text-settings__button-open-list">
+                  <img src="./icons/icons8-down-arrow-32.png">
+              </button>
+              <div class="text-settings__font-family-list_wrapper">
+                  <ul class="text-settings__font-family-list">
+                      <li class="text-settings__font-family-item text-settings__font-family_OpSan">Open Sans</li>
+                      <li class="text-settings__font-family-item text-settings__font-family_Mon">Montserrat</li>
+                      <li class="text-settings__font-family-item text-settings__font-family_Rob">Roboto</li>
+                  </ul>
+              </div>
+          </div>
+    
+          <div class="text-settings__font-size">
+              <div class="text-settings__font-size-value">25</div>
+              <div class="text-settings__button-font-size-wrapper">
+                  <button class="text-settings__button-font-size-up">
+                      <img src="./icons/icons8-длинная-стрелка-вверх-30.png">
+                  </button>
+                  <button class="text-settings__button-font-size-down">
+                      <img src="./icons/icons8-длинная-стрелка-вниз-30.png">
+                  </button>
+              </div>
+          </div>
+      </div>
+    
+      <div class="modal-text-wrapper">
+          <form class="form-text">
+              <input type="text" class="form-text__input" disabled/>
+              <textarea class="form-text__textarea" cols="40" rows="3"></textarea>
+              <button class="form-text__button-submit">Добавить</button>
+          </form>
+      </div>
+    
+    </li>
 
     <li class="tool-panel__item">
       <button class="tool-panel__item-button" id="button_change_width">

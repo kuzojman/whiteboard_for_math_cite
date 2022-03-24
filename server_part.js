@@ -36,7 +36,7 @@ initdb()
 
 
 
-app.use(express.static(path.join(__dirname, "public")));
+//app.use(express.static(path.join(__dirname, "public"),{index: false}));
 
 
 // Register '.html' extension with The Mustache Express
@@ -45,7 +45,10 @@ app.engine('html', mustacheExpress());
 app.set('view engine', 'mustache');
 app.set('views', __dirname + '/public');
 
-app.get("/a", (req, res) => {
+app.get("/", (req, res) => {
+  //console.log(req.query);
+  //res.send({});
+  //return;
   let board_id = req.query.board_id;
   if (!board_id) {
     board_id = 1;
@@ -53,18 +56,20 @@ app.get("/a", (req, res) => {
   let role = req.query.role;
   res.render(path.join(__dirname,"public/index.html"), {board_id: board_id});
 });
+app.use(express.static(path.join(__dirname, "public")));
+
 
 
 io.on("connection", async socket => {
   //array_all_users.push(socket.id);
-
-  
   //var board_id = 1;
-  
-
 
   socket.on("board:board_id",async (e) => {
     board_id = e;
+
+    socket.board_id = board_id;
+    socket.join(board_id);
+
     console.log('>>', board_id, e);
     console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
@@ -85,77 +90,77 @@ io.on("connection", async socket => {
 */
 
   socket.on("mouse:move", (e) => {
-    socket.broadcast.emit("mouse:move", e);
+    socket.broadcast.to(socket.board_id).emit("mouse:move", e);
   });
 
   socket.on("color:change", (colour) => {
-    socket.broadcast.emit("color:change", colour);
+    socket.broadcast.to(socket.board_id).emit("color:change", colour);
   });
 
   socket.on("width:change", (width_pass) => {
-    socket.broadcast.emit("width:change", width_pass);
+    socket.broadcast.to(socket.board_id).emit("width:change", width_pass);
   });
 
   socket.on("circle:edit", (circle_pass) => {
-    socket.broadcast.emit("circle:edit", circle_pass);
+    socket.broadcast.to(socket.board_id).emit("circle:edit", circle_pass);
   });
 
   socket.on("circle:add", (circle_pass) => {
-    socket.broadcast.emit("circle:add", circle_pass);
+    socket.broadcast.to(socket.board_id).emit("circle:add", circle_pass);
   });
 
   socket.on("rect:edit", (rect_pass) => {
-    socket.broadcast.emit("rect:edit", rect_pass);
+    socket.broadcast.to(socket.board_id).emit("rect:edit", rect_pass);
     console.log(rect_pass);
   });
 
   socket.on("rect:add", (rect_pass) => {
-    socket.broadcast.emit("rect:add", rect_pass);
+    socket.broadcast.to(socket.board_id).emit("rect:add", rect_pass);
     console.log(rect_pass);
   });
 
   socket.on("line:edit", (line_pass) => {
-    socket.broadcast.emit("line:edit", line_pass);
+    socket.broadcast.to(socket.board_id).emit("line:edit", line_pass);
   });
 
   socket.on("line:add", (line_pass) => {
-    socket.broadcast.emit("line:add", line_pass);
+    socket.broadcast.to(socket.board_id).emit("line:add", line_pass);
   });
 
   socket.on("picture:add", (img_pass) => {
-    socket.broadcast.emit("picture:add", img_pass);
+    socket.broadcast.to(socket.board_id).emit("picture:add", img_pass);
   });
 
   socket.on("image:add", (img_pass) => {
-    socket.broadcast.emit("image:add", img_pass);
+    socket.broadcast.to(socket.board_id).emit("image:add", img_pass);
   });
 
   socket.on("object:moving", (object_pass) => {
-    socket.broadcast.emit("object:moving", object_pass);
+    socket.broadcast.to(socket.board_id).emit("object:moving", object_pass);
   });
 
   socket.on("object:modified", (object_pass) => {
-    socket.broadcast.emit("object:modified", object_pass);
+    socket.broadcast.to(socket.board_id).emit("object:modified", object_pass);
   });
 
   socket.on("object:scaling", (object_pass) => {
-    socket.broadcast.emit("object:scaling", object_pass);
+    socket.broadcast.to(socket.board_id).emit("object:scaling", object_pass);
   });
 
   socket.on("object:rotating", (object_pass) => {
-    socket.broadcast.emit("object:rotating", object_pass);
+    socket.broadcast.to(socket.board_id).emit("object:rotating", object_pass);
   });
 
   socket.on("figure_delete", (object_pass) => {
-    socket.broadcast.emit("figure_delete", object_pass);
+    socket.broadcast.to(socket.board_id).emit("figure_delete", object_pass);
   });
 
   socket.on("figure_copied", (object_pass) => {
-    socket.broadcast.emit("figure_copied", object_pass);
+    socket.broadcast.to(socket.board_id).emit("figure_copied", object_pass);
   });
 
   socket.on("text:add", (object_pass) => {
-    socket.broadcast.emit("text:add", object_pass);
+    socket.broadcast.to(socket.board_id).emit("text:add", object_pass);
   });
 
   socket.on("canvas_save_to_json", async canvas_pass => {

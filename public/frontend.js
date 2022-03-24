@@ -459,6 +459,10 @@ function enableFreeDrawing()
 {
   removeEvents();
   canvas.isDrawingMode = true;
+
+  canvas.freeDrawingBrush.color = drawingColorEl.value;
+  canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+
   drawingColorEl.onchange = function() 
   {
     canvas.freeDrawingBrush.color = drawingColorEl.value;
@@ -467,7 +471,7 @@ function enableFreeDrawing()
   
   drawingLineWidthEl.onchange = function() 
   {
-    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
+    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
     socket.emit("width:change", canvas.freeDrawingBrush.width);
   };
   let isDrawing = false
@@ -912,9 +916,12 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
 
 
 function drawLine(type_of_line) {
+  canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+  console.log(drawingLineWidthEl.value,canvas.freeDrawingBrush.width);
+  canvas.freeDrawingBrush.color = drawingColorEl.value;
   drawingLineWidthEl.onchange = function() 
   {
-    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) || 1;
+    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) ;
     socket.emit("width:change", canvas.freeDrawingBrush.width);
   };
   let line, isDown;
@@ -1307,6 +1314,153 @@ buttonTriangularGrid.addEventListener('click', () => {
       scaleY: 1
   }, canvas.renderAll.bind(canvas));
 })
+
+
+
+
+const buttonText = document.querySelector('.tool-panel__item-button-text'); // *
+const formTextTextarea = document.querySelector('.form-text__textarea');
+const modalTextWrapper = document.querySelector('.modal-text-wrapper');
+const formTextInput = document.querySelector('.form-text__input');
+const textSettings = document.querySelector('.text-settings');
+const formTextButtonSubmit = document.querySelector('.form-text__button-submit');
+
+const buttonFontSizeUp = document.querySelector('.text-settings__button-font-size-up');
+const buttonFontSizeDown = document.querySelector('.text-settings__button-font-size-down');
+const fontSizeValue = document.querySelector('.text-settings__font-size-value');
+const buttonOpenListFontFamily = document.querySelector('.text-settings__button-open-list');
+const fontFamilyListWrapper = document.querySelector('.text-settings__font-family-list_wrapper');
+const fontFamilyList = document.querySelector('.text-settings__font-family-list');
+
+
+let selectedFontFamily = "Open Sans";
+let newFontSizeValue = "25";
+
+fontFamilyList.addEventListener('click', (event) => {
+    selectedFontFamily = event.target.textContent;
+    formTextInput.style.fontFamily = selectedFontFamily;
+})
+
+buttonOpenListFontFamily.addEventListener('click', () => {
+    fontFamilyListWrapper.classList.toggle('text-settings__font-family-list_wrapper_active');
+})
+
+buttonFontSizeUp.addEventListener('click',() => {
+    const currentFontSize = Number(fontSizeValue.textContent);
+    newFontSizeValue = currentFontSize + 1;
+    fontSizeValue.textContent = newFontSizeValue + '';
+    formTextInput.style.fontSize = newFontSizeValue + 'px';
+});
+
+
+buttonFontSizeDown.addEventListener('click', () => {
+    const currentFontSize = Number(fontSizeValue.textContent);
+    const newFontSizeValue = currentFontSize - 1;
+    fontSizeValue.textContent = newFontSizeValue + '';
+    formTextInput.style.fontSize = newFontSizeValue + 'px';
+})
+
+
+let mouseCursorCoordinatesCanvas = {
+    x: 0,
+    y: 0,
+}
+
+formTextTextarea.addEventListener('input', () => {
+    formTextInput.value = formTextTextarea.value;
+
+})
+
+formTextButtonSubmit.addEventListener('click', (event) => {
+    event.preventDefault();
+    console.log(selectedFontFamily, newFontSizeValue)
+    const text = new fabric.Text(formTextInput.value, {
+        left: mouseCursorCoordinatesCanvas.x,
+        top: mouseCursorCoordinatesCanvas.y,
+        fill: 'black',
+        fontFamily: selectedFontFamily,
+        fontSize: newFontSizeValue
+    })
+    canvas.add(text);
+    canvas.renderAll();
+    mouseCursorCoordinatesCanvas = {
+        x: 0,
+        y: 0
+    };
+    formTextTextarea.value ='';
+    formTextInput.value = '';
+})
+
+let isDown = false
+
+buttonText.addEventListener('click', (event) => {
+    let origX, origY;
+    buttonText.classList.add('settings-panel__button_active');
+    textSettings.classList.toggle('text-settings_active');
+    console.log(isDown)
+    if(isDown) {
+        console.log('dddd')
+        buttonText.classList.remove('settings-panel__button_active');
+        canvas.off('mouse:down');
+        canvas.off('mouse:up');
+    }
+    changeObjectSelection(false);
+    console.log(canvas.__eventListeners);
+    removeEvents();
+    if(modalTextWrapper.classList.contains('modal-text-wrapper_active')) {
+        removeEvents();
+        modalTextWrapper.classList.remove('modal-text-wrapper_active');
+        return;
+    }
+
+    canvas.on('mouse:down', function(o) {
+        console.log('mouse:down');
+        const pointer = canvas.getPointer(o.e);
+        if(formTextTextarea.value !== ''){
+            canvas.renderAll();
+            modalTextWrapper.classList.remove('modal-text-wrapper_active');
+        } else {
+            mouseCursorCoordinatesCanvas = {
+                x: pointer.x,
+                y: pointer.y,
+            }
+            origX = o.pointer.x;
+            origY = o.pointer.y;
+            modalTextWrapper.style.left = origX + 'px';
+            modalTextWrapper.style.top = origY + 'px';
+            modalTextWrapper.classList.add('modal-text-wrapper_active');
+        }
+
+    });
+
+    canvas.on('mouse:up', function(o) {
+        console.log('mouse:up')
+        formTextInput.value = '';
+        formTextTextarea.value ='';
+        // isDown = false;
+        // removeEvents();
+    });
+    isDown = true;
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
