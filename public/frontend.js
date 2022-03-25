@@ -1,6 +1,7 @@
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
 const as = document.querySelector(".scale__value");
+window.canvas = canvas;
 
 let isCursorMove = false;
 
