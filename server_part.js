@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3002;
 
 ////////////////////work with postresql start
 const { Client } = require('pg');

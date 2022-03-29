@@ -135,6 +135,46 @@ freeDrawingButton.onclick = enableFreeDrawing;
 const selectionButton     = document.querySelector('#selection_button');
 selectionButton.onclick   = enableSelection;
 
+
+
+const downloadImage = () =>
+  {
+   const ext = "png";
+   const base64 = canvas.toDataURL({
+     format: ext,
+     enableRetinaScaling: true
+   });
+   const link = document.createElement("a");
+   link.href = base64;
+   link.download = `eraser_example.${ext}`;
+   link.click();
+ };
+
+
+/*
+function downloadImage()
+{
+  let dataURL = canvas.toDataURL();
+  alert(typeof dataURL);
+  console.log(type(dataURL));
+}
+
+
+
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
 const circleDrawingButton = document.querySelector('#circle_drawing_empty_button');
 circleDrawingButton.addEventListener("click",(e) => 
 {
@@ -935,9 +975,6 @@ function recive_part_of_data(e) {
     for (const object of e.objects) {
       let d = canvas.item(object.index);
 
-      //console.log('!!!!!!!', object.index,object,object.object.top,object.top_all,object.object.top+object.top_all);
-
-      // d.set(object.object);
       d.set({
         top: object.top_all, //+object.object.top,
         left: object.left_all, //+object.object.left
@@ -957,9 +994,7 @@ function recive_part_of_data(e) {
       scaleY: e.object.scaleY,
     });
   }
-
   canvas.renderAll();
-  //return d;
 }
 
 document.body.addEventListener('keydown', handleDownKeySpace);
@@ -1125,6 +1160,5 @@ buttonText.addEventListener('click', (event) => {
     });
     isDown = true;
 })
-
 
 

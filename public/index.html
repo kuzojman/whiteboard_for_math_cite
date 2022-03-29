@@ -19,8 +19,8 @@
       </button>
       <div class="logo-menu">
         <ul class="logo-menu__list">
-          <li class="logo-menu__item">Очистить доску</li>
-          <li class="logo-menu__item">Экспорт в PDF</li>
+          <li class="logo-menu__item" >Очистить доску</li>
+          <li class="logo-menu__item" onclick="downloadImage()">Экспорт в PNG</li>
           <li class="logo-menu__item">Личный кабинет</li>
         </ul>
       </div>
@@ -33,7 +33,7 @@
     <li class="tool-panel__item">
       <button class="tool-panel__item-button tool-panel__item-button-moving" id="selection_button">
         <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-selection-by-mouse"></use>
+          <use xlink:href="./icons/sprite.svg#icon-selection-by-mouse-coloured"></use>
         </svg>
       </button>
     </li>
@@ -41,14 +41,14 @@
     <li class="tool-panel__item">
       <button class="tool-panel__item-button tool-panel__item-button-moving" id="moving_our_board">
         <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-hand"></use>
+          <use xlink:href="./icons/sprite.svg#icon-hand-yellow"></use>
         </svg>
       </button>
     </li>
     <li class="tool-panel__item">
       <button class="tool-panel__item-button" id="free_drawing_button">
         <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-free-drawing"></use>
+          <use xlink:href="./icons/sprite.svg#icon-free-drawing-coloured"></use>
         </svg>
       </button>
     </li>
@@ -57,14 +57,15 @@
 
         <label class="sub-tool-panel__item-list-file">
           <svg class="tool-panel__item-icon-button">
-            <use xlink:href="./icons/sprite.svg#icon-download"></use>
+            <use xlink:href="./icons/sprite.svg#icon-download-coloured"></use>
           </svg>
           <input type="file" id="uploader">
         </label>
       </button>
     </li>
+
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" >
+      <button class="tool-panel__item-button" onclick="downloadImage()">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-text"></use>
         </svg>
@@ -121,7 +122,7 @@
     <li class="tool-panel__item">
       <button class="tool-panel__item-button">
         <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-horizontal-line"></use>
+          <use xlink:href="./icons/sprite.svg#icon-horizontal-line-coloured"></use>
         </svg>
       </button>
       <div class="sub-tool-panel">
@@ -165,7 +166,7 @@
     <li class="tool-panel__item">
       <button class="tool-panel__item-button" >
         <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-circle-with-solid-border"></use>
+          <use xlink:href="./icons/sprite.svg#icon-circle-with-solid-border-coloured"></use>
         </svg>
       </button>
       <div class="sub-tool-panel">
@@ -199,7 +200,7 @@
     <li class="tool-panel__item">
       <button class="tool-panel__item-button" >
         <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-rectangle"></use>
+          <use xlink:href="./icons/sprite.svg#icon-rectangle-coloured"></use>
         </svg>
       </button>
       <div class="sub-tool-panel">
@@ -232,7 +233,7 @@
     <li class="tool-panel__item">
       <button class="tool-panel__item-button tool-panel__item-button-text">
           <svg class="tool-panel__item-icon-button">
-              <use xlink:href="../icons/sprite.svg#icon-text"></use>
+              <use xlink:href="../icons/sprite.svg#icon-text-coloured"></use>
           </svg>
       </button>
     
@@ -297,7 +298,7 @@
     <li class="tool-panel__item">
       <button class="tool-panel__item-button button__show-modal-window-formulas">
           <svg class="tool-panel__item-icon-button">
-              <use xlink:href="../icons/sprite.svg#icon-text"></use>
+              <use xlink:href="../icons/sprite.svg#icon-formula"></use>
           </svg>
       </button>
     
