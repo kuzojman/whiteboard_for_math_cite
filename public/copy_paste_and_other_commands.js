@@ -23,7 +23,7 @@ function Delete() {
     doomedObj.canvas = canvas;
     doomedObj.forEachObject(function (obj) {
       canvas.remove(obj);
-      socket.emit("canvas_save_to_json", canvas.toJSON());
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       socket.emit("figure_delete", canvas.toJSON());
     });
   } else {
@@ -31,7 +31,7 @@ function Delete() {
 
     if (activeObject !== null) {
       canvas.remove(activeObject);
-      socket.emit("canvas_save_to_json", canvas.toJSON());
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
       socket.emit("figure_delete", canvas.toJSON());
     }
   }

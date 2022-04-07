@@ -16,6 +16,25 @@ let board_id = get_board_id();
 const buttonCursorMove = document.querySelector('#moving_our_board'); 
 console.log(buttonCursorMove);
 
+
+
+let isRendering = false;
+const render = canvas.renderAll.bind(canvas);
+
+canvas.renderAll = () => {
+    if (!isRendering) {
+        isRendering = true;
+        requestAnimationFrame(() => {
+            render();
+            isRendering = false;
+        });
+    }
+};
+
+
+
+
+
 const handleDownKeySpace = (event) => {
   if (event.code === 'Space' && !event.repeat) {
       event.preventDefault();
@@ -41,7 +60,19 @@ const handleUpKeySpace = (event) => {
 }             // Отпускание пробела
 
 
+
+
+
+
+
+
+
+
+
+
+//const socket = io('localhost:3000',{transports:['websocket']});
 const socket = io();
+
 
 const pathUsualGrid = "./images/grids/usual-grid.svg";
 const pathTriangularGrid = "./images/grids/triangular-grid.svg";
@@ -228,6 +259,7 @@ socket.on( 'connect', function()
     {
       canvas.freeDrawingBrush._points = e.map(item => 
         {
+          console.log(item);
         return new fabric.Point(item.x, item.y)
       })
       canvas._onMouseUpInDrawingMode({target: canvas.upperCanvasEl}) 
@@ -436,19 +468,21 @@ let circle ;
 
 function enableFreeDrawing()
 {
+  let array_of_points = [];
   removeEvents();
   canvas.isDrawingMode = true;
 
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
-  drawingColorEl.onchange = function() 
+  drawingColorEl.oninput = function() 
   {
+    console.log("color:change",drawingColorEl.value);
     canvas.freeDrawingBrush.color = drawingColorEl.value;
     socket.emit("color:change",drawingColorEl.value);
   };
   
-  drawingLineWidthEl.onchange = function() 
+  drawingLineWidthEl.oninput = function() 
   {
     canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
     socket.emit("width:change", canvas.freeDrawingBrush.width);
@@ -458,20 +492,43 @@ function enableFreeDrawing()
   canvas.on('mouse:down', e => 
   {
     isDrawing = true;
-    socket.emit('mouse:down', e)
+    //const newline = new fabric.Point(e.pointer.x,e.pointer.y);
+    const newline = canvas.freeDrawingBrush._points[0];
+    array_of_points.push(newline);
+    console.log(array_of_points);
+    socket.emit('mouse:down', e);
+
   })
   canvas.on('mouse:up', e => 
   {
     isDrawing = false;
     //socket.emit('canvas_save_to_json',canvas.toJSON());
     // let board_id = get_board_id();
+    socket.emit('mouse:move',array_of_points );
+    array_of_points = [];
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+
   })
   canvas.on('mouse:move', function (e)
   {
     if (isDrawing) 
     {
-      socket.emit('mouse:move', canvas.freeDrawingBrush._points);       
+      if (array_of_points.length <6)
+      {
+        //const newline = new fabric.Point(e.pointer.x,e.pointer.y);
+        const newline = canvas.freeDrawingBrush._points[canvas.freeDrawingBrush._points.length-1]
+        array_of_points.push(newline);
+      }else
+      {
+        console.log(array_of_points)
+        //console.log(canvas.freeDrawingBrush._points); 
+        socket.emit('mouse:move',array_of_points );//canvas.freeDrawingBrush._points); 
+        array_of_points = array_of_points.slice(-1);
+      }
+
+      //console.log(array_of_points);
+      //console.log(canvas.freeDrawingBrush._points);
+      //socket.emit('mouse:move', canvas.freeDrawingBrush._points);       
     }
   })
 }
@@ -784,6 +841,8 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
   var  drawingColorEl = document.getElementById("drawing-color"),
   drawingLineWidthEl = document.getElementById("drawing-line-width");
 
+canvas.freeDrawingBrush.color = drawingColorEl.value;
+canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
 function drawLine(type_of_line) {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
@@ -1024,9 +1083,9 @@ let selectedButton;
 toolPanelList.addEventListener('click', (event) => {
     let currentButton = event.target.closest('.tool-panel__item-button');
     if(selectedButton === currentButton) {
-        selectedButton.classList.toggle('settings-panel__button_active');
+        selectedButton?.classList.toggle('settings-panel__button_active');
     } else {
-        currentButton.classList.toggle('settings-panel__button_active');
+        if(currentButton) currentButton.classList.toggle('settings-panel__button_active');
         if(selectedButton) {
             selectedButton.classList.remove('settings-panel__button_active');
         }
