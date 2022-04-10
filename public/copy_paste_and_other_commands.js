@@ -19,20 +19,25 @@ function getMouse(e) {
 
 function Delete() {
   var doomedObj = canvas.getActiveObject();
+  let ids = [];
+  console.log(doomedObj);
   if (doomedObj.type === "activeSelection") {
     doomedObj.canvas = canvas;
     doomedObj.forEachObject(function (obj) {
+      ids.push(find_object_index(obj));
       canvas.remove(obj);
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
-      socket.emit("figure_delete", canvas.toJSON());
     });
+    console.log(ids);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("figure_delete", ids);//canvas.toJSON());
   } else {
     var activeObject = canvas.getActiveObject();
 
     if (activeObject !== null) {
+      ids.push(find_object_index(activeObject));
       canvas.remove(activeObject);
       socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
-      socket.emit("figure_delete", canvas.toJSON());
+      socket.emit("figure_delete", ids);//canvas.toJSON());
     }
   }
 }
@@ -54,15 +59,15 @@ function Paste() {
       clonedObj.canvas = canvas;
       clonedObj.forEachObject(function (obj) {
         canvas.add(obj);
-        socket.emit("canvas_save_to_json", canvas.toJSON());
-        socket.emit("figure_copied", canvas.toJSON());
       });
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("figure_copied", canvas.toJSON());
       // this should solve the unselectability
       clonedObj.setCoords();
     } else {
       canvas.add(clonedObj);
-      socket.emit("canvas_save_to_json", canvas.toJSON());
-      socket.emit("figure_copied", canvas.toJSON());
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("figure_copied",clonedObj) //canvas.toJSON());
     }
     _clipboard.top += 10;
     _clipboard.left += 10;
@@ -70,6 +75,36 @@ function Paste() {
     canvas.requestRenderAll();
   });
 }
+
+function find_object_index(target_object) {
+  let target_index; 
+  let objects = canvas.getObjects();
+  console.log(objects,'objects',target_object)
+  objects.forEach(function (object, index) {
+    if (object == target_object) {
+      target_index = index;
+    }
+  });
+  if(!target_index)
+  {
+    objects.forEach(function (object, index) {
+      if (object.id == target_object.id) {
+        target_index = index;
+      }
+    });
+  }
+  console.log(target_index,'target_index')
+  return target_index;
+}
+
+
+
+
+
+
+
+
+
 
 /*
 var state = [];

@@ -417,13 +417,26 @@ let circle ;
     socket.on('figure_delete', e =>
     {
         console.log('figure_delete',e)
-        canvas.loadFromJSON(e);
+        e.forEach(function(id)
+        {
+          canvas._objects.forEach(function(object,index)
+          {
+            if(index==id)
+            {
+              canvas.remove(object);
+            }
+          })
+        })
+        //canvas.loadFromJSON(e);
     });
 
     socket.on('figure_copied', e =>
     {
-        console.log('figure_copied',e)
-        canvas.loadFromJSON(e);
+        console.log('figure_copied',e,new fabric.Object(e));
+        
+        canvas.add(new fabric.Object(e));
+        canvas.renderAll();
+        //canvas.loadFromJSON(e);
     });
     
 
@@ -480,18 +493,7 @@ function enableFreeDrawing()
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
-  drawingColorEl.oninput = function() 
-  {
-    console.log("color:change",drawingColorEl.value);
-    canvas.freeDrawingBrush.color = drawingColorEl.value;
-    socket.emit("color:change",drawingColorEl.value);
-  };
-  
-  drawingLineWidthEl.oninput = function() 
-  {
-    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-    socket.emit("width:change", canvas.freeDrawingBrush.width);
-  };
+
   let isDrawing = false
 
   canvas.on('mouse:down', e => 
@@ -843,6 +845,25 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
 canvas.freeDrawingBrush.color = drawingColorEl.value;
 canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
+drawingColorEl.oninput = function() 
+{
+  console.log("color:change",drawingColorEl.value);
+  canvas.freeDrawingBrush.color = drawingColorEl.value;
+  socket.emit("color:change",drawingColorEl.value);
+};
+
+drawingLineWidthEl.oninput = function() 
+{
+  canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+  socket.emit("width:change", canvas.freeDrawingBrush.width);
+};
+
+
+
+
+
+
+
 function drawLine(type_of_line) {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   console.log(drawingLineWidthEl.value,canvas.freeDrawingBrush.width);
@@ -985,12 +1006,20 @@ function print_Text() {
 function find_object_index(target_object) {
   let target_index; 
   let objects = canvas.getObjects();
-  console.log(objects,'objects')
+  console.log(objects,'objects',target_object)
   objects.forEach(function (object, index) {
     if (object == target_object) {
       target_index = index;
     }
   });
+  if(!target_index)
+  {
+    objects.forEach(function (object, index) {
+      if (object.id == target_object.id) {
+        target_index = index;
+      }
+    });
+  }
   console.log(target_index,'target_index')
   return target_index;
 }
@@ -999,21 +1028,36 @@ function send_part_of_data(e) {
   if (e.target._objects) {
     let data = { objects: [] };
     let json_canvas = canvas.toJSON();
-
-    e.transform.target._objects.forEach((object) => {
-      let object_index = find_object_index(object);
-      object.object_index = object_index;
-      data.objects.push({
-        object: object,
-        index: object_index,
-        top_all: json_canvas.objects[object_index].top,
-        left_all: json_canvas.objects[object_index].left,
-        angle: json_canvas.objects[object_index].angle,
-        scaleX: json_canvas.objects[object_index].scaleX,
-        scaleY: json_canvas.objects[object_index].scaleY,
+    console.log(e,'send_part_of_data');
+    if(e.transform.target.type=='group')
+    {
+        let object_index = find_object_index(e.transform.target);
+        //console.log('group_index',find_object_index(e.transform.target));
+        e.transform.target.object_index = find_object_index(e.transform.target);
+        data.objects.push({
+          index: object_index,
+          object:e.transform.target,
+          top_all: json_canvas.objects[object_index].top,
+          left_all: json_canvas.objects[object_index].left,
+          angle: json_canvas.objects[object_index].angle,
+          scaleX: json_canvas.objects[object_index].scaleX,
+          scaleY: json_canvas.objects[object_index].scaleY,
+        })
+    }else{   
+      e.transform.target._objects.forEach((object) => {
+        let object_index = find_object_index(object);
+        object.object_index = object_index;
+        data.objects.push({
+          object: object,
+          index: object_index,
+          top_all: json_canvas.objects[object_index].top,
+          left_all: json_canvas.objects[object_index].left,
+          angle: json_canvas.objects[object_index].angle,
+          scaleX: json_canvas.objects[object_index].scaleX,
+          scaleY: json_canvas.objects[object_index].scaleY,
+        });
       });
-    });
-
+    }
     socket.emit("object:modified", data);
     console.log("data send", data);
     //console.log('e send',e);
@@ -1028,6 +1072,12 @@ function send_part_of_data(e) {
     });
   }
 }
+
+
+
+
+
+
 
 function recive_part_of_data(e) {
   console.log("get something", e);
