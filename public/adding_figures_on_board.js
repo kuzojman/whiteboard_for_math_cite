@@ -1,3 +1,7 @@
+
+
+/*
+
 const cylinderAddButton = document.querySelector('#draw_cylinder');
 cylinderAddButton.addEventListener("click",(e) => 
 {
@@ -86,7 +90,7 @@ function add_3d_figure(figure)
   socket.emit("picture:add",canvas.toJSON());
   canvas.renderAll();
 }
-
+*/
 const uploadButton = document.querySelector('.tool-panel__item-button-uploader');
 uploadButton.addEventListener("click",(e) => {
   //document.getElementById("uploader").onchange = function(e) 
@@ -118,3 +122,104 @@ uploadButton.addEventListener("click",(e) => {
   //}
   
 }) 
+
+
+
+
+
+const svgAddSphereButton = document.querySelector('#add_sphere_picture');
+svgAddSphereButton.addEventListener("click",(e) => 
+{
+  adding_svg_figure("./icons/3d-shape-3d-sphere-geometric-geometry-round-shape-2-svgrepo-com.svg")
+});
+
+const svgAdd3dHexagonalPyramidButton = document.querySelector('#add_3d_hexagonal_pyramid');
+svgAdd3dHexagonalPyramidButton.addEventListener("click",(e) => 
+{
+  adding_svg_figure("./icons/3d-hexagonal-pyramid-3d-shape-geometric-geometry-hexagon-pyramid-svgrepo-com.svg")
+});
+
+const svgAddConusButton = document.querySelector('#add_conus');
+svgAddConusButton.addEventListener("click",(e) => 
+{
+  adding_svg_figure("./icons/3d-cone-3d-design-3d-shape-cone-geometric-geometry-svgrepo-com.svg")
+});
+
+const svgAddCubeButton = document.querySelector('#draw_cube');
+svgAddCubeButton.addEventListener("click",(e) => 
+{
+  adding_svg_figure("./icons/3d-cube-3d-design-3d-shape-cube-geometric-geometry-2-svgrepo-com.svg")
+});
+
+const svgAdd3dSquarePyramidButton = document.querySelector('#add_3d_square_pyramid');
+svgAdd3dSquarePyramidButton.addEventListener("click",(e) => 
+{
+  adding_svg_figure("./icons/pyramid-svgrepo-com.svg")
+});
+
+const svgAdd3dCylinderButton = document.querySelector('#add_cylinder');
+svgAdd3dCylinderButton.addEventListener("click",(e) => 
+{
+  adding_svg_figure("./icons/3d-cylinder-3d-design-3d-shape-cylinder-geometric-geometry-svgrepo-com.svg")
+});
+
+
+
+
+
+function adding_svg_figure(what_to_add)
+{
+  var group = [];
+  fabric.loadSVGFromURL(what_to_add,function(objects,options)
+  {
+    var loadedObjects = new fabric.Group(group);
+    loadedObjects.set({
+      left: 100,
+      top: 100,
+      width:100,
+      height:100
+    });
+    loadedObjects.scaleToWidth(400);
+    loadedObjects.scaleToHeight(400);
+    canvas.add(loadedObjects);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("picture:add",canvas.toJSON());
+    canvas.renderAll();
+  },
+  function(item, object) {
+    object.set('id', item.getAttribute('id'));
+    group.push(object);
+  });
+}
+
+
+
+
+
+
+
+
+
+
+function add_svg()
+{
+  fabric.Image.fromURL('./icons/pug_small_2.jpg', function(myImg) {
+    //i create an extra var for to change some image properties
+    var img1 = myImg.set({ left: 0, top: 0 ,width:250,height:250});
+    canvas.add(img1); 
+    canvas.renderAll();
+   });
+}
+
+const svgAddButton = document.querySelector('#add_svg_picture');
+svgAddButton.addEventListener("click",(e) => 
+{
+  fabric.Image.fromURL('./icons/pug_small_2.jpg', function(myImg) {
+    //i create an extra var for to change some image properties
+    var img1 = myImg.set({ left: 0, top: 0 ,width:250,height:250});
+    canvas.add(img1); 
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("picture:add",canvas.toJSON());
+    canvas.renderAll();
+   });
+});

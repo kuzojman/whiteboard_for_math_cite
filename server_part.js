@@ -92,6 +92,14 @@ io.on("connection", async socket => {
   socket.on("mouse:move", (e) => {
     socket.broadcast.to(socket.board_id).emit("mouse:move", e);
   });
+  socket.on("mouse:down", (e) => {
+    socket.broadcast.to(socket.board_id).emit("mouse:down", e);
+  });
+  socket.on("mouse:up", (e) => {
+    socket.broadcast.to(socket.board_id).emit("mouse:up", e);
+  });
+
+
 
   socket.on("color:change", (colour) => {
     socket.broadcast.to(socket.board_id).emit("color:change", colour);

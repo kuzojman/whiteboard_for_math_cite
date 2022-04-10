@@ -63,13 +63,6 @@ const handleUpKeySpace = (event) => {
 
 
 
-
-
-
-
-
-
-
 //const socket = io('localhost:3000',{transports:['websocket']});
 const socket = io();
 
@@ -253,17 +246,29 @@ lineDrawingButtonDOtted.addEventListener("click",(e) =>
 socket.on( 'connect', function()
 {
     socket.emit("board:board_id",board_id);
+    socket.on('mouse:up', function(pointer)
+    {
+      canvas.freeDrawingBrush.onMouseUp({e:{}});
+    });
+
+    socket.on('mouse:down', function(pointer)
+    {
+      canvas.freeDrawingBrush.onMouseDown(pointer,{e:{}});
+    });
 
 
     socket.on('mouse:move', function(e)
     {
+      /*
       canvas.freeDrawingBrush._points = e.map(item => 
         {
           console.log(item);
         return new fabric.Point(item.x, item.y)
       })
-      canvas._onMouseUpInDrawingMode({target: canvas.upperCanvasEl}) 
-
+      */
+      //canvas._onMouseUpInDrawingMode({target: canvas.upperCanvasEl}) ;
+      console.log(e);
+      canvas.freeDrawingBrush.onMouseMove(e,{e:{}});
       console.log('recieved',  canvas.freeDrawingBrush._points.length)
     });
     socket.on('color:change', function(colour_taken)
@@ -492,20 +497,24 @@ function enableFreeDrawing()
   canvas.on('mouse:down', e => 
   {
     isDrawing = true;
-    //const newline = new fabric.Point(e.pointer.x,e.pointer.y);
-    const newline = canvas.freeDrawingBrush._points[0];
-    array_of_points.push(newline);
-    console.log(array_of_points);
-    socket.emit('mouse:down', e);
+    const pointer = canvas.getPointer(e);
 
+
+    //const newline = new fabric.Point(e.pointer.x,e.pointer.y);
+    //const newline = canvas.freeDrawingBrush._points[0];
+    ///array_of_points.push(newline);
+    ///console.log(array_of_points);
+    //socket.emit('mouse:down', e);
+    socket.emit('mouse:down', pointer);
   })
   canvas.on('mouse:up', e => 
   {
     isDrawing = false;
+    const pointer = canvas.getPointer(e);
     //socket.emit('canvas_save_to_json',canvas.toJSON());
     // let board_id = get_board_id();
-    socket.emit('mouse:move',array_of_points );
-    array_of_points = [];
+    socket.emit('mouse:up',pointer);
+    //array_of_points = [];
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
 
   })
@@ -513,19 +522,9 @@ function enableFreeDrawing()
   {
     if (isDrawing) 
     {
-      if (array_of_points.length <6)
-      {
-        //const newline = new fabric.Point(e.pointer.x,e.pointer.y);
-        const newline = canvas.freeDrawingBrush._points[canvas.freeDrawingBrush._points.length-1]
-        array_of_points.push(newline);
-      }else
-      {
-        console.log(array_of_points)
-        //console.log(canvas.freeDrawingBrush._points); 
-        socket.emit('mouse:move',array_of_points );//canvas.freeDrawingBrush._points); 
-        array_of_points = array_of_points.slice(-1);
-      }
-
+      const pointer = canvas.getPointer(e);
+      socket.emit('mouse:move',pointer );//canvas.freeDrawingBrush._points); 
+      console.log(pointer);
       //console.log(array_of_points);
       //console.log(canvas.freeDrawingBrush._points);
       //socket.emit('mouse:move', canvas.freeDrawingBrush._points);       
@@ -984,13 +983,15 @@ function print_Text() {
 }
 
 function find_object_index(target_object) {
-  let target_index;
+  let target_index; 
   let objects = canvas.getObjects();
+  console.log(objects,'objects')
   objects.forEach(function (object, index) {
     if (object == target_object) {
       target_index = index;
     }
   });
+  console.log(target_index,'target_index')
   return target_index;
 }
 
@@ -1219,5 +1220,6 @@ buttonText.addEventListener('click', (event) => {
     });
     isDown = true;
 })
+
 
 
