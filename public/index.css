@@ -302,3 +302,7 @@
   border: none;
   padding: 15px;
 }
+.sub-tool-panel_visible {
+  padding-left: 10px;
+  display: block;
+}

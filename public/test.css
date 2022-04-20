@@ -155,8 +155,8 @@ body {
 .tool-panel__item {
     position: relative;
     list-style-type: none;
-    width: 5rem;
-    height: 5rem;
+    width: 5vh; /*5 rem */
+    height: 5vh; /*5 rem */
     border-bottom: 2px solid rgba(166, 166, 166, 0.35);
 }
 
@@ -277,7 +277,7 @@ body {
 }
 
 .tool-panel__item:hover > .sub-tool-panel {
-    padding-left: 10px;
+    padding-left: 0;
     display: block;
 }
 

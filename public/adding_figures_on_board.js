@@ -92,9 +92,9 @@ function add_3d_figure(figure)
 }
 */
 const uploadButton = document.querySelector('.tool-panel__item-button-uploader');
-uploadButton.addEventListener("click",(e) => {
-  //document.getElementById("uploader").onchange = function(e) 
-  //{
+//uploadButton.addEventListener("click",(e) => {
+  document.getElementById("uploader").onchange = function(e) 
+  {
     var reader = new FileReader();
     reader.onload = function(e) 
     {
@@ -118,10 +118,11 @@ uploadButton.addEventListener("click",(e) => {
         console.log("работает!!!!!!!!!!!!!!!!!! загружается картинка!");
       }
     }
+    console.log(e.target.files);
     reader.readAsDataURL(e.target.files[0]);
-  //}
+  }
   
-}) 
+//}) 
 
 
 

@@ -354,11 +354,12 @@ let circle ;
         console.log('line:add',line_taken)
 
         line = new fabric.Line(line_taken.points, {
-          strokeWidth: 5,
+          strokeWidth: line_taken.width,
           fill: line_taken.fill,//'#07ff11a3',
           stroke: line_taken.stroke,//'#07ff11a3',
           originX: 'center',
           originY: 'center',
+          strokeDashArray: line_taken.strokeDashArray,
           selectable: false
         });
         //line = new fabric.Line(line_taken)
@@ -396,15 +397,33 @@ let circle ;
 
     canvas.on('object:modified', e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
       send_part_of_data(e);
     });
 
 
+    canvas.on('object:added',e =>
+    {
+      let object = e.target;
+      if(!object.id)
+      {
+        object.set('id',Date.now().toString(36) + Math.random().toString(36).substring(2));
+        object.toJSON = (function(toJSON){
+          return function(){
+            return fabric.util.object.extend(toJSON.call(this),{"id":this.id})
+          }
+        })(object.toJSON)
+
+      }
+
+      //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      //send_part_of_data(e);
+    });
+
 
     canvas.on('object:moving',e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
       send_part_of_data(e);
     });
 
@@ -442,7 +461,7 @@ let circle ;
 
     canvas.on('object:scaling',e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
       send_part_of_data(e);
     });
 
@@ -454,7 +473,7 @@ let circle ;
 
     canvas.on('object:rotating',e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
       send_part_of_data(e);
     });
 
@@ -513,11 +532,11 @@ function enableFreeDrawing()
   {
     isDrawing = false;
     const pointer = canvas.getPointer(e);
-    //socket.emit('canvas_save_to_json',canvas.toJSON());
+    //socket.emit('canvas_save_to_json',canvas.toJSON(['id']));
     // let board_id = get_board_id();
     socket.emit('mouse:up',pointer);
     //array_of_points = [];
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
 
   })
   canvas.on('mouse:move', function (e)
@@ -635,9 +654,9 @@ function drawrec(type_of_rectangle) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     rect.setCoords();
-    //socket.emit("canvas_save_to_json", canvas.toJSON());
+    //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
 
@@ -705,9 +724,9 @@ function drawcle(type_of_circle) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     circle.setCoords();
-    //socket.emit("canvas_save_to_json", canvas.toJSON());
+    //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
 
@@ -781,7 +800,7 @@ function adding_line_to_partner_board(line_taken) {
   console.log("line:add", line_taken);
 
   line = new fabric.Line(line_taken, {
-    strokeWidth: 5,
+    strokeWidth: 15,
     fill: "#07ff11a3",
     stroke: "#07ff11a3",
     originX: "center",
@@ -880,8 +899,8 @@ function drawLine(type_of_line) {
     canvas.freeDrawingBrush.color = drawingColorEl.value;
     socket.emit("color:change",drawingColorEl.value);
   };
-
-  if (type_of_line == "trival")
+  console.log(type_of_line);
+  if (type_of_line == "trivial")
   {
     colour_inside = hexToRgbA('#000dff',5);
     stroke_line   = 0;
@@ -892,7 +911,7 @@ function drawLine(type_of_line) {
     stroke_line = 20;
   }
 
-
+  console.log(stroke_line);
 
   removeEvents();
   changeObjectSelection(false);
@@ -914,6 +933,8 @@ function drawLine(type_of_line) {
     socket.emit("line:add", {
       points: points,
       fill:line.fill,
+      width: line.strokeWidth,
+      strokeDashArray: [stroke_line, stroke_line],
       stroke: line.stroke});
     console.log("line:add", points);
   });
@@ -944,9 +965,9 @@ function drawLine(type_of_line) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     line.setCoords();
-    //socket.emit("canvas_save_to_json", canvas.toJSON());
+    //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
 
@@ -999,8 +1020,8 @@ function print_Text() {
   });
 
   canvas.add(textbox);
-  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
-  socket.emit("text:add", canvas.toJSON());
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+  socket.emit("text:add", canvas.toJSON(['id']));
 }
 
 function find_object_index(target_object) {
@@ -1008,7 +1029,7 @@ function find_object_index(target_object) {
   let objects = canvas.getObjects();
   console.log(objects,'objects',target_object)
   objects.forEach(function (object, index) {
-    if (object == target_object) {
+    if (object.id == target_object.id) {
       target_index = index;
     }
   });
@@ -1027,7 +1048,7 @@ function find_object_index(target_object) {
 function send_part_of_data(e) {
   if (e.target._objects) {
     let data = { objects: [] };
-    let json_canvas = canvas.toJSON();
+    let json_canvas = canvas.toJSON(['id']);
     console.log(e,'send_part_of_data');
     if(e.transform.target.type=='group')
     {
@@ -1273,3 +1294,21 @@ buttonText.addEventListener('click', (event) => {
 
 
 
+
+
+
+const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > input');
+const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
+
+
+const handleClickOpenInputChangeColor = () => {
+  subToolPanel.classList.add('sub-tool-panel_visible');
+}
+const handleClickCloseInputChangeColor = (event) => {
+  if (event.target !== inputChangeColor) {
+      subToolPanel?.classList.remove('sub-tool-panel_visible');
+  }
+}
+
+window.addEventListener('click', handleClickCloseInputChangeColor);
+inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
