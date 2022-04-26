@@ -12,6 +12,9 @@ function get_board_id() {
 }
 
 let board_id = get_board_id();
+let isDown = false;
+
+
 
 const buttonCursorMove = document.querySelector('#moving_our_board'); 
 console.log(buttonCursorMove);
@@ -36,7 +39,7 @@ canvas.renderAll = () => {
 
 
 const handleDownKeySpace = (event) => {
-  if (event.code === 'Space' && !event.repeat) {
+  if (event.code === 'Space' && !event.repeat && !isDown) {
       event.preventDefault();
       canvas.toggleDragMode();
       canvas.isDrawingMode = false;
@@ -46,7 +49,7 @@ const handleDownKeySpace = (event) => {
   }
 }           // Нажатие на пробел
 const handleUpKeySpace = (event) => {
-  if (event.code === 'Space') {
+  if (event.code === 'Space' && !isDown) {
       event.preventDefault();
       canvas.toggleDragMode();
       canvas.isDrawingMode = true;
@@ -1150,7 +1153,8 @@ buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 
 const toolPanelList = document.querySelector('.tool-panel__list');
 
-let selectedButton;
+let selectedButton = freeDrawingButton;
+
 
 toolPanelList.addEventListener('click', (event) => {
     let currentButton = event.target.closest('.tool-panel__item-button');
@@ -1176,20 +1180,21 @@ const formTextButtonSubmit = document.querySelector('.form-text__button-submit')
 
 const buttonFontSizeUp = document.querySelector('.text-settings__button-font-size-up');
 const buttonFontSizeDown = document.querySelector('.text-settings__button-font-size-down');
-const fontSizeValue = document.querySelector('.text-settings__font-size-value');
+//const fontSizeValue = document.querySelector('.text-settings__font-size-value');
 const buttonOpenListFontFamily = document.querySelector('.text-settings__button-open-list');
 const fontFamilyListWrapper = document.querySelector('.text-settings__font-family-list_wrapper');
-const fontFamilyList = document.querySelector('.text-settings__font-family-list');
+//const fontFamilyList = document.querySelector('.text-settings__font-family-list');
 
 
-let selectedFontFamily = "Open Sans";
-let newFontSizeValue = "25";
-
+//let selectedFontFamily = "Open Sans";
+//let newFontSizeValue = "25";
+/*
 fontFamilyList.addEventListener('click', (event) => {
     selectedFontFamily = event.target.textContent;
     formTextInput.style.fontFamily = selectedFontFamily;
 })
-
+*/
+/*
 buttonOpenListFontFamily.addEventListener('click', () => {
     fontFamilyListWrapper.classList.toggle('text-settings__font-family-list_wrapper_active');
 })
@@ -1208,13 +1213,13 @@ buttonFontSizeDown.addEventListener('click', () => {
     fontSizeValue.textContent = newFontSizeValue + '';
     formTextInput.style.fontSize = newFontSizeValue + 'px';
 })
-
+*/
 
 let mouseCursorCoordinatesCanvas = {
     x: 0,
     y: 0,
 }
-
+/*
 formTextTextarea.addEventListener('input', () => {
     formTextInput.value = formTextTextarea.value;
 
@@ -1240,7 +1245,7 @@ formTextButtonSubmit.addEventListener('click', (event) => {
     formTextInput.value = '';
 })
 
-let isDown = false
+
 
 buttonText.addEventListener('click', (event) => {
     let origX, origY;
@@ -1312,3 +1317,237 @@ const handleClickCloseInputChangeColor = (event) => {
 
 window.addEventListener('click', handleClickCloseInputChangeColor);
 inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
+
+*/
+
+let selectedFontFamily = "Open Sans";
+let newFontSizeValue = 40;
+
+const buttonFontFamily = document.querySelector('.setting-item__button-font-family');
+const fontFamilyList = document.querySelector('.setting-item__font-family-list-wrapper');
+const fontSizeValue = document.querySelector('.setting-item__font-size-value');
+const fontColorInput = document.querySelector('.setting-item__input-font-color > input');
+const fontColorListWrapper = document.querySelector('.setting-item__font-color-list-wrapper');
+const buttonFontStyleDiv = document.querySelector('.setting-item__font-color-list-wrapper > div');
+
+
+fontColorInput.addEventListener('click', () => {
+    fontColorListWrapper.classList.add('active');
+})
+
+fontColorInput.addEventListener('change', (e) => {
+    canvas.getActiveObject().set("fill", e.target.value);
+})
+
+textSettings.addEventListener('click', (e) => {
+    switch(e.target.tagName) {
+        case "LI":
+            if(e.target.classList.contains('setting-item__font-family-item')) {
+              
+                selectedFontFamily = e.target.textContent;
+                buttonFontFamily.textContent = e.target.textContent;
+                e.target.classList.toggle('text-settings__font-item_active');
+                console.log(selectedFontFamily)
+                canvas.getActiveObject().set('fontFamily', selectedFontFamily);
+                canvas.renderAll();
+            } else if(e.target.classList.contains('setting-item__font-style-item')) {
+                const text = canvas.getActiveObject();
+                switch(+e.target.dataset.item) {
+                    case 1: {
+                        
+                        const currentFontWeight = getStyle(text,'fontWeight')
+                        const newFontWeight = currentFontWeight === "bold" ? "normal" : "bold";
+                        e.target.classList.toggle('text-settings__font-item_active')
+                        canvas.getActiveObject().set("fontWeight", newFontWeight);
+                        canvas.renderAll();
+                        console.log('1');
+                        return;
+                    }
+                    case 2: {
+                        const currentFontStyle = getStyle(text,'fontStyle');
+                        const newFontStyle = currentFontStyle === "italic" ? "normal" : "italic";
+                        canvas.getActiveObject().set("fontStyle", newFontStyle);
+                        e.target.classList.toggle('text-settings__font-item_active')
+                        canvas.renderAll();
+                        console.log('2');
+                        return;
+                    }
+                    case 3: {
+                        const currentUnderline = getStyle(text,'underline');
+                        const newUnderline = !currentUnderline;
+                        canvas.getActiveObject().set("underline", newUnderline);
+                        e.target.classList.toggle('text-settings__font-item_active')
+                        canvas.renderAll();
+                        console.log('3');
+                        return;
+                    }
+                    case 4: {
+                        const currentLinethrough = getStyle(text,'linethrough');
+                        const newLinethrough = !currentLinethrough
+                        canvas.getActiveObject().set("linethrough", newLinethrough);
+                        e.target.classList.toggle('text-settings__font-item_active')
+                        canvas.renderAll();
+                        console.log('4');
+                        return;
+                    }
+                }
+            }
+            canvas.renderAll();
+        case 'BUTTON':
+            if(e.target.classList.contains('setting-item__button-font-size-down')){
+                newFontSizeValue-=2;
+                fontSizeValue.textContent = newFontSizeValue
+                canvas.getActiveObject().set('fontSize', newFontSizeValue)
+
+            } else if(e.target.classList.contains('setting-item__button-font-size-up')){
+                newFontSizeValue+=2;
+                fontSizeValue.textContent = newFontSizeValue
+                canvas.getActiveObject().set('fontSize', newFontSizeValue)
+            }
+            canvas.renderAll();
+        default:
+            return
+
+    }
+    
+})
+
+
+
+  
+const getStyle = (object, styleName) => {
+    return object[styleName];
+}
+
+const onSelectionChanged = () => {
+    changeObjectSelection(false);
+    const obj = canvas.getActiveObject();
+    if (obj.selectionStart>-1) {
+      console.log(getStyle(obj,'fontSize'));
+    }
+}
+
+
+canvas.on('text:selection:changed', onSelectionChanged);
+
+const showTextEditPanel = () => {
+    buttonText.classList.add('settings-panel__button_active');
+    textSettings.classList.add('text-settings_active');
+}
+
+const hideTextEditPanel = () => {
+    textSettings.style.left = '';
+    textSettings.style.top = '';
+    isDown = false;
+    removeEvents();
+    changeObjectSelection(true);
+    buttonText.classList.remove('settings-panel__button_active');
+    textSettings.classList.remove('text-settings_active');
+    fontColorListWrapper.classList.remove('active');
+}
+
+
+let pageX, pageY;
+
+document.addEventListener('mousemove', (e) => {
+    pageX = e.pageX;
+    pageY = e.pageY;
+}, false);
+
+
+
+buttonText.addEventListener('click', () => {
+    
+    selectedButton.classList.remove('settings-panel__button_active');
+    selectedButton = buttonText;
+    removeEvents();
+    console.log('buttonText > click');
+    isDown = !isDown;
+    let isEditing = false;
+    let firstTouch = false;
+    console.log(isDown)
+
+    buttonText.classList.toggle('settings-panel__button_active');
+
+    if(isDown) {
+        changeObjectSelection(false);
+        canvas.isDrawingMode = false;
+        canvas.on('mouse:down', function(o) {
+            if(!isEditing) {
+                textSettings.classList.add('text-settings_active');
+                console.log('mouse:down');
+                const pointer = canvas.getPointer(o.e);
+                const text = new fabric.IText('Tap and Type', { 
+                    fontFamily: selectedFontFamily,
+                    fontSize: newFontSizeValue,
+                    left: pointer.x, 
+                    top: pointer.y,
+                    textDecoration: 'underline',
+                    editable: true,
+                })
+                canvas.add(text);
+                canvas.setActiveObject(text);
+                text.enterEditing();
+                text.selectAll();
+                isEditing = text.isEditing;
+            }
+
+        });
+
+        canvas.on('mouse:up', function(o) {
+            if(o.target !== null){
+                if(o.target.isType('i-text') && isEditing) {
+                    console.log('IT IS TEXT!!!! - 1');
+                }
+                else {
+                    if(!firstTouch) {
+                        firstTouch = true;
+                    } else {
+                        console.log('NOT TEXT!!!! - 1');
+                        hideTextEditPanel();
+                        firstTouch = false;
+                    }
+                }
+            } else {
+                if(isEditing && !firstTouch) {
+                    console.log('IT IS TEXT!!!! - 2')
+                    firstTouch = true;
+
+                } else {
+                    console.log('NOT TEXT!!!! - 2');
+                    hideTextEditPanel();
+                    isEditing = false;
+                }
+                
+            }
+            console.log('mouse:up')
+        });
+
+    } else {
+        canvas.isDrawingMode = false;
+        textSettings.classList.remove('text-settings_active');
+        changeObjectSelection(true);
+        removeEvents();
+    }
+})
+
+canvas.on('text:editing:entered', () => {
+    console.log('text:editing:entered')
+    showTextEditPanel();
+    isDown = true;
+    document.body.addEventListener('keyup', (e) => {
+        if(e.code === 'Escape') {
+            hideTextEditPanel();    
+        }
+    }, { once: true })
+    canvas.on('mouse:down', function(o) {
+        console.log('mouse:up')
+        if(o.target === null ? true : !o.target.isType('i-text')){
+            hideTextEditPanel();
+        }
+    });
+});
+
+
+
+
