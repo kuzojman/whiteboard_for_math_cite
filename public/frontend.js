@@ -1,5 +1,6 @@
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
+//const canvas = new fabric.Canvas(document.getElementById("canvasId"),{ renderOnAddRemove: false });
 const as = document.querySelector(".scale__value");
 window.canvas = canvas;
 
@@ -66,7 +67,9 @@ const handleUpKeySpace = (event) => {
 
 
 
-//const socket = io('localhost:3000',{transports:['websocket']});
+//
+//const socket = io('62.113.99.98:3000',{transports:['websocket']});
+
 const socket = io();
 
 

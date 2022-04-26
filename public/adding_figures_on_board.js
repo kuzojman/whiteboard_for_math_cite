@@ -213,7 +213,7 @@ function add_svg()
 }
 
 const svgAddButton = document.querySelector('#add_svg_picture');
-svgAddButton.addEventListener("click",(e) => 
+svgAddButton?.addEventListener("click",(e) => 
 {
   fabric.Image.fromURL('./icons/pug_small_2.jpg', function(myImg) {
     //i create an extra var for to change some image properties
