@@ -72,6 +72,22 @@ const handleUpKeySpace = (event) => {
 
 const socket = io();
 
+function chunk (arr, len) {
+
+  var chunks = [],
+      i = 0,
+      n = arr.length;
+
+  while (i < n) {
+    chunks.push(arr.slice(i, i += len));
+  }
+
+  return chunks;
+}
+
+
+
+
 
 const pathUsualGrid = "./images/grids/usual-grid.svg";
 const pathTriangularGrid = "./images/grids/triangular-grid.svg";
@@ -395,9 +411,25 @@ let circle ;
 
     socket.on('take_data_from_json_file',function(data)
     {
+      console.log(data,'init_canvas');
+      let chunks = chunk(data.objects,10);
+      console.log(chunks);
       if(data)
       {
-        canvas.loadFromJSON(data);
+        chunks.forEach(chunk=>
+        {
+            fabric.util.enlivenObjects(chunk,function(objects)
+            {
+              console.log(objects);
+              objects.forEach(function(object)
+              {
+                canvas.add(object);
+              })
+              canvas.renderAll();
+            });
+        })
+
+        //canvas.loadFromJSON(data);
       }
     })
 
