@@ -1,3 +1,5 @@
+//const { set } = require("express/lib/application");
+
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
 //const canvas = new fabric.Canvas(document.getElementById("canvasId"),{ renderOnAddRemove: false });
@@ -204,18 +206,7 @@ function downloadImage()
   alert(typeof dataURL);
   console.log(type(dataURL));
 }
-
-
-
-
-
 */
-
-
-
-
-
-
 
 
 
@@ -412,12 +403,17 @@ let circle ;
     socket.on('take_data_from_json_file',function(data)
     {
       console.log(data,'init_canvas');
-      let chunks = chunk(data.objects,10);
+      let chunks = chunk(data.objects,30);
       console.log(chunks);
+      let chunk_index = 0;
       if(data)
       {
-        chunks.forEach(chunk=>
-        {
+        
+        let init_interval = setInterval(function(){
+            let chunk = chunks[chunk_index];
+            if(!chunk){
+              clearInterval(init_interval)
+            }
             fabric.util.enlivenObjects(chunk,function(objects)
             {
               console.log(objects);
@@ -427,7 +423,9 @@ let circle ;
               })
               canvas.renderAll();
             });
-        })
+            chunk_index++;
+        },50)
+
 
         //canvas.loadFromJSON(data);
       }
@@ -451,7 +449,44 @@ let circle ;
             return fabric.util.object.extend(toJSON.call(this),{"id":this.id})
           }
         })(object.toJSON)
+        console.log(e);
+        if(object.path)
+        {
+          let massiv_of_points = object.path.map(function(item)
+          {
+            if(item[0]=='M'||item[0]=='L')
+            {
+              return [item[1],item[2]];
+            }
+            else{
+              return [item[1],item[2]];
+              //return [item[1],item[2],item[3],item[4]];
+            }
+            
+          })
+          const error = 10;
+          let bezierCurves = fitCurve(massiv_of_points, error);
+          
+          let bezierProcessedPath = [
+            ['M',...bezierCurves[0][0]]
+          ];
 
+          for (let i = 0; i < bezierCurves.length; i++)
+          {
+              bezierProcessedPath.push(['C',...bezierCurves[i][1],...bezierCurves[i][2],...bezierCurves[i][3]]);
+          }
+
+          object.path = bezierProcessedPath.map(function(item){
+            if(item.length==3){
+              return [item[0],Math.round(item[1]),Math.round(item[2])];
+
+            }
+            if (item.length==7)
+            {
+              return [item[0],Math.round(item[1]),Math.round(item[2]),Math.round(item[3]),Math.round(item[4]),Math.round(item[5]),Math.round(item[6])];
+            }
+          });
+        }
       }
 
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
@@ -1233,15 +1268,12 @@ fontFamilyList.addEventListener('click', (event) => {
 buttonOpenListFontFamily.addEventListener('click', () => {
     fontFamilyListWrapper.classList.toggle('text-settings__font-family-list_wrapper_active');
 })
-
 buttonFontSizeUp.addEventListener('click',() => {
     const currentFontSize = Number(fontSizeValue.textContent);
     newFontSizeValue = currentFontSize + 1;
     fontSizeValue.textContent = newFontSizeValue + '';
     formTextInput.style.fontSize = newFontSizeValue + 'px';
 });
-
-
 buttonFontSizeDown.addEventListener('click', () => {
     const currentFontSize = Number(fontSizeValue.textContent);
     const newFontSizeValue = currentFontSize - 1;
@@ -1257,9 +1289,7 @@ let mouseCursorCoordinatesCanvas = {
 /*
 formTextTextarea.addEventListener('input', () => {
     formTextInput.value = formTextTextarea.value;
-
 })
-
 formTextButtonSubmit.addEventListener('click', (event) => {
     event.preventDefault();
     console.log(selectedFontFamily, newFontSizeValue)
@@ -1279,9 +1309,6 @@ formTextButtonSubmit.addEventListener('click', (event) => {
     formTextTextarea.value ='';
     formTextInput.value = '';
 })
-
-
-
 buttonText.addEventListener('click', (event) => {
     let origX, origY;
     buttonText.classList.add('settings-panel__button_active');
@@ -1301,7 +1328,6 @@ buttonText.addEventListener('click', (event) => {
         modalTextWrapper.classList.remove('modal-text-wrapper_active');
         return;
     }
-
     canvas.on('mouse:down', function(o) {
         console.log('mouse:down');
         const pointer = canvas.getPointer(o.e);
@@ -1319,9 +1345,7 @@ buttonText.addEventListener('click', (event) => {
             modalTextWrapper.style.top = origY + 'px';
             modalTextWrapper.classList.add('modal-text-wrapper_active');
         }
-
     });
-
     canvas.on('mouse:up', function(o) {
         console.log('mouse:up')
         formTextInput.value = '';
@@ -1331,16 +1355,8 @@ buttonText.addEventListener('click', (event) => {
     });
     isDown = true;
 })
-
-
-
-
-
-
 const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > input');
 const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
-
-
 const handleClickOpenInputChangeColor = () => {
   subToolPanel.classList.add('sub-tool-panel_visible');
 }
@@ -1349,10 +1365,8 @@ const handleClickCloseInputChangeColor = (event) => {
       subToolPanel?.classList.remove('sub-tool-panel_visible');
   }
 }
-
 window.addEventListener('click', handleClickCloseInputChangeColor);
 inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
-
 */
 
 let selectedFontFamily = "Open Sans";
@@ -1582,7 +1596,3 @@ canvas.on('text:editing:entered', () => {
         }
     });
 });
-
-
-
-

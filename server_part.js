@@ -174,7 +174,7 @@ io.on("connection", async socket => {
   socket.on("canvas_save_to_json", async canvas_pass => {
 
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
-    const data_saved = JSON.stringify(canvas_pass, null, "\t");
+    const data_saved = JSON.stringify(canvas_pass);
 //    console.log(canvas_pass);
     //await client.connect()
     //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
