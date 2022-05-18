@@ -2,6 +2,69 @@
 
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
+
+const serializer_dictionary = {
+  "backgroundColor": "bc",
+  "originX": "oX",
+  "originY": "oY",
+  "version": "v"
+};
+
+function serialize_canvas(canvas)
+{
+  let result =[];
+  canvas._objects.forEach(function(object)
+  {
+    let replaced_object ={};
+    for (const key in object) {
+      if(serializer_dictionary[key])
+      {
+        replaced_object[serializer_dictionary[key]]=object[key];
+      }
+      else{
+        replaced_object[key]=object[key]
+      }
+    }
+    
+    result.push(replaced_object);
+    
+    
+  });
+  
+  console.log('new_result',result);
+  return JSON.stringify(result);
+}
+
+function deserialize(object) 
+{
+  let result = {};
+  for (const key in object) 
+  {
+    result[get_long_property_by_short(key)]=object[key];
+  }
+  console.log(result)
+  return result;
+}
+
+function get_long_property_by_short(short_property_name)
+{
+  let result;
+  for (const key in serializer_dictionary) 
+  {
+    if(short_property_name==serializer_dictionary[key])
+    {
+      result = key;
+    }
+  }
+  return result;
+}
+
+
+
+
+
+
+
 //const canvas = new fabric.Canvas(document.getElementById("canvasId"),{ renderOnAddRemove: false });
 const as = document.querySelector(".scale__value");
 window.canvas = canvas;
@@ -403,7 +466,7 @@ let circle ;
     socket.on('take_data_from_json_file',function(data)
     {
       console.log(data,'init_canvas');
-      let chunks = chunk(data.objects,30);
+      let chunks = chunk(data,30);
       console.log(chunks);
       let chunk_index = 0;
       if(data)
@@ -414,12 +477,18 @@ let circle ;
             if(!chunk){
               clearInterval(init_interval)
             }
+            chunk.forEach((object,id)=>{
+              chunk[id]=deserialize(object);
+            });
+            console.log(chunk,'chunk');
             fabric.util.enlivenObjects(chunk,function(objects)
             {
-              console.log(objects);
+              console.log("5555555555!",objects);
               objects.forEach(function(object)
               {
-                canvas.add(object);
+                let deserialized_object =deserialize(object);
+                console.log('deserialized_object',deserialized_object)
+                canvas.add(deserialized_object);
               })
               canvas.renderAll();
             });
@@ -433,7 +502,8 @@ let circle ;
 
     canvas.on('object:modified', e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
 
@@ -450,6 +520,8 @@ let circle ;
           }
         })(object.toJSON)
         console.log(e);
+        
+
         if(object.path)
         {
           let massiv_of_points = object.path.map(function(item)
@@ -487,8 +559,9 @@ let circle ;
             }
           });
         }
+        serialize_canvas(canvas);
       }
-
+      
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
       //send_part_of_data(e);
     });
@@ -496,7 +569,7 @@ let circle ;
 
     canvas.on('object:moving',e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
 
@@ -1238,6 +1311,15 @@ toolPanelList.addEventListener('click', (event) => {
         selectedButton = currentButton;
     }
 })
+
+
+
+
+
+
+
+
+
 
 
 
