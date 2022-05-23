@@ -3,12 +3,43 @@
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
 
+
 const serializer_dictionary = {
   "backgroundColor": "bc",
   "originX": "oX",
   "originY": "oY",
-  "version": "v"
+  "version": "v",
+  "type": "t",
+  "path": "p",
+  "opacity": "o",
+  "scaleX": "sx",
+  "scaleY": "sy",
+  "zoomX": "zx",
+  "zoomY": "zy",
+  "strokeWidth": "sw",
+  "stroke": "s",
+  "id": "id",
+  "fill": "f",
+  "strokeLineCap": "slp",
+  "strokeLineJoin": "slj",
+  "x1":"x1",
+  "x2":"x2",
+  "y1":"y1",
+  "y2":"y2", 
+  "strokeDashArray":"sDA",
+  "transparentCorners":'tC',
+  "angle": "ae",
+  "width":"w",
+  "height":"h",
+  "top":"tp",
+  "left":"lt"
 };
+
+
+
+
+
+
 
 function serialize_canvas(canvas)
 {
@@ -21,9 +52,9 @@ function serialize_canvas(canvas)
       {
         replaced_object[serializer_dictionary[key]]=object[key];
       }
-      else{
-        replaced_object[key]=object[key]
-      }
+ //     else{
+ //       replaced_object[key]=object[key]
+ //     }
     }
     
     result.push(replaced_object);
@@ -32,7 +63,7 @@ function serialize_canvas(canvas)
   });
   
   console.log('new_result',result);
-  return JSON.stringify(result);
+  return result//JSON.stringify(result);
 }
 
 function deserialize(object) 
@@ -465,17 +496,21 @@ let circle ;
 
     socket.on('take_data_from_json_file',function(data)
     {
-      console.log(data,'init_canvas');
-      let chunks = chunk(data,30);
-      console.log(chunks);
-      let chunk_index = 0;
-      if(data)
+      if(!data)
       {
-        
+        return false;
+      }
+      else
+      {
+        console.log(data,'init_canvas');
+        let chunks = chunk(data?.canvas,30);
+        console.log(chunks);
+        let chunk_index = 0;
         let init_interval = setInterval(function(){
             let chunk = chunks[chunk_index];
             if(!chunk){
               clearInterval(init_interval)
+              return false;
             }
             chunk.forEach((object,id)=>{
               chunk[id]=deserialize(object);
@@ -486,9 +521,9 @@ let circle ;
               console.log("5555555555!",objects);
               objects.forEach(function(object)
               {
-                let deserialized_object =deserialize(object);
-                console.log('deserialized_object',deserialized_object)
-                canvas.add(deserialized_object);
+                //let deserialized_object =deserialize(object);
+                //console.log('deserialized_object',deserialized_object)
+                canvas.add(object);
               })
               canvas.renderAll();
             });
@@ -559,7 +594,7 @@ let circle ;
             }
           });
         }
-        serialize_canvas(canvas);
+        //serialize_canvas(canvas);
       }
       
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
@@ -569,6 +604,7 @@ let circle ;
 
     canvas.on('object:moving',e =>
     {
+      
       socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
@@ -607,7 +643,8 @@ let circle ;
 
     canvas.on('object:scaling',e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
 
@@ -619,7 +656,8 @@ let circle ;
 
     canvas.on('object:rotating',e =>
     {
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+      //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
       send_part_of_data(e);
     });
 
@@ -682,7 +720,8 @@ function enableFreeDrawing()
     // let board_id = get_board_id();
     socket.emit('mouse:up',pointer);
     //array_of_points = [];
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
 
   })
   canvas.on('mouse:move', function (e)
@@ -802,7 +841,8 @@ function drawrec(type_of_rectangle) {
     rect.setCoords();
     //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
 
@@ -872,7 +912,8 @@ function drawcle(type_of_circle) {
     circle.setCoords();
     //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
 
@@ -1113,7 +1154,8 @@ function drawLine(type_of_line) {
     line.setCoords();
     //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
 
@@ -1166,7 +1208,8 @@ function print_Text() {
   });
 
   canvas.add(textbox);
-  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   socket.emit("text:add", canvas.toJSON(['id']));
 }
 
