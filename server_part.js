@@ -1,9 +1,26 @@
+const protobuf = require("protobufjs");
 const express = require("express");
 const { Server } = require("socket.io");
 const http = require("http");
 const path = require("path");
 const fs = require("fs");
 const mustacheExpress = require('mustache-express');
+
+var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
+
+var root = protobuf.Root.fromJSON(jsonDescriptor);
+let boards_schema = root.lookupType("awesomepackage.AwesomeMessage")
+
+let pathOffset_schema = root.lookupType("awesomepackage.pathOffset")
+console.log(pathOffset_schema);
+
+
+let buf_encoded = boards_schema.encode({board_id:123,bc:'#ffff'}).finish();
+console.log(buf_encoded);
+
+let buf_decoded = boards_schema.decode(buf_encoded);
+console.log(buf_decoded);
+
 
 require('dotenv').config()
 

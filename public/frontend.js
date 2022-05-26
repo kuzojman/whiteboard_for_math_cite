@@ -3,9 +3,18 @@
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
 
+protobuf.load('./awesome.json',function(err,root){
+  if(err)
+  {
+    console.log(err);
+  }
+  else{
+    console.log(root);
+  }
+})
 
 const serializer_dictionary = {
-  "backgroundColor": "bc",
+  "backgroundColor": "bc", 
   "originX": "oX",
   "originY": "oY",
   "version": "v",
@@ -50,6 +59,11 @@ function serialize_canvas(canvas)
     for (const key in object) {
       if(serializer_dictionary[key])
       {
+        //  отсчечем нулевые значения if(object[key])
+        // if(typeof object[key] is number)
+        //{
+        //  Math.round
+        //}
         replaced_object[serializer_dictionary[key]]=object[key];
       }
  //     else{

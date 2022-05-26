@@ -1,0 +1,44 @@
+{
+    "nested": {
+      "awesomepackage": {
+        "nested": {
+          "AwesomeMessage": {
+            "fields": {
+              "board_id": {
+                "type": "int32",
+                "id": 1
+              },
+              "bc":{
+                "type":"string",
+                "id": 2
+              },
+              "oX":{
+                "type":"float",
+                "id": 3 
+              },
+              "oY":{
+                "type":"float",
+                "id": 4 
+              }
+
+
+            }
+          },
+          "pathOffset":
+          {
+            "fields": {
+              "x": {
+                "type": "int32",
+                "id": 1
+              },
+              "y": {
+                "type": "int32",
+                "id": 2
+              }
+
+            }
+          }
+        }
+      }
+    }
+  }
