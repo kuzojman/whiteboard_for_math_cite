@@ -36,7 +36,7 @@ const serializer_dictionary = {
   "y1":"y1",
   "y2":"y2", 
   "strokeDashArray":"sDA",
-  "transparentCorners":'tC',
+  "transparentCorners":"tC",
   "angle": "ae",
   "width":"w",
   "height":"h",
@@ -45,10 +45,28 @@ const serializer_dictionary = {
 };
 
 
+const serializer_dictionary_for_bezier = {
+  "backgroundColor": "bc",
+  "originX": "oX",
+  "originY": "oY",
+  "version": "v",
+  "type": "t",
+  "path": "p",
+  "opacity": "o",
+  "scaleX": "sx",
+  "scaleY": "sy",
+  "zoomX": "zx",
+  "zoomY": "zy",
+  "strokeWidth": "sw",
+  "stroke": "s",
+  "id": "id",
+  "fill": "f",
+  "strokeLineCap": "slp",
+  "strokeLineJoin": "slj"
+};
 
 
-
-
+///"path"
 
 function serialize_canvas(canvas)
 {
@@ -56,15 +74,40 @@ function serialize_canvas(canvas)
   canvas._objects.forEach(function(object)
   {
     let replaced_object ={};
+    let my_dict = {};
+    if(object.type=="path")
+    {
+      my_dict=serializer_dictionary_for_bezier;
+    }
+    else{
+      my_dict=serializer_dictionary;
+    }
+
+
     for (const key in object) {
-      if(serializer_dictionary[key])
+
+      if(my_dict[key])
       {
+        
+        if(typeof(object[key]) === 'number')
+        {
+          if(Math.abs(object[key])<3 )
+          {
+            object[key]=Math.trunc(object[key] * 1000) / 1000;
+          }
+          else
+          {
+            object[key]=Math.round(object[key]);
+          }
+        }
+
+
         //  отсчечем нулевые значения if(object[key])
         // if(typeof object[key] is number)
         //{
         //  Math.round
         //}
-        replaced_object[serializer_dictionary[key]]=object[key];
+        replaced_object[my_dict[key]]=object[key];
       }
  //     else{
  //       replaced_object[key]=object[key]
@@ -585,7 +628,7 @@ let circle ;
             }
             
           })
-          const error = 10;
+          const error = 30;
           let bezierCurves = fitCurve(massiv_of_points, error);
           
           let bezierProcessedPath = [

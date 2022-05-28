@@ -19,10 +19,101 @@
               "oY":{
                 "type":"float",
                 "id": 4 
+              },
+              "v":{
+                "type":"float",
+                "id": 5 
+              },
+              "t":{
+                "type":"string",
+                "id": 6 
+              },
+              "p":{
+                "type":"string",
+                "id": 7 
+              },
+              "o":{
+                "type":"float",
+                "id": 8 
+              },
+              "sx":{
+                "type":"float",
+                "id": 9 
+              },
+              "sy":{
+                "type":"float",
+                "id": 10 
+              },
+              "zx":{
+                "type":"float",
+                "id": 11 
+              },
+              "zy":{
+                "type":"float",
+                "id": 12 
+              },
+              "sw":{
+                "type":"float",
+                "id": 13 
+              },
+              "s":{
+                "type":"string",
+                "id": 14 
+              },
+              "id":{
+                "type":"string",
+                "id": 15 
+              },
+              "f":{
+                "type":"string",
+                "id": 16 
+              },
+              "slp":{
+                "type":"string",
+                "id": 17 
+              },
+              "slj":{
+                "type":"string",
+                "id": 18 
+              },
+              "x1":{
+                "type":"float",
+                "id": 19 
+              },
+              "x2":{
+                "type":"float",
+                "id": 20 
+              },
+              "y1":{
+                "type":"float",
+                "id": 21 
+              },
+              "y2":{
+                "type":"float",
+                "id": 22 
+              },
+              "tp":{
+                "type":"float",
+                "id": 23 
+              },
+              "h":{
+                "type":"float",
+                "id": 24 
+              },
+              "w":{
+                "type":"float",
+                "id": 25 
+              },
+              "ae":{
+                "type":"float",
+                "id": 26 
+              },
+              "tC":{
+                "type":"bool",
+                "id": 27 
               }
-
-
             }
+
           },
           "pathOffset":
           {
