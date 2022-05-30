@@ -438,13 +438,15 @@ socket.on( 'connect', function()
     socket.on('color:change', function(colour_taken)
     {
         console.log('recieved colour',colour_taken)
-        canvas.freeDrawingBrush.color = colour_taken
+        canvas.freeDrawingBrush.color = colour_taken;
+        localStorage.setItem('color',colour_taken);
     });
 
     socket.on('width:change', function(width_taken)
     {
         console.log('width:change',width_taken)
-        canvas.freeDrawingBrush.width = width_taken
+        canvas.freeDrawingBrush.width = width_taken;
+        localStorage.setItem('width',width_taken);
     });
 
 let circle ;
@@ -1015,6 +1017,7 @@ function handle_mouse_move(e) {
 function change_colour_of_brush(colour_taken) {
   console.log("recieved colour", colour_taken);
   canvas.freeDrawingBrush.color = colour_taken;
+  localStorage.setItem("color",colour_taken);
 }
 
 function handle_editing_rectangle(rect_taken) {
@@ -1108,17 +1111,36 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
 canvas.freeDrawingBrush.color = drawingColorEl.value;
 canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
+let localStorageColour = localStorage.getItem('color');
+let localStorageWidth  = localStorage.getItem('width');
+
+if (localStorageColour)
+{
+  canvas.freeDrawingBrush.color = localStorageColour;
+  drawingColorEl.value = localStorageColour;
+}
+
+if (localStorageWidth)
+{
+  canvas.freeDrawingBrush.width = localStorageWidth;
+  drawingLineWidthEl.value = localStorageWidth;
+}
+
+
+
 drawingColorEl.oninput = function() 
 {
   console.log("color:change",drawingColorEl.value);
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   socket.emit("color:change",drawingColorEl.value);
+  
 };
 
 drawingLineWidthEl.oninput = function() 
 {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   socket.emit("width:change", canvas.freeDrawingBrush.width);
+  
 };
 
 
