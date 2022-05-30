@@ -417,36 +417,32 @@ socket.on( 'connect', function()
 
     socket.on('mouse:down', function(pointer)
     {
-      canvas.freeDrawingBrush.onMouseDown(pointer,{e:{}});
+      canvas.freeDrawingBrush.color = pointer.color;
+      canvas.freeDrawingBrush.width = pointer.width;
+      canvas.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
+
     });
 
 
     socket.on('mouse:move', function(e)
     {
-      /*
-      canvas.freeDrawingBrush._points = e.map(item => 
-        {
-          console.log(item);
-        return new fabric.Point(item.x, item.y)
-      })
-      */
-      //canvas._onMouseUpInDrawingMode({target: canvas.upperCanvasEl}) ;
-      console.log(e);
-      canvas.freeDrawingBrush.onMouseMove(e,{e:{}});
+      canvas.freeDrawingBrush.color = e.color;
+      canvas.freeDrawingBrush.width = e.width;
+      canvas.freeDrawingBrush.onMouseMove(e.pointer,{e:{}});
       console.log('recieved',  canvas.freeDrawingBrush._points.length)
     });
     socket.on('color:change', function(colour_taken)
     {
         console.log('recieved colour',colour_taken)
         canvas.freeDrawingBrush.color = colour_taken;
-        localStorage.setItem('color',colour_taken);
+        
     });
 
     socket.on('width:change', function(width_taken)
     {
         console.log('width:change',width_taken)
         canvas.freeDrawingBrush.width = width_taken;
-        localStorage.setItem('width',width_taken);
+
     });
 
 let circle ;
@@ -769,7 +765,7 @@ function enableFreeDrawing()
     ///array_of_points.push(newline);
     ///console.log(array_of_points);
     //socket.emit('mouse:down', e);
-    socket.emit('mouse:down', pointer);
+    socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
   })
   canvas.on('mouse:up', e => 
   {
@@ -777,7 +773,7 @@ function enableFreeDrawing()
     const pointer = canvas.getPointer(e);
     //socket.emit('canvas_save_to_json',canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit('mouse:up',pointer);
+    socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
     //array_of_points = [];
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
@@ -788,7 +784,7 @@ function enableFreeDrawing()
     if (isDrawing) 
     {
       const pointer = canvas.getPointer(e);
-      socket.emit('mouse:move',pointer );//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});//canvas.freeDrawingBrush._points); 
       console.log(pointer);
       //console.log(array_of_points);
       //console.log(canvas.freeDrawingBrush._points);
@@ -1132,6 +1128,7 @@ drawingColorEl.oninput = function()
 {
   console.log("color:change",drawingColorEl.value);
   canvas.freeDrawingBrush.color = drawingColorEl.value;
+  localStorage.setItem('color',drawingColorEl.value)
   socket.emit("color:change",drawingColorEl.value);
   
 };
@@ -1140,7 +1137,7 @@ drawingLineWidthEl.oninput = function()
 {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   socket.emit("width:change", canvas.freeDrawingBrush.width);
-  
+  localStorage.setItem('width',canvas.freeDrawingBrush.width)
 };
 
 
