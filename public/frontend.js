@@ -66,6 +66,86 @@ const serializer_dictionary_for_bezier = {
 };
 
 
+
+const MAX_ZOOM_IN  = 4;
+const MAX_ZOOM_OUT = 0.05;
+const SCALE_STEP = 0.05;
+
+let currentValueZoom = 1;
+
+canvas.on('mouse:wheel',function(opt){
+  const delta =opt.e.deltaY;
+  handleScale(delta);
+  as.textContent = (currentValueZoom * 100).toFixed(0)+'%';
+  canvas.zoomToPoint({x:opt.e.offsetX, y: opt.e.offsetY},currentValueZoom);
+  opt.e.preventDefault();
+  opt.e.stopPropagation();
+})
+
+
+const handleChangeActiveButton = (newActiveButton) => {
+  let button = newActiveButton;
+  selectedButton.classList.remove('settings-panel__button_active');
+  if(button){
+      selectedButton = button;
+      selectedButton.classList.add('settings-panel__button_active');
+  }
+}     // Смена выбранной кнопки на другую актинвую
+
+
+const handleDownKeySpace = (event) => {
+  if (event.code === 'Space' && !event.repeat && !isDown) {
+      event.preventDefault();
+      canvas.isDrawingMode = false;
+      isCursorMove = true;
+      canvas.toggleDragMode();
+      handleChangeActiveButton(buttonCursorMove)
+
+  }
+}           // Нажатие на пробел
+const handleUpKeySpace = (event) => {
+  if (event.code === 'Space' && !isDown) {
+    isCursorMove = false;
+    canvas.selection = true;
+      event.preventDefault();
+      canvas.toggleDragMode();
+      handleChangeActiveButton()
+
+      if(!isCursorMove) {
+          document.body.addEventListener('keydown', handleDownKeySpace)
+      }
+  }
+}             // Отпускание пробела
+
+
+function handleScale (delta)
+{
+    if (delta<0)
+    {
+        if(currentValueZoom<=MAX_ZOOM_OUT)
+        {
+            return;
+        }
+        else
+        {
+            currentValueZoom = (parseFloat(currentValueZoom)-SCALE_STEP).toFixed(2);
+
+        }
+    }
+    else
+    {
+        if(currentValueZoom>=MAX_ZOOM_IN)
+        {
+            return;
+        }
+        else
+        {
+            currentValueZoom = (parseFloat(currentValueZoom)+SCALE_STEP).toFixed(2);
+
+        }
+    }
+}
+
 ///"path"
 
 function serialize_canvas(canvas)
@@ -192,34 +272,6 @@ canvas.renderAll = () => {
 
 
 
-const handleDownKeySpace = (event) => {
-  if (event.code === 'Space' && !event.repeat && !isDown) {
-      event.preventDefault();
-      canvas.toggleDragMode();
-      canvas.isDrawingMode = false;
-      buttonCursorMove.classList.add('settings-panel__button-cursor-move_active');
-      buttonCursorMove.classList.add('settings-panel__button-cursor-move_disabled');
-      isCursorMove = true;
-  }
-}           // Нажатие на пробел
-const handleUpKeySpace = (event) => {
-  if (event.code === 'Space' && !isDown) {
-      event.preventDefault();
-      canvas.toggleDragMode();
-      canvas.isDrawingMode = true;
-      buttonCursorMove.classList.remove('settings-panel__button-cursor-move_active');
-      buttonCursorMove.classList.remove('settings-panel__button-cursor-move_disabled');
-      isCursorMove = false;
-      if(!isCursorMove) {
-          document.body.addEventListener('keydown', handleDownKeySpace)
-      }
-  }
-}             // Отпускание пробела
-
-
-
-
-
 //
 //const socket = io('62.113.99.98:3000',{transports:['websocket']});
 
@@ -258,7 +310,7 @@ fabric.Canvas.prototype.toggleDragMode = function () {
 
   let state = STATE_IDLE;
   // We're entering dragmode
-  if (canvas.isDrawingMode) {
+  if (isCursorMove) {
       this.off('mouse:move');
       // Discard any active object
       canvas.discardActiveObject();
@@ -322,7 +374,6 @@ fabric.Canvas.prototype.toggleDragMode = function () {
       this.off("mouse:up");
       this.off("mouse:down");
       this.off("mouse:move");
-      this.on("mouse:move", (event) => handleMouseMovement(event))
       // Restore selection ability on the canvas
       this.selection = true;
   }
@@ -1398,17 +1449,10 @@ document.body.addEventListener('keyup', handleUpKeySpace);
 
 
 const handleButtonCursorMoveClick = () => {
-  console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!jdasjdkjdkajsdkajkdjasdkajd')
   isCursorMove = !isCursorMove;
-  console.log(isCursorMove)
-  if(isCursorMove){
-      document.body.removeEventListener('keydown', handleDownKeySpace);
-  } else {
-      document.body.addEventListener('keydown', handleDownKeySpace);
-  }
   canvas.toggleDragMode();
   buttonCursorMove.classList.toggle('settings-panel__button-cursor-move_active');
-  canvas.isDrawingMode = !canvas.isDrawingMode;
+  canvas.isDrawingMode = false
 } 
 buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 
