@@ -44,6 +44,100 @@ const serializer_dictionary = {
   "left":"lt"
 };
 
+const serializer_dictionary_image = {
+  "backgroundColor": "bc", 
+  "originX": "oX",
+  "originY": "oY",
+  "version": "v",
+  "type": "t",
+  "path": "p",
+  "opacity": "o",
+  "scaleX": "sx",
+  "scaleY": "sy",
+  "zoomX": "zx",
+  "zoomY": "zy",
+  "strokeWidth": "sw",
+  "stroke": "s",
+  "id": "id",
+  "fill": "f",
+  "strokeLineCap": "slp",
+  "strokeLineJoin": "slj",
+  "x1":"x1",
+  "x2":"x2",
+  "y1":"y1",
+  "y2":"y2", 
+  "strokeDashArray":"sDA",
+  "transparentCorners":"tC",
+  "angle": "ae",
+  "width":"w",
+  "height":"h",
+  "top":"tp",
+  "left":"lt",
+  "strokeDashOffset":"sDO",
+  "strokeUniform":"sU",
+  "strokeMiterLimit":"sML",
+  "flipX":"fX",
+  "flipY":"fY",
+  "shadow":"sh",
+  "visible":"vi",
+  "fillRule":"fR",
+  "paintFirst":"pF",
+  "globalCompositeOperation":"gCO",
+  "skewX":"sX",
+  "skewY":"sY",
+  "cropX":"cX",
+  "cropY":"cY",
+  "src":"sr",
+  "crossOrigin": "cO",
+  "filters":"fs"    
+};
+
+
+const serializer_dictionary_for_circle =  {
+  "backgroundColor": "bc", 
+  "originX": "oX",
+  "originY": "oY",
+  "version": "v",
+  "type": "t",
+  "path": "p",
+  "opacity": "o",
+  "scaleX": "sx",
+  "scaleY": "sy",
+  "zoomX": "zx",
+  "zoomY": "zy",
+  "strokeWidth": "sw",
+  "stroke": "s",
+  "id": "id",
+  "fill": "f",
+  "strokeLineCap": "slp",
+  "strokeLineJoin": "slj",
+  "x1":"x1",
+  "x2":"x2",
+  "y1":"y1",
+  "y2":"y2", 
+  "strokeDashArray":"sDA",
+  "transparentCorners":"tC",
+  "angle": "ae",
+  "width":"w",
+  "height":"h",
+  "top":"tp",
+  "left":"lt",
+  "strokeDashOffset":"sDO",
+  "strokeUniform":"sU",
+  "strokeMiterLimit":"sML",
+  "flipX":"fX",
+  "flipY":"fY",
+  "shadow":"sh",
+  "visible":"vi",
+  "fillRule":"fR",
+  "globalCompositeOperation":"gCO",
+  "radius":"rs",
+  "startAngle":"sA",
+  "endAngle":"eA"
+};
+
+
+
 
 const serializer_dictionary_for_bezier = {
   "backgroundColor": "bc",
@@ -64,6 +158,8 @@ const serializer_dictionary_for_bezier = {
   "strokeLineCap": "slp",
   "strokeLineJoin": "slj"
 };
+
+const max_dictionary =serializer_dictionary_image;
 
 
 
@@ -159,10 +255,18 @@ function serialize_canvas(canvas)
     {
       my_dict=serializer_dictionary_for_bezier;
     }
-    else{
+    else if(object.type=="image")
+    {
+      my_dict=serializer_dictionary_image;
+    }
+    else if(object.type=="circle")
+    {
+      my_dict=serializer_dictionary_for_circle;
+    }else
+    {
       my_dict=serializer_dictionary;
     }
-
+    
 
     for (const key in object) {
 
@@ -193,15 +297,61 @@ function serialize_canvas(canvas)
  //       replaced_object[key]=object[key]
  //     }
     }
-    
+
     result.push(replaced_object);
-    
-    
   });
   
   console.log('new_result',result);
   return result//JSON.stringify(result);
 }
+
+function serialize_object(object)
+{
+
+    let replaced_object ={};
+    let my_dict = {};
+    my_dict=serializer_dictionary_image;
+    /*
+    if(object.type=="path")
+    {
+      my_dict=serializer_dictionary_for_bezier;
+    }
+    else if(object.type=="image")
+    {
+      my_dict=serializer_dictionary_image;
+    }
+    else if(object.type=="circle")
+    {
+      my_dict=serializer_dictionary_for_circle;
+    }else
+    {
+      my_dict=serializer_dictionary;
+    }
+*/
+
+    for (const key in object) {
+
+      if(my_dict[key])
+      {
+        
+        if(typeof(object[key]) === 'number')
+        {
+          if(Math.abs(object[key])<3 )
+          {
+            object[key]=Math.trunc(object[key] * 1000) / 1000;
+          }
+          else
+          {
+            object[key]=Math.round(object[key]);
+          }
+        }
+        replaced_object[my_dict[key]]=object[key];
+      }
+    }
+  console.log(replaced_object);
+  return replaced_object;
+}
+
 
 function deserialize(object) 
 {
@@ -217,9 +367,10 @@ function deserialize(object)
 function get_long_property_by_short(short_property_name)
 {
   let result;
-  for (const key in serializer_dictionary) 
+  let dict =max_dictionary
+  for (const key in dict) 
   {
-    if(short_property_name==serializer_dictionary[key])
+    if(short_property_name==dict[key])
     {
       result = key;
     }
@@ -700,10 +851,13 @@ let circle ;
             }
           });
         }
+        socket.emit("object:added", {"board_id": board_id, "object": serialize_object(object)});
         //serialize_canvas(canvas);
       }
       
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+   //   
+
       //send_part_of_data(e);
     });
 

@@ -5,6 +5,9 @@ const http = require("http");
 const path = require("path");
 const fs = require("fs");
 const mustacheExpress = require('mustache-express');
+const S3 = require('aws-sdk/clients/s3');
+
+
 
 var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
 
@@ -12,14 +15,14 @@ var root = protobuf.Root.fromJSON(jsonDescriptor);
 let boards_schema = root.lookupType("awesomepackage.AwesomeMessage")
 
 let pathOffset_schema = root.lookupType("awesomepackage.pathOffset")
-console.log(pathOffset_schema);
+//console.log(pathOffset_schema);
 
 
 let buf_encoded = boards_schema.encode({board_id:123,bc:'#ffff'}).finish();
-console.log(buf_encoded);
+//console.log(buf_encoded);
 
 let buf_decoded = boards_schema.decode(buf_encoded);
-console.log(buf_decoded);
+//console.log(buf_decoded);
 
 
 require('dotenv').config()
@@ -87,8 +90,8 @@ io.on("connection", async socket => {
     socket.board_id = board_id;
     socket.join(board_id);
 
-    console.log('>>', board_id, e);
-    console.log('>>', 'before select -- board_id = ' + board_id);
+   // console.log('>>', board_id, e);
+  //  console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
     socket.emit("take_data_from_json_file", res.rows[0].board_stack);
   });
@@ -212,6 +215,75 @@ io.on("connection", async socket => {
 
   });
 
+
+  socket.on('upload_to_aws', (image_pass,callback) =>{
+
+        var s3 = new S3({
+            accessKeyId: '',
+            secretAccessKey: '',
+            endpoint: 'https://hb.bizmrg.com',
+            apiVersion: 'latest'
+        });
+        //s3.createBucket()
+        // Загрузить объект
+        const fileContent = Buffer.from(image_pass.replace('data:image/jpeg;base64,',""),'base64')  ;
+        console.log(image_pass);
+
+        let name_obj = makeid(32)+'.jpg';
+        var params = {
+            Bucket: 'hot_data_kuzovkin_info_private',
+            Key: name_obj,
+            ContentType:'image/jpeg',
+            Body: fileContent
+        };
+        
+        s3.upload(params, (err, data) => {
+            if (err) 
+            {
+                console.log(err, err.stack);
+            } else 
+            {
+                global.loca=data['Location']; 
+                console.log(loca);
+                
+            }
+        });
+      
+        callback ('https://hb.bizmrg.com/hot_data_kuzovkin_info_private/'+name_obj);
+    })
+  
+
+
+
+
+  socket.on("object:added", async canvas_pass => {
+    const board = await client.query('SELECT * from boards WHERE id=$1',[canvas_pass.board_id]);
+    /*
+
+*/
+    let board_stack = board.rows[0].board_stack;
+    let item_index = board_stack.canvas.indexOf(db_item =>
+      {
+      return db_item.id==canvas_pass.id;
+    })
+    console.log(item_index);
+    if(item_index>=0)
+    {
+      
+    } 
+    else
+    {
+      board_stack.canvas.push(canvas_pass.object);
+    }
+    const data_saved = JSON.stringify(board_stack);
+    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
+    
+  });
+
+
+
+
+
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
@@ -220,3 +292,15 @@ io.on("connection", async socket => {
 server.listen(port, () => {
   console.log(`Server running at port ` + port);
 });
+
+
+function makeid(length) {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * 
+charactersLength));
+ }
+ return result;
+}

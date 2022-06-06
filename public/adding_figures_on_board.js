@@ -91,32 +91,44 @@ function add_3d_figure(figure)
   canvas.renderAll();
 }
 */
+
+window.onerror = function(message, url, line, col, errorObj) {
+  alert(`${message}\n${url}, ${line}:${col}`);
+};
 const uploadButton = document.querySelector('.tool-panel__item-button-uploader');
 //uploadButton.addEventListener("click",(e) => {
   document.getElementById("uploader").onchange = function(e) 
   {
     var reader = new FileReader();
+
     reader.onload = function(e) 
     {
-      var image = new Image();
-      image.src = e.target.result;
-      image.onload = function() 
-      {
-        var img = new fabric.Image(image);
-        img.set(
+
+
+      socket.emit("upload_to_aws",e.target.result,response=>{
+        var image = new Image(1,1);
+        
+        image.src = response/////e.target.result;
+        console.log(response,image);
+        image.onerror=function(e){
+          console.log("imageerror",e)
+        }
+        image.onload = function() 
         {
-          left: 100,
-          top: 60
-        });
-        img.scaleToWidth(600);
-        canvas.add(img).setActiveObject(img).renderAll();
-        //socket.emit('canvas_save_to_json',canvas.toJSON());
-        // let board_id = get_board_id();
-        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
-        socket.emit("picture:add",canvas.toJSON());
-        console.log("picture:add",img);
-        console.log("работает!!!!!!!!!!!!!!!!!! загружается картинка!");
-      }
+          var img = new fabric.Image(image);
+          img.src = image.src;
+          console.log(img,'12345678965534343434343434343434')
+          img.set(
+          {
+            left: 100,
+            top: 60
+          });
+          img.scaleToWidth(600);
+          canvas.add(img).setActiveObject(img).renderAll();
+          console.log("работает!!!!!!!!!!!!!!!!!! загружается картинка!");
+        }
+      });
+
     }
     console.log(e.target.files);
     reader.readAsDataURL(e.target.files[0]);
