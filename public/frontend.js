@@ -19,6 +19,16 @@ const MAX_ZOOM_OUT = 0.05;
 const SCALE_STEP = 0.05;
 
 let currentValueZoom = 1;
+let currentRadiusCursor = 10;
+
+const cursorUser = new fabric.Circle({              // Представление курсора
+  radius: currentRadiusCursor,
+  fill: 'red',
+  left: -10,
+  top: -10,
+  originX: 'center',
+  originY: 'center',
+});
 
 canvas.on('mouse:wheel',function(opt){
   const delta =opt.e.deltaY;
@@ -63,6 +73,29 @@ const handleUpKeySpace = (event) => {
       }
   }
 }             // Отпускание пробела
+
+
+let cursorCoordinateOtherUsers;
+
+const handleMouseMovement = (event) => {
+  const cursorCoordinate = canvas.getPointer(event.e);
+  let data = {
+      userId: socket.id,
+      coords: cursorCoordinate,
+  }
+  socket.emit('cursor-data', data);
+}                                                   // Курсор
+const getCursorData = (data) => {
+  if(data.userId !== socket.id) {
+
+      cursorCoordinateOtherUsers = data.cursorCoordinates;
+      cursorUser.left = data.cursorCoordinates.x;
+      cursorUser.top = data.cursorCoordinates.y;
+      console.log('dewedeew')
+      canvas.add(cursorUser);
+  }
+  canvas.renderAll();
+}                                                   // Получение координат курсора
 
 
 function handleScale (delta)
@@ -1170,6 +1203,7 @@ function removeEvents() {
   canvas.off("mouse:down");
   canvas.off("mouse:up");
   canvas.off("mouse:move");
+  canvas.on("mouse:move", (event) => handleMouseMovement(event))
 }
 
 function hexToRgbA(hex, figures_opacity) {
@@ -1338,6 +1372,33 @@ toolPanelList.addEventListener('click', (event) => {
     }
 })
 
+canvas.on('mouse:move', handleMouseMovement);         // Отображение чужих курсоров
+socket.on('cursor-data', getCursorData);              // отображаем курсоры чужих пользователей
 
 
 
+const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > input');
+const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
+const fontColorListWrapper2 = document.querySelector('.setting-item__font-color-list-wrapper');
+const fontColorInput2 = document.querySelector('.setting-item__input-font-color > input');
+
+
+const handleClickOpenInputChangeColor = () => {
+  subToolPanel.classList.add('sub-tool-panel_visible');
+}
+const handleClickCloseInputChangeColor = (event) => {
+  if (event.target !== inputChangeColor) {
+    subToolPanel.classList.remove('sub-tool-panel_visible');
+  } else if(event.target !== fontColorInput2) {
+    fontColorListWrapper2.classList.remove('active');
+  } else {
+
+  }
+}
+
+window.addEventListener('click', handleClickCloseInputChangeColor);
+inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
+
+fontColorInput2.addEventListener('click', () => { fontColorListWrapper2.classList.add('active') })
+
+fontColorInput2.addEventListener('change', (e) => { canvas.getActiveObject().set("fill", e.target.value) })

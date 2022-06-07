@@ -1,0 +1,49 @@
+.logo-menu {
+    padding-top: 10px;
+    display: none;
+    position: absolute;
+    top: 45px;
+    left: 0;
+    width: 100%;
+    z-index: 2;
+    transition: all 0.5s linear;
+    font-size: 2rem;
+}
+
+.logo-menu__list {
+    font-size: 1.8rem;
+    border-radius: 15px;
+    background-color: white;
+    transition: all .4s linear;
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+}
+
+.logo-menu__item {
+    padding: 5px;
+    border-bottom: 2px solid #8c8c8c;
+    transition: all 0.3s linear;
+}
+.logo-menu__item:first-child {
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+.logo-menu__item:last-child {
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.logo-menu__item:hover {
+    cursor: pointer;
+    background-color: rgba(161, 157, 157, 0.31);
+}
+
+
+.logo-menu__item-button {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: none;
+    font-size: 16px;
+}

@@ -5,9 +5,10 @@ const http = require("http");
 const path = require("path");
 const fs = require("fs");
 const mustacheExpress = require('mustache-express');
-const S3 = require('aws-sdk/clients/s3');
+// const S3 = require('aws-sdk/clients/s3');
 
-
+const arrayAllUsers = [];
+const arrayOfUserCursorCoordinates = [];
 
 var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
 
@@ -83,6 +84,22 @@ app.use(express.static(path.join(__dirname, "public")));
 io.on("connection", async socket => {
   //array_all_users.push(socket.id);
   //var board_id = 1;
+
+  arrayAllUsers.push(socket.id);
+  arrayOfUserCursorCoordinates.push({
+      userId: socket.id,
+      cursorCoordinates: {
+          x: 0,
+          y: 0,
+      },
+  });
+  socket.on('cursor-data', (data) => {
+    const cursorDataUser = arrayOfUserCursorCoordinates.find(item => item.userId === data.userId);
+    if(cursorDataUser) {
+        cursorDataUser.cursorCoordinates = data.coords;
+        io.emit('cursor-data', cursorDataUser);
+    }
+  });
 
   socket.on("board:board_id",async (e) => {
     board_id = e;
@@ -284,8 +301,16 @@ io.on("connection", async socket => {
 
 
 
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
+  socket.on('disconnect', () => {
+    const index = arrayAllUsers.findIndex(item => item === socket.id);
+    const index2 = arrayOfUserCursorCoordinates.findIndex(item => item.userId === socket.id);
+
+    if(index !== -1) {
+        arrayAllUsers.splice(index, 1)
+    }
+    if(index2 !== -1){
+        arrayOfUserCursorCoordinates.splice(index2, 1)
+    }
   });
 });
 

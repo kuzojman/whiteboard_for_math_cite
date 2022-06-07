@@ -1,0 +1,21 @@
+.scale {
+    display: flex;
+    border-radius: 15px;
+    background-color: white;
+    cursor: pointer;
+    z-index: 2;
+    padding: 10px;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+}
+
+.scale-panel__subtitle {
+    margin-right: 10px;
+}
+
+.scale-panel__value,
+.scale-panel__subtitle {
+    font-size: 2.5rem;
+}

@@ -1,0 +1,56 @@
+.top-panel {
+    top: 20px;
+    left: 20px;
+    position: fixed;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+}
+
+.top-panel__logo {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 30px;
+    column-gap: 10px;
+}
+
+.top-panel__logo-text {
+    font-size: 2.5rem
+}
+
+.top-panel__button-functions {
+
+    width: 3rem;
+    height: 3rem;
+    background: none;
+    border: none;
+}
+
+.top-panel__functions {
+    display: block;
+}
+
+.top-panel__button-functions:hover {
+    cursor: pointer;
+}
+
+.top-panel__item-icon-button {
+    width: 30px;
+    height: 30px;
+}
+
+.top-panel__logo:hover {
+    cursor: pointer;
+}
+
+.top-panel__logo:hover .logo-menu {
+    display: block;
+}
+
+.logo-menu__item-button {
+    font-size: 16px;
+}
+
