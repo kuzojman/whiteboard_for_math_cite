@@ -169,6 +169,17 @@ const SCALE_STEP = 0.05;
 
 let currentValueZoom = 1;
 
+let currentRadiusCursor = 10;
+
+const cursorUser = new fabric.Circle({              // Представление курсора
+  radius: currentRadiusCursor,
+  fill: 'red',
+  left: -10,
+  top: -10,
+  originX: 'center',
+  originY: 'center',
+});
+
 canvas.on('mouse:wheel',function(opt){
   const delta =opt.e.deltaY;
   handleScale(delta);
@@ -212,6 +223,28 @@ const handleUpKeySpace = (event) => {
       }
   }
 }             // Отпускание пробела
+
+let cursorCoordinateOtherUsers;
+
+const handleMouseMovement = (event) => {
+  const cursorCoordinate = canvas.getPointer(event.e);
+  let data = {
+      userId: socket.id,
+      coords: cursorCoordinate,
+  }
+  socket.emit('cursor-data', data);
+}                                                   // Курсор
+const getCursorData = (data) => {
+  if(data.userId !== socket.id) {
+
+      cursorCoordinateOtherUsers = data.cursorCoordinates;
+      cursorUser.left = data.cursorCoordinates.x;
+      cursorUser.top = data.cursorCoordinates.y;
+      canvas.add(cursorUser);
+  }
+  canvas.renderAll();
+}                                                   // Получение координат курсора
+
 
 
 function handleScale (delta)
@@ -1456,6 +1489,7 @@ function removeEvents() {
   canvas.off("mouse:down");
   canvas.off("mouse:up");
   canvas.off("mouse:move");
+  canvas.on("mouse:move", (event) => handleMouseMovement(event))
 }
 
 function hexToRgbA(hex, figures_opacity) {
@@ -1995,3 +2029,6 @@ canvas.on('text:editing:entered', () => {
         }
     });
 });
+
+canvas.on('mouse:move', handleMouseMovement);         // Отображение чужих курсоров
+socket.on('cursor-data', getCursorData);              // отображаем курсоры чужих пользователей
