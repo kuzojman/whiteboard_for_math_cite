@@ -292,6 +292,11 @@ buttonText.addEventListener('click', () => {
                     editable: true,
                 })
                 canvas.add(text);
+                //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+                socket.emit("text:added", {"board_id": board_id, "object": serialize_object(text)});
+ //               socket.emit('text:added',text)
+                console.log(text);
+
                 canvas.setActiveObject(text);
                 text.enterEditing();
                 text.selectAll();

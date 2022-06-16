@@ -1,308 +1,69 @@
+@import url("./blocks/scale-panel/scale-panel.css");
+@import url("./blocks/tool-panel/tool-panel.css");
+@import url("./blocks/top-panel/top-panel.css");
+@import url("./blocks/sub-tool-panel/sub-tool-panel.css");
+@import url("./blocks/logo-menu/logo-menu.css");
+@import url("./blocks/grid-panel/grid-panel.css");
+@import url("./blocks/formulas/formulas.css");
+@import url("./blocks/text-settings/text-settings.css");
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+ul {
+  list-style-type: none;
+}
+
+html {
+    font-size: 10px;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+html, body, .canvasWrapper
+{
+    width: 100vw;
+    height: 100vh;
+}
+
 #canvasId {
-  border: 1px solid red;
+    border: 1px solid red;
+    display: block;
 }
 
 .canvasWrapper {
-  position: relative;
-  z-index: 2;
-}
-
-.scale {
-  display: flex;
-  border-radius: 5ex;
-  background: rgb(255, 252, 252);
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-  padding: 5px 10px;
-  cursor: pointer;
-  z-index: 3;
-  padding: 10px;
-  position: fixed;
-  right: 10px;
-  bottom: 10px;
+    position: relative;
+    z-index: 1;
 }
 
 .scale__subtitle {
-  margin-right: 10px;
+    margin-right: 10px;
 }
 
 .scale__value,
-.scale__subtitle {
-  font-size: 30px;
-}
-
-.config {
-  display: none;
+.scale__subtitle,
+.header__title {
+    font-size: 30px;
+    font-weight: bold;
 }
 
 .settings-panel__button_active {
-  background-color: yellow;
+    background-color: yellow;
 }
 
-
-.grid-panel {
-  position: fixed;
-  top: 20px;
-  right: 30px;
-  width: 170px;
-  z-index: 3;
+.tool-panel__item {
+    position: relative;
 }
 
-.grid-panel__title {
-  padding: 10px;
-  z-index: 2;
-  cursor: pointer;
-  background-color: white;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-  border-radius: 15px;
-  font-size: 2.5rem;
-  font-weight: bold;
-  text-align: center;
-}
-
-.grid-panel__list-wrapper {
+#uploader {
   display: none;
-  padding-top: 5px;
-}
-
-.grid-panel:hover .grid-panel__list-wrapper {
-  display: block;
-}
-
-
-.grid-panel__list {
-  background-color: white;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-  font-size: 16px;
-  padding: 5px;
-  border-radius: 15px;
-}
-
-.grid-panel__item {
-  padding: 5px;
-  border-bottom: 1px solid black;
-}
-
-
-.grid-panel__item:last-child {
-  border-bottom: none;
-}
-
-.grid-panel__item:hover {
-  cursor: pointer;
-  background-color: rgba(161, 157, 157, 0.31);
-}
-
-
-.text-settings {
-  display: none;
-  padding: 5px 10px;
-  top: 2px;
-  left: 55px;
-  position: absolute;
-  background-color: white;
-  border-radius: 10px;
-  z-index: 10;
-  grid-template-columns: auto 20px 15px;
-  column-gap: 5px;
-  width: 250px;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-}
-
-.text-settings_active {
-  display: grid;
-}
-
-.text-settings__font-family-selected {
-  font-size: 20px;
-}
-
-.text-settings__button-open-list {
-  width: 20px;
-  height: 20px;
-}
-
-.text-settings__button-open-list > img {
-  width: 15px;
-  height: 15px;
-}
-
-
-
-
-.text-settings__font-family {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.text-settings__select-font-family {
-  font-size: 20px;
-  padding: 5px;
-  border-right: 2px solid black;
-}
-
-.text-settings__input-font-size {
-  width: 40px;
-}
-
-.text-settings__font-size {
-  display: flex;
-  align-items: center;
-}
-
-.text-settings__font-size-value {
-  font-size: 22px;
-  margin-right: 5px;
-}
-
-.text-settings__button-font-size-wrapper {
-  width: 15px;
-  display: flex;
-  flex-direction: column;
-
-}
-
-.text-settings__button-font-size-wrapper > button {
-  width: 15px;
-  height: 15px;
-}
-
-.text-settings__button-font-size-wrapper > button > img {
-  width: 10px;
-  height: 10px;
-}
-
-.text-settings__font-family {
-  position: relative;
-}
-
-.text-settings__font-family-list_wrapper {
-  display: none;
-  border-radius: 10px;
-  padding: 10px;
-  position: absolute;
-  background-color: white;
-  top: 45px;
-  left: -9px;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-  width: 195px;
-}
-
-.text-settings__font-family-item {
-  font-size: 20px;
-  border-bottom: 2px solid black;
-}
-
-.text-settings__font-family-item:hover {
-  background-color: #d7d7d7;
-}
-
-.text-settings__font-family-item:last-child {
-  border-bottom: none;
-}
-
-.text-settings__font-family_OpSan {
-  font-family: "Open Sans", sans-serif;
-  font-weight: 400;
-}
-
-.text-settings__font-family_Mon {
-  font-family: "Montserrat", sans-serif;
-  font-weight: 400;
-}
-
-.text-settings__font-family_Rob {
-  font-family: "Roboto", sans-serif;
-  font-weight: 400;
-}
-
-.text-settings__font-family-list_wrapper_active {
-  display: block;
-}
-
-
-
-
-
-
-.form-text__textarea {
-  padding: 10px;
-  font-size: 30px;
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-  margin-bottom: 5px;
-}
-
-.form-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.form-text__button-submit {
-  font-size: 20px;
-  border-radius: 15px;
-  border: none;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-  background-color: white;
-  padding: 15px;
-}
-
-.form-text__input {
-  margin-bottom: 10px;
-  width: 100%;
-  background: none;
-  outline: none;
-  border: none;
-  font-size: 25px;
-}
-
-.modal-text-wrapper {
-  position: fixed;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-}
-
-.modal-text-wrapper_active {
-  display: flex;
-}
-.form-formulas__wrapper {
-  position: fixed;
-  display: none;
-  top: 500px;
-  left: 200px;
-  z-index: 30;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: white;
-  box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-  border-radius: 15px;
-  padding: 10px;
-}
-
-.form-formulas__wrapper_visible {
-  display: flex;
-}
-
-.form-formulas__field {
-  border-radius: 15px;
-  padding: 15px;
-  font-size: 25px;
-  margin-bottom: 10px;
-}
-
-.button__add-formulas {
-  width: 100%;
-  font-size: 20px;
-  border-radius: 15px;
-  border: none;
-  padding: 15px;
-}
-.sub-tool-panel_visible {
-  padding-left: 10px;
-  display: block;
 }

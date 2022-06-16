@@ -106,10 +106,15 @@ const uploadButton = document.querySelector('.tool-panel__item-button-uploader')
 
 
       socket.emit("upload_to_aws",e.target.result,response=>{
-        var image = new Image(1,1);
-        
-        image.src = response/////e.target.result;
-        console.log(response,image);
+  //      var image = new Image(1,1);
+        const image = document.createElement('img')
+        document.body.append(image);
+        setTimeout(() => {
+          image.src = response/////e.target.result;
+          console.log(response,image);
+        }, 1500);
+
+
         image.onerror=function(e){
           console.log("imageerror",e)
         }

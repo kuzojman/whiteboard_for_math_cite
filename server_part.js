@@ -211,8 +211,8 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("figure_copied", object_pass);
   });
 
-  socket.on("text:add", (object_pass) => {
-    socket.broadcast.to(socket.board_id).emit("text:add", object_pass);
+  socket.on("text:added", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("text:added", object_pass);
   });
 
   socket.on("canvas_save_to_json", async canvas_pass => {
@@ -243,14 +243,14 @@ io.on("connection", async socket => {
   socket.on('upload_to_aws', (image_pass,callback) =>{
 
         var s3 = new S3({
-            accessKeyId: '',
-            secretAccessKey: '',
-            endpoint: 'https://hb.bizmrg.com',
+            accessKeyId: process.env.ACCESS_KEY,
+            secretAccessKey: process.env.SECRET_ACCESS_KEY,
+            endpoint: process.env.END_POINT,
             apiVersion: 'latest'
         });
         //s3.createBucket()
         // Загрузить объект
-        const fileContent = Buffer.from(image_pass.replace('data:image/jpeg;base64,',""),'base64')  ;
+        const fileContent = Buffer.from(image_pass.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
         console.log(image_pass);
 
         let name_obj = makeid(32)+'.jpg';

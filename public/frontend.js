@@ -679,10 +679,13 @@ let circle ;
         //canvas.loadFromJSON(e);
     });
 
-    socket.on('text:add', e =>
+    socket.on('text:added', e =>
     {
-        console.log('text:add',e);
-        canvas.loadFromJSON(e);
+        console.log('text:added',e);
+        const text = new fabric.IText(e);
+        canvas.add(text);
+        canvas.renderAll();
+        //canvas.loadFromJSON(e);
     });
 
 
@@ -1380,3 +1383,29 @@ toolPanelList.addEventListener('click', (event) => {
 canvas.on('mouse:move', handleMouseMovement);         // Отображение чужих курсоров
 socket.on('cursor-data', getCursorData);              // отображаем курсоры чужих пользователей
 
+
+const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > input');
+const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
+const fontColorListWrapper2 = document.querySelector('.setting-item__font-color-list-wrapper');
+const fontColorInput2 = document.querySelector('.setting-item__input-font-color > input');
+
+
+const handleClickOpenInputChangeColor = () => {
+  subToolPanel.classList.add('sub-tool-panel_visible');
+}
+const handleClickCloseInputChangeColor = (event) => {
+  if (event.target !== inputChangeColor) {
+    subToolPanel.classList.remove('sub-tool-panel_visible');
+  } else if(event.target !== fontColorInput2) {
+    fontColorListWrapper2.classList.remove('active');
+  } else {
+
+  }
+}
+
+window.addEventListener('click', handleClickCloseInputChangeColor);
+inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
+
+fontColorInput2.addEventListener('click', () => { fontColorListWrapper2.classList.add('active') })
+
+fontColorInput2.addEventListener('change', (e) => { canvas.getActiveObject().set("fill", e.target.value) })
