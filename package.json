@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.1156.0",
     "dotenv": "^16.0.0",
     "express": "^4.17.2",
     "fabric": "^5.2.1",
