@@ -99,9 +99,10 @@ io.on("connection", async socket => {
   });
   socket.on('cursor-data', (data) => {
     const cursorDataUser = arrayOfUserCursorCoordinates.find(item => item.userId === data.userId);
-    if(cursorDataUser) {
+    if(cursorDataUser) 
+    {
         cursorDataUser.cursorCoordinates = data.coords;
-        io.emit('cursor-data', cursorDataUser);
+        socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
 });
 
@@ -309,15 +310,17 @@ io.on("connection", async socket => {
 
 
   socket.on('disconnect', () => {
-    const index = arrayAllUsers.findIndex(item => item === socket.id);
-    const index2 = arrayOfUserCursorCoordinates.findIndex(item => item.userId === socket.id);
-
+    io.to(socket.board_id).emit('coursour_disconected', socket.id);
+    //const index  = arrayAllUsers.findIndex(item => item === socket.id);
+    //const index2 = arrayOfUserCursorCoordinates.findIndex(item => item.userId === socket.id);
+/*
     if(index !== -1) {
         arrayAllUsers.splice(index, 1)
     }
     if(index2 !== -1){
         arrayOfUserCursorCoordinates.splice(index2, 1)
-    }
+    }*/
+
   });
 });
 
