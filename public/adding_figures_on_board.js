@@ -120,7 +120,7 @@ const uploadButton = document.querySelector('.tool-panel__item-button-uploader')
         }
         image.onload = function() 
         {
-          var img = new fabric.Image(image);
+          let img = new fabric.Image(image);
           img.src = image.src;
           console.log(img,'12345678965534343434343434343434')
           img.set(
@@ -130,6 +130,7 @@ const uploadButton = document.querySelector('.tool-panel__item-button-uploader')
           });
           img.scaleToWidth(600);
           canvas.add(img).setActiveObject(img).renderAll();
+          socket.emit("image:add", {src: img.src, id_of: img.id});
           console.log("работает!!!!!!!!!!!!!!!!!! загружается картинка!");
         }
       });

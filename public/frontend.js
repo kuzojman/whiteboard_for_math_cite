@@ -2,7 +2,7 @@
 
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
-
+/*
 protobuf.load('./awesome.json',function(err,root){
   if(err)
   {
@@ -12,7 +12,7 @@ protobuf.load('./awesome.json',function(err,root){
     console.log(root);
   }
 })
-
+*/
 
 const MAX_ZOOM_IN  = 4;
 const MAX_ZOOM_OUT = 0.05;
@@ -87,8 +87,33 @@ const handleMouseMovement = (event) => {
       coords: cursorCoordinate,
   }
   socket.emit('cursor-data', data);
-}                                                   // Курсор
+}   
+
+let colors = ['#ff0000','#0f71d3','#14ff00'];
+let color_index =0;                                            // Курсор
 const getCursorData = (data) => {
+
+  let existing_coursor = canvas._objects.find(item=>item.socket_id==data.userId)
+  if(!existing_coursor)
+  {
+    cursorUser.socket_id=data.userId;
+    cursorUser.fill=colors[color_index];
+    color_index++;
+    if(!colors[color_index]){
+      color_index=0;
+    }
+    //cursorUser.left = data.cursorCoordinates.x
+    canvas.add(cursorUser);
+  }else{
+    existing_coursor.set({
+      top:  data.cursorCoordinates.y,
+      left: data.cursorCoordinates.x,
+    }); 
+  }
+
+
+
+/*
   if(data.userId !== socket.id) {
 
       cursorCoordinateOtherUsers = data.cursorCoordinates;
@@ -96,6 +121,7 @@ const getCursorData = (data) => {
       cursorUser.top = data.cursorCoordinates.y;
       canvas.add(cursorUser);
   }
+  */
   canvas.renderAll();
 }                                                   // Получение координат курсора
 
@@ -468,6 +494,7 @@ let circle ;
         console.log('line:add',line_taken)
 
         line = new fabric.Line(line_taken.points, {
+          id: line_taken.id,
           strokeWidth: line_taken.width,
           fill: line_taken.fill,//'#07ff11a3',
           stroke: line_taken.stroke,//'#07ff11a3',
@@ -494,10 +521,24 @@ let circle ;
 
     socket.on('image:add', function(img_taken)
     {
-      
-        var img = new fabric.Image(img_taken);       
-        canvas.add(img);
-        console.log("image:add",img);        
+      const image = document.createElement('img')
+      image.src = img_taken.src
+
+      document.body.append(image);
+
+      image.onload = function() 
+      {
+        let img = new fabric.Image(image);
+        img.id = img_taken.id_of;
+        img.src = image.src;
+        img.set(
+        {
+          left: 100,
+          top: 60
+        });
+        img.scaleToWidth(600);
+        canvas.add(img).setActiveObject(img).renderAll();
+      }   
         //'canvas.freeDrawingBrush.width = width_taken'
     });
 
@@ -545,6 +586,7 @@ let circle ;
     canvas.on('object:modified', e =>
     {
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      
       socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
@@ -556,6 +598,7 @@ let circle ;
       if(!object.id)
       {
         object.set('id',Date.now().toString(36) + Math.random().toString(36).substring(2));
+        console.log("create new id",object.id)
         object.toJSON = (function(toJSON){
           return function(){
             return fabric.util.object.extend(toJSON.call(this),{"id":this.id})
@@ -601,7 +644,11 @@ let circle ;
             }
           });
         }
-        socket.emit("object:added", {"board_id": board_id, "object": serialize_object(object)});
+        if(!object.socket_id)
+        {
+          socket.emit("object:added", {"board_id": board_id, "object": serialize_object(object)});
+        }
+
         //serialize_canvas(canvas);
       }
       
@@ -1152,6 +1199,7 @@ function drawLine(type_of_line) {
     });
     canvas.add(line);
     socket.emit("line:add", {
+      id: line.id,
       points: points,
       fill:line.fill,
       width: line.strokeWidth,
@@ -1281,6 +1329,7 @@ function send_part_of_data(e) {
         //console.log('group_index',find_object_index(e.transform.target));
         e.transform.target.object_index = find_object_index(e.transform.target);
         data.objects.push({
+          id: e.transform.target.id,
           index: object_index,
           object:e.transform.target,
           top_all: json_canvas.objects[object_index].top,
@@ -1294,6 +1343,7 @@ function send_part_of_data(e) {
         let object_index = find_object_index(object);
         object.object_index = object_index;
         data.objects.push({
+          id:object.id,
           object: object,
           index: object_index,
           top_all: json_canvas.objects[object_index].top,
@@ -1311,9 +1361,12 @@ function send_part_of_data(e) {
     let object_index = find_object_index(e.target);
 
     e.target.object_index = object_index;
+    console.log('sending_object',canvas._objects[object_index])
 
     socket.emit("object:modified", {
-      object: e.target,
+      //object: e.target,
+      id: canvas._objects[object_index].id,
+      object: canvas._objects[object_index],
       index: object_index,
     });
   }
@@ -1324,8 +1377,12 @@ function recive_part_of_data(e) {
   console.log("get something", e);
   if (e.objects) {
     for (const object of e.objects) {
-      let d = canvas.item(object.index);
-
+      //let d = canvas.item(object.index);
+      let d = canvas._objects.find(item=>item.id==object.id);
+      console.log(object.id,d);
+      if(!d){
+        continue;
+      }
       d.set({
         top: object.top_all, //+object.object.top,
         left: object.left_all, //+object.object.left
@@ -1335,8 +1392,13 @@ function recive_part_of_data(e) {
       });
     }
   } else {
-    let d = canvas.item(e.index);
+    //let d = canvas.item(e.index);
+    let d = canvas._objects.find(item=>item.id==e.id);
+    console.log(d,e.object.id)
     //d.set(e.object);
+    if(!d){
+      return false
+    }
     d.set({
       top: e.object.top, //+object.object.top,
       left: e.object.left, //+object.object.left
@@ -1382,6 +1444,17 @@ toolPanelList.addEventListener('click', (event) => {
 
 canvas.on('mouse:move', handleMouseMovement);         // Отображение чужих курсоров
 socket.on('cursor-data', getCursorData);              // отображаем курсоры чужих пользователей
+
+
+socket.on('coursour_disconected', function(user_id){
+
+  let index_of_existing_coursor = canvas._objects.findIndex(item=>item.socket_id==user_id);
+  (canvas._objects).splice(index_of_existing_coursor,1);
+  canvas.renderAll();
+}
+
+);
+
 
 
 const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > input');
