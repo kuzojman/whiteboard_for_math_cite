@@ -623,14 +623,13 @@ let circle ;
           })
           const error = 30;
           let bezierCurves = fitCurve(massiv_of_points, error);
-          
-          if(bezierCurves[0])
+          if(!bezierCurves[0])
           {
-            let bezierProcessedPath = [
-              ['M',...bezierCurves[0][0]]
-            ];
+            console.log('bezier error',bezierCurves,massiv_of_points);
           }
-
+          let bezierProcessedPath = [
+            ['M',...bezierCurves[0][0]]
+          ];
 
           for (let i = 0; i < bezierCurves.length; i++)
           {
