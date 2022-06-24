@@ -2,7 +2,7 @@
 
 //import { canvas } from "./some_functions.js"
 const canvas = new fabric.Canvas(document.getElementById("canvasId"));
-
+/*
 protobuf.load('./awesome.json',function(err,root){
   if(err)
   {
@@ -12,7 +12,7 @@ protobuf.load('./awesome.json',function(err,root){
     console.log(root);
   }
 })
-
+*/
 
 const MAX_ZOOM_IN  = 4;
 const MAX_ZOOM_OUT = 0.05;
@@ -494,6 +494,7 @@ let circle ;
         console.log('line:add',line_taken)
 
         line = new fabric.Line(line_taken.points, {
+          id: line_taken.id,
           strokeWidth: line_taken.width,
           fill: line_taken.fill,//'#07ff11a3',
           stroke: line_taken.stroke,//'#07ff11a3',
@@ -585,6 +586,7 @@ let circle ;
     canvas.on('object:modified', e =>
     {
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+      
       socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
@@ -642,7 +644,11 @@ let circle ;
             }
           });
         }
-        socket.emit("object:added", {"board_id": board_id, "object": serialize_object(object)});
+        if(!object.socket_id)
+        {
+          socket.emit("object:added", {"board_id": board_id, "object": serialize_object(object)});
+        }
+
         //serialize_canvas(canvas);
       }
       
@@ -1193,6 +1199,7 @@ function drawLine(type_of_line) {
     });
     canvas.add(line);
     socket.emit("line:add", {
+      id: line.id,
       points: points,
       fill:line.fill,
       width: line.strokeWidth,
@@ -1322,6 +1329,7 @@ function send_part_of_data(e) {
         //console.log('group_index',find_object_index(e.transform.target));
         e.transform.target.object_index = find_object_index(e.transform.target);
         data.objects.push({
+          id: e.transform.target.id,
           index: object_index,
           object:e.transform.target,
           top_all: json_canvas.objects[object_index].top,
@@ -1335,6 +1343,7 @@ function send_part_of_data(e) {
         let object_index = find_object_index(object);
         object.object_index = object_index;
         data.objects.push({
+          id:object.id,
           object: object,
           index: object_index,
           top_all: json_canvas.objects[object_index].top,
@@ -1368,8 +1377,12 @@ function recive_part_of_data(e) {
   console.log("get something", e);
   if (e.objects) {
     for (const object of e.objects) {
-      let d = canvas.item(object.index);
-
+      //let d = canvas.item(object.index);
+      let d = canvas._objects.find(item=>item.id==object.id);
+      console.log(object.id,d);
+      if(!d){
+        continue;
+      }
       d.set({
         top: object.top_all, //+object.object.top,
         left: object.left_all, //+object.object.left

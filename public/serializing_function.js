@@ -135,6 +135,9 @@ function serialize_canvas(canvas)
       my_dict=serializer_dictionary;
     }
     
+    if(!object.socket_id)
+    {
+
 
     for (const key in object) {
 
@@ -165,9 +168,10 @@ function serialize_canvas(canvas)
  //       replaced_object[key]=object[key]
  //     }
     }
-
+  
     result.push(replaced_object);
-  });
+  }
+});
   
   console.log('new_result',result);
   return result//JSON.stringify(result);
