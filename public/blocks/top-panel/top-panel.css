@@ -53,3 +53,19 @@
 .logo-menu__item-button {
     font-size: 16px;
 }
+@media (max-height: 992px) {
+    .top-panel__logo-text {
+        font-size: 15px;
+    }
+    .top-panel__button-functions {
+        width: 2rem;
+        height: 2rem;
+    }
+    .top-panel__item-icon-button {
+        width: 20px;
+        height: 20px;
+    }
+    .top-panel__logo { 
+        grid-template-columns: 1fr 20px;
+    }
+  }

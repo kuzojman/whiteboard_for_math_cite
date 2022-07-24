@@ -50,3 +50,12 @@
     cursor: pointer;
     background-color: rgba(161, 157, 157, 0.31);
 }
+
+@media (max-height: 992px) {
+    .grid-panel__title {
+        font-size: 15px;
+    }
+    .grid-panel {
+        width: 80px;
+    }
+  }
