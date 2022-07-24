@@ -1485,3 +1485,38 @@ inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
 fontColorInput2.addEventListener('click', () => { fontColorListWrapper2.classList.add('active') })
 
 fontColorInput2.addEventListener('change', (e) => { canvas.getActiveObject().set("fill", e.target.value) })
+
+
+
+
+const buttonIncreaseScale = document.querySelector(".scale__button-increase-scale");
+const buttonDecreaseScale = document.querySelector(".scale__button-decrease-scale");
+
+buttonIncreaseScale.addEventListener("click", (event) => {
+  event.preventDefault();
+  if((parseFloat(currentValueZoom) + SCALE_STEP*2).toFixed(2) > MAX_ZOOM_IN){
+    return;
+  } else {
+    currentValueZoom = (parseFloat(currentValueZoom) + SCALE_STEP*2).toFixed(2);
+  }
+
+  const center = canvas.getCenter();
+  const centerPoint = new fabric.Point(center.left, center.top);
+  canvas.zoomToPoint(centerPoint, currentValueZoom);
+  as.textContent = (currentValueZoom * 100).toFixed(0) + '%';
+
+})
+
+buttonDecreaseScale.addEventListener("click", (event) => {
+  event.preventDefault();
+  if((parseFloat(currentValueZoom) - SCALE_STEP*2).toFixed(2) < MAX_ZOOM_OUT){
+    return;
+  } else {
+    currentValueZoom = (parseFloat(currentValueZoom) - SCALE_STEP*2).toFixed(2);
+  }
+
+  const center = canvas.getCenter();
+  const centerPoint = new fabric.Point(center.left, center.top);
+  canvas.zoomToPoint(centerPoint, currentValueZoom);
+  as.textContent = (currentValueZoom * 100).toFixed(0) + '%';
+})

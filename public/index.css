@@ -67,3 +67,9 @@ html, body, .canvasWrapper
 #uploader {
   display: none;
 }
+@media (max-height: 992px) {
+    .scale__value,
+    .scale__subtitle {
+        font-size: 15px;
+    }
+  }

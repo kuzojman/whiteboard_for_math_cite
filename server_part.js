@@ -34,7 +34,9 @@ const arrayOfUserCursorCoordinates = [];
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+  maxHttpBufferSize: 1e7
+});
 
 const port = process.env.PORT || 3000;
 
@@ -252,7 +254,7 @@ io.on("connection", async socket => {
         //s3.createBucket()
         // Загрузить объект
         const fileContent = Buffer.from(image_pass.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
-        console.log(image_pass);
+        console.log('start_upload');
 
         let name_obj = makeid(32)+'.jpg';
         var params = {
