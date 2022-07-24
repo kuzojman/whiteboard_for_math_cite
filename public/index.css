@@ -73,3 +73,6 @@ html, body, .canvasWrapper
         font-size: 15px;
     }
   }
+.canvas-img {
+    display: none;
+}
