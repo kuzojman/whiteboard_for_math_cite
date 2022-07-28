@@ -47,3 +47,37 @@
     background: none;
     font-size: 16px;
 }
+
+
+@media screen and (max-device-width: 767px) and (orientation: portrait),
+screen and (max-device-height: 767px) and (orientation: landscape) {
+    .logo-menu__item{
+        border-radius: 0;
+
+    }
+    .logo-menu{
+        top: 100%;
+        /* bottom: 0; */
+        padding-top: 0;
+    }
+    .logo-menu__list{
+        width: 50vw;
+        border-radius: 0;
+        box-shadow: none;
+        border: 1px solid #a0a0a0;
+    }
+    .logo-menu__item{   
+        border-bottom: 1px solid #a0a0a0;
+        padding: 1.4rem;
+    }
+    .logo-menu__item:first-child {
+        border-top-right-radius: 0;
+        border-top-left-radius: 0;
+    }
+    
+    .logo-menu__item:last-child {
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+        border-bottom: none;
+    }
+}

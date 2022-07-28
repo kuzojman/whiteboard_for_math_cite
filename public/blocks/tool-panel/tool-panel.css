@@ -87,3 +87,56 @@
         height: 4rem;
     }
   }
+
+  @media screen and (max-device-width: 767px) and (orientation: portrait),
+  screen and (max-device-height: 767px) and (orientation: landscape){
+    .tool-panel{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        overflow-x:scroll;
+        overflow-y:hidden;
+        top:unset;
+        height: 6rem;
+        width: 100vw;
+        border: 1px solid #a0a0a0;
+        border-radius: 0px;
+        z-index: 3;
+        background: white;
+        box-shadow: none;
+    }
+    .tool-panel.full-screen{
+        height: 100%;
+        display: flex;
+        align-items: end;
+        background: rgba(205,205,205,0.9);
+    }
+    .tool-panel__list{
+        display: inline-flex;
+        flex-direction: row;
+        justify-content: space-between;
+        border-radius: 0px;
+        box-shadow: none;
+    }
+    .tool-panel__item{
+        width: 6rem;
+        height: 6rem;
+        
+    }
+    .tool-panel__item-button{
+        padding: 0.5rem;
+        border-right: 1px solid #a8a8a8;
+        border-radius: 0px;
+    }
+
+    .tool-panel__item:first-child > .tool-panel__item-button {
+        border-top-right-radius: 0px;
+        border-top-left-radius: 0px;
+    }
+    
+    .tool-panel__item:last-child > .tool-panel__item-button {
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 0px;
+    }
+}
