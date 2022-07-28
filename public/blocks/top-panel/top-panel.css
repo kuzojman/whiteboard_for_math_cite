@@ -2,7 +2,7 @@
     top: 20px;
     left: 20px;
     position: fixed;
-    z-index: 3;
+    z-index: 2;
     display: flex;
     align-items: center;
     background-color: white;
@@ -15,6 +15,7 @@
     display: grid;
     grid-template-columns: 1fr 30px;
     column-gap: 10px;
+    z-index: 3;
 }
 
 .top-panel__logo-text {
