@@ -42,13 +42,16 @@ canvas.on('mouse:wheel',function(opt){
   opt.e.stopPropagation();
 })
 
+const toolPanel = document.querySelector('.tool-panel');
 
 const handleChangeActiveButton = (newActiveButton) => {
   let button = newActiveButton;
   selectedButton.classList.remove('settings-panel__button_active');
+  toolPanel.classList.remove('full-screen');
   if(button){
       selectedButton = button;
       selectedButton.classList.add('settings-panel__button_active');
+      toolPanel.classList.add('full-screen');
   }
 }     // Смена выбранной кнопки на другую актинвую
 
@@ -168,18 +171,15 @@ let isCursorMove = false;
 
 function get_board_id() {
   const board_id =  document.getElementById("board_id").attributes["board"].value;
-  console.log('>>>>>>' + board_id);
+  // console.log('>>>>>>' + board_id);
   return board_id;
 }
 
 let board_id = get_board_id();
 let isDown = false;
 
-
-
 const buttonCursorMove = document.querySelector('#moving_our_board'); 
-console.log(buttonCursorMove);
-
+// console.log(buttonCursorMove);
 
 
 let isRendering = false;
@@ -1430,13 +1430,51 @@ const toolPanelList = document.querySelector('.tool-panel__list');
 
 let selectedButton = freeDrawingButton;
 
+let getSiblings = function (e) {
+  // for collecting siblings
+  let siblings = []; 
+  // if no parent, return no sibling
+  if(!e.parentNode) {
+      return siblings;
+  }
+  // first child of the parent node
+  let sibling  = e.parentNode.firstChild;
+  // collecting siblings
+  while (sibling) {
+      if (sibling.nodeType === 1 && sibling !== e) {
+          siblings.push(sibling);
+      }
+      sibling = sibling.nextSibling;
+  }
+  return siblings;
+};
+
+
 
 toolPanelList.addEventListener('click', (event) => {
     let currentButton = event.target.closest('.tool-panel__item-button');
+
+    let siblings = getSiblings(currentButton);
+    if ( siblings.length>0 ){
+      if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
+        if(selectedButton === currentButton) {
+          toolPanel.classList.toggle('full-screen');
+        }else{
+          toolPanel.classList.add('full-screen');
+        }
+      }else{
+        toolPanel.classList.remove('full-screen')
+      }
+    }else{
+      toolPanel.classList.remove('full-screen')
+    }
+
     if(selectedButton === currentButton) {
-        selectedButton?.classList.toggle('settings-panel__button_active');
+        selectedButton.classList.toggle('settings-panel__button_active');
     } else {
-        if(currentButton) currentButton.classList.toggle('settings-panel__button_active');
+        if(currentButton) {
+          currentButton.classList.toggle('settings-panel__button_active');
+        }
         if(selectedButton) {
             selectedButton.classList.remove('settings-panel__button_active');
         }

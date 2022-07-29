@@ -74,8 +74,8 @@
     appearance: none;
     background-color: transparent;
     border: none;
-    width: 4rem;
-    height: 4rem;
+    width: 50px;
+    height: 50px;
     cursor: pointer;
 }
 
@@ -85,5 +85,43 @@
 }
 
 .sub-tool-panel__item-list-color-selection > input::-webkit-color-swatch-wrapper {
-    padding: .4rem;
+    padding: .50px;
+}
+
+@media screen and (max-device-width: 767px) and (orientation: portrait),
+screen and (max-device-height: 767px) and (orientation: landscape){
+    .sub-tool-panel{
+        border-radius: 0px;
+        bottom: 100%;
+        left: 0;
+        top: unset;
+        transform: none;
+        margin: 0;
+        padding-left:0px !important;
+    }
+    .sub-tool-panel__list{
+        border-radius: 0;
+        flex-direction: column-reverse;
+    }
+    .sub-tool-panel__item-list{
+        width: 6rem;
+        height: 6rem;
+    }
+    .sub-tool-panel__item-button{
+        padding: 0.5rem;
+        border: 1px solid #a0a0a0;
+        width: auto;
+        border-bottom:none;
+    }
+    
+    .sub-tool-panel__item-list:first-child .sub-tool-panel__item-button {
+        border-top-left-radius: 0px;
+        border-bottom-left-radius: 0px;
+    }
+    
+    .sub-tool-panel__item-list:last-child .sub-tool-panel__item-button {
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0px;
+        border-right: 1px solid #a0a0a0;
+    }
 }
