@@ -200,7 +200,7 @@ canvas.renderAll = () => {
 
 
 //
-//const socket = io('62.113.99.98:3000',{transports:['websocket']});
+//const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
 const socket = io();
 
