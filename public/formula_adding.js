@@ -6,7 +6,7 @@ const buttonShowModalWindowFormulas = document.querySelector('.button__show-moda
 const buttonAddFormulas = document.querySelector('.button__add-formulas');
 const fieldFormFormulas = document.querySelector('.form-formulas__field');
 let fabric_canvas = window.canvas;
-console.log(window.canvas);
+// console.log(window.canvas);
 
 buttonAddFormulas.addEventListener('click', (event) => {
     event.preventDefault();
