@@ -21,6 +21,9 @@
 .grid-panel__list-wrapper {
     display: none;
     padding-top: 5px;
+    width: 200px;
+    right: 0;
+    position: absolute;
 }
 
 .grid-panel.active .grid-panel__list-wrapper {
@@ -68,6 +71,11 @@
         width: auto !important;
         /* display: flex;
         flex-direction: column; */
+    }
+    .grid-panel__list-wrapper {
+        width: unset;
+        right: unset;
+        position: unset;
     }
     .grid-panel__title{
         width: 6rem;
