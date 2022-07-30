@@ -342,47 +342,28 @@ function downloadImage()
 
 
 const circleDrawingButton = document.querySelector('#circle_drawing_empty_button');
-circleDrawingButton.addEventListener("click",(e) => 
-{
-  drawcle("empty");
-});
+circleDrawingButton.addEventListener("click",(e) =>  drawcle("empty"));
+
 const circleDrawingButtonDotted = document.querySelector('#circle_with_stroke_line_button');
-circleDrawingButtonDotted.addEventListener("click",(e) => 
-{
-  drawcle("empty_with_stroke_line");
-});
+circleDrawingButtonDotted.addEventListener("click",(e) =>  drawcle("empty_with_stroke_line"));
+
 const circleDrawingButtonFilled = document.querySelector('#circle_filled');
-circleDrawingButtonFilled.addEventListener("click",(e) => 
-{
-  drawcle("filled");
-});
+circleDrawingButtonFilled.addEventListener("click",(e) =>  drawcle("filled"));
+
 const rectangleDrawingButton = document.querySelector('#rectangle_drawing_empty_button');
-rectangleDrawingButton.addEventListener("click",(e) => 
-{
-  drawrec("empty");
-});
+rectangleDrawingButton.addEventListener("click",(e) =>  drawrec("empty"));
+
 const rectangleDrawingButtonDotted = document.querySelector('#rectangle_with_stroke_line_button');
-rectangleDrawingButtonDotted.addEventListener("click",(e) => 
-{
-  drawrec("empty_with_stroke_line");
-});
+rectangleDrawingButtonDotted.addEventListener("click",(e) => drawrec("empty_with_stroke_line"));
+
 const rectangleDrawingButtonFilled = document.querySelector('#rectangle_filled');
-rectangleDrawingButtonFilled.addEventListener("click",(e) => 
-{
-  drawrec("filled");
-});
+rectangleDrawingButtonFilled.addEventListener("click",(e) =>  drawrec("filled"));
 
 const lineDrawingButton = document.querySelector('#line_drawing_button');
-lineDrawingButton.addEventListener("click",(e) => 
-{
-  drawLine('trivial');
-});
+lineDrawingButton.addEventListener("click",(e) => drawLine('trivial'));
 
 const lineDrawingButtonDOtted = document.querySelector('#line_drawing_button_dotted');
-lineDrawingButtonDOtted.addEventListener("click",(e) => 
-{
-  drawLine('dotted');
-});
+lineDrawingButtonDOtted.addEventListener("click",(e) => drawLine('dotted'));
 
 
 socket.on( 'connect', function()
@@ -1155,8 +1136,9 @@ drawingLineWidthEl.oninput = function()
 
 
 function drawLine(type_of_line) {
+  console.log(type_of_line);
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-  console.log(drawingLineWidthEl.value,canvas.freeDrawingBrush.width);
+  // console.log(drawingLineWidthEl.value,canvas.freeDrawingBrush.width);
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   drawingLineWidthEl.onchange = function() 
   {
@@ -1170,7 +1152,7 @@ function drawLine(type_of_line) {
     canvas.freeDrawingBrush.color = drawingColorEl.value;
     socket.emit("color:change",drawingColorEl.value);
   };
-  console.log(type_of_line);
+  // console.log(type_of_line);
   if (type_of_line == "trivial")
   {
     colour_inside = hexToRgbA('#000dff',5);
@@ -1182,7 +1164,7 @@ function drawLine(type_of_line) {
     stroke_line = 20;
   }
 
-  console.log(stroke_line);
+  // console.log(stroke_line);
 
   removeEvents();
   changeObjectSelection(false);
@@ -1453,14 +1435,18 @@ let getSiblings = function (e) {
 
 toolPanelList.addEventListener('click', (event) => {
     let currentButton = event.target.closest('.tool-panel__item-button');
-
-    let siblings = getSiblings(currentButton);
-    if ( siblings.length>0 ){
-      if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
-        if(selectedButton === currentButton) {
-          toolPanel.classList.toggle('full-screen');
+    
+    if(currentButton) {
+      let siblings = getSiblings(currentButton);
+      if ( siblings.length>0 ){
+        if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
+          if(selectedButton === currentButton) {
+            toolPanel.classList.toggle('full-screen');
+          }else{
+            toolPanel.classList.add('full-screen');
+          }
         }else{
-          toolPanel.classList.add('full-screen');
+          toolPanel.classList.remove('full-screen')
         }
       }else{
         toolPanel.classList.remove('full-screen')
@@ -1469,7 +1455,7 @@ toolPanelList.addEventListener('click', (event) => {
       toolPanel.classList.remove('full-screen')
     }
 
-    if(selectedButton === currentButton) {
+    if(selectedButton === currentButton && selectedButton) {
         selectedButton.classList.toggle('settings-panel__button_active');
     } else {
         if(currentButton) {
