@@ -195,7 +195,8 @@ canvas.renderAll = () => {
     }
 };
 
-
+const menu_logo = document.querySelector(".top-panel__logo");
+menu_logo.addEventListener('click', e=> e.currentTarget.classList.toggle('active') );
 
 
 

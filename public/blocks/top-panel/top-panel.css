@@ -19,7 +19,9 @@
 }
 
 .top-panel__logo-text {
-    font-size: 2.5rem
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
 }
 
 .top-panel__button-functions {
@@ -47,7 +49,11 @@
     cursor: pointer;
 }
 
-.top-panel__logo:hover .logo-menu {
+.top-panel__logo.active{
+    display: flex !important;
+}
+
+.top-panel__logo.active .logo-menu {
     display: block;
 }
 
@@ -71,8 +77,8 @@
     }
   }
 
-  @media screen and (max-device-width: 767px) and (orientation: portrait),
-  screen and (max-device-height: 767px) and (orientation: landscape){
+  @media screen and (max-device-width: 902px) and (orientation: portrait),
+  screen and (max-device-height: 902px) and (orientation: landscape){
   
     .top-panel{
         right: 0px;

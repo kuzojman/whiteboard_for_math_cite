@@ -49,8 +49,8 @@
 }
 
 
-@media screen and (max-device-width: 767px) and (orientation: portrait),
-screen and (max-device-height: 767px) and (orientation: landscape) {
+@media screen and (max-device-width: 902px) and (orientation: portrait),
+screen and (max-device-height: 902px) and (orientation: landscape) {
     .logo-menu__item{
         border-radius: 0;
 
