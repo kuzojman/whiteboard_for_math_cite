@@ -79,9 +79,6 @@
 
 
 @media (max-height: 992px) {
-    .tool-panel {
-        top: 100px;
-    }
     .tool-panel__item {
         width: 4rem;
         height: 4rem;
