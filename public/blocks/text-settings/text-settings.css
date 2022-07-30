@@ -369,3 +369,16 @@
 .active {
     display: block !important;
 }
+
+
+@media screen and (max-device-width: 767px) and (orientation: portrait),
+screen and (max-device-height: 767px) and (orientation: landscape){
+    .text-settings{
+        top: 60px;
+        left: 0px;
+        width: 100vw;
+        border-radius:0px;
+        box-shadow: none;
+        border: 1px solid #a0a0a0;
+    }
+}
