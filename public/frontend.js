@@ -1435,7 +1435,6 @@ let getSiblings = function (e) {
 
 toolPanelList.addEventListener('click', (event) => {
     let currentButton = event.target.closest('.tool-panel__item-button');
-    
     if(currentButton) {
       let siblings = getSiblings(currentButton);
       if ( siblings.length>0 ){
