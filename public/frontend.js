@@ -1,18 +1,54 @@
 //const { set } = require("express/lib/application");
 
 //import { canvas } from "./some_functions.js"
-const canvas = new fabric.Canvas(document.getElementById("canvasId"));
-/*
-protobuf.load('./awesome.json',function(err,root){
-  if(err)
-  {
-    console.log(err);
+
+
+// var defaultOnTouchStartHandler = fabric.Canvas.prototype._onTouchStart;
+// fabric.util.object.extend(fabric.Canvas.prototype, {
+//   _onTouchStart: function(e) {
+//     var target = this.findTarget(e);
+//     // if allowTouchScrolling is enabled, no object was at the
+//     // the touch position and we're not in drawing mode, then
+//     // let the event skip the fabricjs canvas and do default
+//     // behavior
+//     if (this.allowTouchScrolling && !target && !this.isDrawingMode) {
+//       // returning here should allow the event to propagate and be handled
+//       // normally by the browser
+//       return;
+//     }
+//     // otherwise call the default behavior
+//     defaultOnTouchStartHandler.call(this, e);
+//   }
+// });
+
+const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
+  allowTouchScrolling: true,
+});
+
+let selectionTimer = null;
+
+canvas.on('touch:gesture',function(e){
+  isGestureEvent = true;
+  if ( e.self.touches!==undefined && e.self.touches.length==2 ){
+    this.selection = false;
+    var lPinchScale = e.self.scale;  
+    var scaleDiff = (lPinchScale -1)/10 + 1;  // Slow down zoom speed    
+    const delta = e.self.scale-currentValueZoom;
+    // alert(JSON.stringify(e.self));
+    handleScale(delta);
+    as.textContent = (currentValueZoom * 100).toFixed(0)+'%';
+    canvas.zoomToPoint({x:e.self.x, y: e.self.y},currentValueZoom);
+    selectionTimer = setTimeout( enableSelection , 500);
   }
-  else{
-    console.log(root);
-  }
-})
-*/
+  
+});
+
+
+function ready() {
+  
+}
+document.addEventListener("DOMContentLoaded", ready);
+
 
 const MAX_ZOOM_IN  = 4;
 const MAX_ZOOM_OUT = 0.05;
@@ -70,13 +106,13 @@ const handleUpKeySpace = (event) => {
   if (event.code === 'Space' && !isDown) {
     isCursorMove = false;
     canvas.selection = true;
-      event.preventDefault();
-      canvas.toggleDragMode();
-      handleChangeActiveButton()
+    event.preventDefault();
+    canvas.toggleDragMode();
+    handleChangeActiveButton()
 
-      if(!isCursorMove) {
-          document.body.addEventListener('keydown', handleDownKeySpace)
-      }
+    if(!isCursorMove) {
+        document.body.addEventListener('keydown', handleDownKeySpace)
+    }
   }
 }             // Отпускание пробела
 
@@ -264,33 +300,48 @@ fabric.Canvas.prototype.toggleDragMode = function () {
       // // When MouseDown fires, we set the state to panning
       this.on("mouse:down", (e) => {
           state = STATE_PANNING;
-          lastClientX = e.e.clientX;
-          lastClientY = e.e.clientY;
+          if ( e.e.changedTouches!==undefined && e.e.changedTouches.length==1 ){ 
+            let lt_ = e.e.changedTouches[0];
+            lastClientX = lt_.clientX;
+            lastClientY = lt_.clientY;
+          }else{
+            lastClientX = e.e.clientX;
+            lastClientY = e.e.clientY;
+          }
       });
       // When the mouse moves, and we're panning (mouse down), we continue
       this.on("mouse:move", (e) => {
+          // console.log(state,lastClientX,lastClientY);
           if (state === STATE_PANNING && e && e.e) {
               // let delta = new fabric.Point(e.e.movementX, e.e.movementY); // No Safari support for movementX and movementY
               // For cross-browser compatibility, I had to manually keep track of the delta
               // console.log(e.e)
               // Calculate deltas
+              let x_,y_;
+              if ( e.e.changedTouches!==undefined && e.e.changedTouches.length==1 ){ 
+                let lt_ = e.e.changedTouches[0];
+                x_ = lt_.clientX;
+                y_ = lt_.clientY;
+              }else{
+                x_ = e.e.clientX;
+                y_ = e.e.clientY;
+              }
 
               if (lastClientX) {
-                  deltaX = e.e.clientX - lastClientX; // смещение по оси X
+                  deltaX = x_ - lastClientX; // смещение по оси X
                                                       // (если вниз передвигаемся, то
                                                       // это значение уменьшается иначе увеличивается)
               }
               if (lastClientY) {
-                  deltaY = e.e.clientY - lastClientY; // смещение по оси Y
+                  deltaY = y_ - lastClientY; // смещение по оси Y
                                                       // (если влево передвигаемся, то
                                                       // это значение увеличивается иначе уменьшается)
               }
               // Update the last X and Y values
-              lastClientX = e.e.clientX;
-              lastClientY = e.e.clientY;
+              lastClientX=x_;
+              lastClientY=y_;
               let delta = new fabric.Point(deltaX, deltaY);
               this.relativePan(delta);
-              // this.trigger("moved");
           }
       });
   } else {
@@ -1408,6 +1459,7 @@ const handleButtonCursorMoveClick = () => {
   canvas.toggleDragMode();
   buttonCursorMove.classList.toggle('settings-panel__button-cursor-move_active');
   canvas.isDrawingMode = false
+  canvas.allowTouchScrolling = true;
 } 
 buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 

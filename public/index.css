@@ -38,6 +38,7 @@ html, body, .canvasWrapper
 #canvasId {
     border: 1px solid red;
     display: block;
+    touch-action: manipulation;
 }
 
 .canvasWrapper {
