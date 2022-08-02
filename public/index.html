@@ -83,7 +83,7 @@
     </li>
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" onclick="downloadImage()">
+      <button class="tool-panel__item-button" id="modal_image_plugin">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-text"></use>
         </svg>
@@ -403,6 +403,24 @@
   </div>
 </div>
 
+<div id="modal_window">
+  <div class="modal_dialog"> 
+    <div class="modal_header">
+      <span>Выбор картинки </span>
+      <div id="modal_window_close">x</div>
+    </div>
+    <div class="modal_body">
+      <div class="modal_tabs">
+        <div class="modal_tab" data-id="tab-1">Математика</div>
+      </div>
+      <div class="modal_content">
+
+      </div>
+    </div>
+  </div>
+  
+</div>
+
 <div class="canvasWrapper">
     <canvas id="canvasId"></canvas>
 </div>
@@ -418,13 +436,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.X.X/dist/protobuf.js"></script>
-<script src="fabric.js"></script>
+<script src="./fabric.js"></script>
 <!-- <script src="https://unpkg.com/fabric@4.6.0/dist/fabric.js"></script> -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
 <script defer src="//unpkg.com/mathlive/dist/mathlive.min.js"></script>
 
 <script src="./fabric_plugin_undo_redo.js"></script>
+<script src="./fabric_modal.js"></script>
 
 <!--- <script src="./some_functions.js" type="module"></script> -->
 <script src="adding_figures_on_board.js" ></script>

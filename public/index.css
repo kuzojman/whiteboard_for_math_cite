@@ -6,6 +6,7 @@
 @import url("./blocks/grid-panel/grid-panel.css");
 @import url("./blocks/formulas/formulas.css");
 @import url("./blocks/text-settings/text-settings.css");
+@import url("./blocks/modal/modal.css");
 
 
 * {
