@@ -89,13 +89,17 @@
     background-color: #6c757d;
     border-color: #6c757d;
 }
-.modal_content{
-    display: flex;
+.modal_content > div{
+    display: none;
     padding: 1rem;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items:center;
     width: 100%;
     flex-wrap: wrap;
+}
+
+.modal_content > div.is-active{
+    display: flex !important;
 }
 
 .modal_image{

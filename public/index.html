@@ -84,9 +84,10 @@
 
     <li class="tool-panel__item">
       <button class="tool-panel__item-button js-modal-trigger" id="modal_image_plugin" data-target="modal_window">
-        <svg class="tool-panel__item-icon-button">
+        <i class="fas fa-image fa-2x has-text-link" aria-hidden="true" ></i>
+        <!-- <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-text"></use>
-        </svg>
+        </svg> -->
       </button>
     </li>
 
@@ -407,21 +408,21 @@
   <div class="modal-background"></div>
   <div class="modal-card">
     <header class="modal-card-head">
-      <p class="modal-card-title">Modal title</p>
+      <p class="modal-card-title">Выберите изображение</p>
       <button class="delete" aria-label="close"></button>
     </header>
     <section class="modal-card-body">
       <div class="tabs is-centered is-boxed is-medium">
-        <ul>
-          <li class="is-active">
-            <a>
-              <span class="is-small"><i class="fas fa-image" aria-hidden="true"></i></span>
+        <ul id="modal_list">
+          <li class="is-active" onclick="changeTab" data-target="modal-pictures">
+            <a >
+              <span class="is-small"><i class="fas fa-image  mr-2" aria-hidden="true"></i></span>
               <span>Pictures</span>
             </a>
           </li>
-          <li>
-            <a>
-              <span class="is-small"><i class="fas fa-music" aria-hidden="true"></i></span>
+          <li onclick="changeTab" data-target="modal-music">
+            <a >
+              <span class="is-small"><i class="fas fa-music mr-2" aria-hidden="true"></i></span>
               <span>Music</span>
             </a>
           </li>
@@ -432,8 +433,6 @@
       </div>
     </section>
     <footer class="modal-card-foot">
-      <button class="button is-success">Save changes</button>
-      <button class="button">Cancel</button>
     </footer>
   </div>
 </div>

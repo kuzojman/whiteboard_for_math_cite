@@ -1511,10 +1511,14 @@ toolPanelList.addEventListener('click', (event) => {
     }
 
     if(selectedButton === currentButton && selectedButton) {
-        selectedButton.classList.toggle('settings-panel__button_active');
+        if ( !selectedButton.classList.contains('js-modal-trigger') ){
+          selectedButton.classList.toggle('settings-panel__button_active');
+        }
     } else {
         if(currentButton) {
-          currentButton.classList.toggle('settings-panel__button_active');
+          if ( !currentButton.classList.contains('js-modal-trigger') ){
+            currentButton.classList.toggle('settings-panel__button_active');
+          }
         }
         if(selectedButton) {
             selectedButton.classList.remove('settings-panel__button_active');
