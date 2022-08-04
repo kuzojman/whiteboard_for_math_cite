@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1,user-scalable=yes">
     <title>Flask_Chat_App</title>
     <link rel="icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon.ico" type="image/png">
     <link href="./index.css" rel="stylesheet"/> 
@@ -83,10 +83,11 @@
     </li>
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" onclick="downloadImage()">
-        <svg class="tool-panel__item-icon-button">
+      <button class="tool-panel__item-button js-modal-trigger" id="modal_image_plugin" data-target="modal_window">
+        <i class="fas fa-image fa-2x has-text-link" aria-hidden="true" ></i>
+        <!-- <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-text"></use>
-        </svg>
+        </svg> -->
       </button>
     </li>
 
@@ -403,6 +404,39 @@
   </div>
 </div>
 
+<div class="modal" id="modal_window">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Выберите изображение</p>
+      <button class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+      <div class="tabs is-centered is-boxed is-medium">
+        <ul id="modal_list">
+          <li class="is-active" onclick="changeTab" data-target="modal-pictures">
+            <a >
+              <span class="is-small"><i class="fas fa-image  mr-2" aria-hidden="true"></i></span>
+              <span>Pictures</span>
+            </a>
+          </li>
+          <li onclick="changeTab" data-target="modal-music">
+            <a >
+              <span class="is-small"><i class="fas fa-music mr-2" aria-hidden="true"></i></span>
+              <span>Music</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class=" modal_content">
+
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+    </footer>
+  </div>
+</div>
+
 <div class="canvasWrapper">
     <canvas id="canvasId"></canvas>
 </div>
@@ -417,17 +451,15 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-
-
-
-
 <script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.X.X/dist/protobuf.js"></script>
-<script src="https://unpkg.com/fabric@4.6.0/dist/fabric.js"></script>
+<script src="./fabric.js"></script>
+<!-- <script src="https://unpkg.com/fabric@4.6.0/dist/fabric.js"></script> -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
 <script defer src="//unpkg.com/mathlive/dist/mathlive.min.js"></script>
 
 <script src="./fabric_plugin_undo_redo.js"></script>
+<script src="./fabric_modal.js"></script>
 
 <!--- <script src="./some_functions.js" type="module"></script> -->
 <script src="adding_figures_on_board.js" ></script>
