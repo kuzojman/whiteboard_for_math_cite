@@ -240,9 +240,9 @@ menu_grid.addEventListener('click', e=> e.currentTarget.classList.toggle('active
 
 
 //
-//const socket = io('62.113.99.98:3000',{transports:['websocket']});
+const socket = io('localhost:3000',{transports:['websocket']});
 
-const socket = io();
+// const socket = io();
 
 function chunk (arr, len) {
 

@@ -54,9 +54,10 @@ function closeImagesModal(){
  * Вставляем картинку на панель
  * @param {*} url 
  */
-function insertImageOnBoart(url){
+function insertImageOnBoard(url){
     fabric.Image.fromURL(url, function(myImg) {
-      canvas.add(myImg); 
+      canvas.add(myImg).setActiveObject(myImg).renderAll(); 
+      // canvas.add(img)
     });
     closeAllModals();
 }
@@ -69,7 +70,7 @@ function insertImageOnBoart(url){
 function insertImageInModal(img,content){
     let div = document.createElement('div');
     div.setAttribute('class', 'modal_image');
-    div.innerHTML = `<img src="`+img+`" onClick="insertImageOnBoart('`+img+`')" />`
+    div.innerHTML = `<img src="`+img+`" onClick="insertImageOnBoard('`+img+`')" />`
     content.appendChild(div);
 }
 

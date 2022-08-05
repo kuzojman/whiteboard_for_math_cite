@@ -43,6 +43,7 @@ const port = process.env.PORT || 3000;
 ////////////////////work with postresql start
 const { Client } = require('pg');
 const { Console } = require("console");
+// console.log(process.env);
 const client = new Client({
   user: process.env.DB_USER, 
   host: process.env.DB_HOST,
@@ -285,15 +286,14 @@ io.on("connection", async socket => {
 
   socket.on("object:added", async canvas_pass => {
     const board = await client.query('SELECT * from boards WHERE id=$1',[canvas_pass.board_id]);
-    /*
-
-*/
+    let item_index=0;
+    // console.log(board);
     let board_stack = board.rows[0].board_stack;
-    let item_index = board_stack.canvas.indexOf(db_item =>
-      {
-      return db_item.id==canvas_pass.id;
-    })
-    console.log(item_index);
+    if ( board_stack !==undefined && board_stack ){
+      item_index = board_stack.canvas.indexOf(db_item => db_item.id==canvas_pass.id)
+      console.log(item_index);
+    }
+    
     if(item_index>=0)
     {
       
