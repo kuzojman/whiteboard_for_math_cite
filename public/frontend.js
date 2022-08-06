@@ -451,7 +451,7 @@ function hideWaitingOverlay(){
  */
 function checkLoggedIn(){
   fetch(serverHostDebug+'/check_user_id/').then( data=>data.json()).then(e=>{
-    //e.user=1;
+    // e.user=3;
     // если пользователь не залогинен - перенаправляем на страницу логина
     if ( e===undefined || !e || e.user==false ){
       window.location.href=serverHostDebug+"/auth?parametr_enter=email";
