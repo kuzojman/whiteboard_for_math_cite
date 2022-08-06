@@ -1,5 +1,6 @@
 const protobuf = require("protobufjs");
 const express = require("express");
+const axios = require('axios');
 const { Server } = require("socket.io");
 const http = require("http");
 const path = require("path");
@@ -43,6 +44,7 @@ const port = process.env.PORT || 3000;
 ////////////////////work with postresql start
 const { Client } = require('pg');
 const { Console } = require("console");
+const { response } = require("express");
 // console.log(process.env);
 const client = new Client({
   user: process.env.DB_USER, 
@@ -91,8 +93,12 @@ app.use(express.static(path.join(__dirname, "public")));
 io.on("connection", async socket => {
   //array_all_users.push(socket.id);
   //var board_id = 1;
+  // let user_id=false;
+  // const response = await axios.get('http://localhost:5000/check_user_id/');
+  // console.log( response.data );
 
   arrayAllUsers.push(socket.id);
+  console.log(socket.id);
   arrayOfUserCursorCoordinates.push({
       userId: socket.id,
       cursorCoordinates: {
@@ -109,8 +115,27 @@ io.on("connection", async socket => {
     }
 });
 
+  socket.on("user:user_id",async (e) => {
+    // board_id = e;
+    // console.log(e);
+    socket.user_id = e;
+    // socket.join(e);
+  });
 
-
+  // запрос на разрешение к доске
+  socket.on("access:request", async (e)=>{
+    let response = {
+      role:'',
+      user:e.user,
+      board:e.board,
+    }
+    const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and users_id=$2',[response.board, response.user]);
+    if ( res.rows.length>0 ){
+      let r_ = res.rows[0];
+      response.role = r_.role;
+    }
+    socket.emit("access:response",response)
+  })
 
   socket.on("board:board_id",async (e) => {
     board_id = e;

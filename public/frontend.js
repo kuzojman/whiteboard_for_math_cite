@@ -21,6 +21,13 @@
 //   }
 // });
 
+// для продакшна надо оставить пустым
+let serverHostDebug = "http://localhost:5000/"
+// есть ли доступ к доске? и в качестве какой роли
+let accessBoard = false;
+// ожидаем ли мы одобрения от учителя?
+let waitingOverlay = false;
+
 const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
   allowTouchScrolling: true,
 });
@@ -420,10 +427,63 @@ lineDrawingButton.addEventListener("click",(e) => drawLine('trivial'));
 const lineDrawingButtonDOtted = document.querySelector('#line_drawing_button_dotted');
 lineDrawingButtonDOtted.addEventListener("click",(e) => drawLine('dotted'));
 
+const waitingOverlayBlock = document.querySelector('#waiting-overlay');
+
+
+/**
+ * Показываем оверлей ожидания
+ */
+function showWaitingOverlay(){
+  waitingOverlay = true;
+  waitingOverlayBlock.classList.remove('is-hidden')
+}
+
+/**
+ * Скрываем оверлей ожидания
+ */
+function hideWaitingOverlay(){
+  waitingOverlay = false;
+  waitingOverlayBlock.classList.add('is-hidden')
+}
+
+/**
+ * Проверяем залогинен ли пользователь
+ */
+function checkLoggedIn(){
+  fetch(serverHostDebug+'/check_user_id/').then( data=>data.json()).then(e=>{
+    //e.user=1;
+    // если пользователь не залогинен - перенаправляем на страницу логина
+    if ( e===undefined || !e || e.user==false ){
+      window.location.href=serverHostDebug+"/auth?parametr_enter=email";
+      return;
+    }
+    // сохраняем пользователя через сокеты
+    socket.emit("user:user_id",e.user);
+    // отправляем запрос на регистрацию на доске
+    socket.emit("access:request", {user:e.user, board:board_id});
+    // показываем оверлей ожидания
+    showWaitingOverlay()
+    
+  });
+}
+
+
 
 socket.on( 'connect', function()
 {
-    socket.emit("board:board_id",board_id);
+    
+    checkLoggedIn()
+    // получаем ответ на наш запрос - можно на доску заходить или нет?
+    socket.on('access:response', function(data){
+      console.log(data);
+      if ( data.role!='' && data.role!='waiting' ){
+        hideWaitingOverlay()
+        socket.emit("board:board_id",board_id);
+      }
+      
+    });
+    
+
     socket.on('mouse:up', function(pointer)
     {
       canvas.freeDrawingBrush.onMouseUp({e:{}});
