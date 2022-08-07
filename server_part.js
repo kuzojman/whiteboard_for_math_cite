@@ -98,7 +98,7 @@ io.on("connection", async socket => {
   // console.log( response.data );
 
   arrayAllUsers.push(socket.id);
-  console.log(socket.id);
+  
   arrayOfUserCursorCoordinates.push({
       userId: socket.id,
       cursorCoordinates: {
@@ -129,12 +129,43 @@ io.on("connection", async socket => {
       user:e.user,
       board:e.board,
     }
+
+    // console.log('+ board_'+e.board+'/user_'+e.user);
+    socket.join('board_'+e.board+'/user_'+e.user);
+
     const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and users_id=$2',[response.board, response.user]);
     if ( res.rows.length>0 ){
       let r_ = res.rows[0];
       response.role = r_.role;
     }
-    socket.emit("access:response",response)
+    // console.log(response);
+    // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
+    if ( response.role=='' ){
+      const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and role=\'creator\'',[response.board]);
+      
+      if ( res.rows.length>0 ){
+        let r_ = res.rows[0];
+        // console.log('-> board_'+e.board+'/user_'+r_.users_id);
+        io.sockets.in('board_'+e.board+'/user_'+r_.users_id).emit("creator:request",{ board_id:e.board, user_id:e.user });
+      }
+    }
+    // console.log('---> board_'+e.board+'/user_'+e.user);
+    io.sockets.in('board_'+e.board+'/user_'+e.user).emit("access:response",response)
+  })
+
+  // ответ от администратора комнаты
+  socket.on("creator:response", async (e)=>{
+    // creator_id
+    // user_id
+    // board_id
+    // role (accept)
+    const res = await client.query('INSERT INTO boards_users (boards_id, users_id, role) VALUES ($1,$2,$3)',[e.board_id,e.user_id,e.role]);
+    let response = {
+      role:e.role,
+      user:e.user_id,
+      board:e.board_id,
+    }
+    io.sockets.in('board_'+e.board_id+'/user_'+e.user_id).emit("access:response",response)
   })
 
   socket.on("board:board_id",async (e) => {
