@@ -128,30 +128,43 @@ io.on("connection", async socket => {
       role:'',
       user:e.user,
       board:e.board,
+      username:'',
+      email:'',
     }
 
     
-    if ( e.user==false ){
+    if ( e.user==false || isNaN(e.user) || parseInt(e.user) <= 0 ){
       return;
     }
     e.user = parseInt(e.user);
+
+    // console.log('board_'+e.board+'/user_'+e.user)
     socket.join('board_'+e.board+'/user_'+e.user);
     
 
-    const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and users_id=$2',[response.board, response.user]);
+    let res = await client.query('SELECT boards_users.* from boards_users  WHERE boards_users.boards_id=$1 and boards_users.users_id=$2;',[e.board, e.user]);
     if ( res.rows.length>0 ){
-      let r_ = res.rows[0];
-      response.role = r_.role;
+      let r_                = res.rows[0];
+          response.role     = r_.role;
+    }
+    // получаем информацию от пользователя 
+    res = await client.query("SELECT users.username,users.email FROM users WHERE  users.id=$1",[e.user])
+    if ( res.rows.length>0 ){
+      let r_                = res.rows[0];
+          response.username = r_.username;
+          response.email    = r_.email;
     }
     // console.log(response);
     // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
     if ( response.role=='' ){
-      const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and role=\'creator\'',[response.board]);
+      res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and role=\'creator\'',[response.board]);
       
       if ( res.rows.length>0 ){
-        let r_ = res.rows[0];
-        // console.log('-> board_'+e.board+'/user_'+r_.users_id);
-        io.sockets.in('board_'+e.board+'/user_'+r_.users_id).emit("creator:request",{ board_id:e.board, user_id:e.user });
+        for (let l = 0; l < res.rows.length; l++) {
+          const r_ = res.rows[l];
+          // console.log('-> board_'+e.board+'/user_'+r_.users_id);
+          io.sockets.in('board_'+e.board+'/user_'+r_.users_id).emit("creator:request",{ board_id:e.board, user_id:e.user, username:response.username, email:response.email }); 
+        }
       }
     }
     // console.log('---> board_'+e.board+'/user_'+e.user);
