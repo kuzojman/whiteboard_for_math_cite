@@ -1,5 +1,6 @@
 const protobuf = require("protobufjs");
 const express = require("express");
+const axios = require('axios');
 const { Server } = require("socket.io");
 const http = require("http");
 const path = require("path");
@@ -43,6 +44,8 @@ const port = process.env.PORT || 3000;
 ////////////////////work with postresql start
 const { Client } = require('pg');
 const { Console } = require("console");
+const { response } = require("express");
+// console.log(process.env);
 const client = new Client({
   user: process.env.DB_USER, 
   host: process.env.DB_HOST,
@@ -90,8 +93,12 @@ app.use(express.static(path.join(__dirname, "public")));
 io.on("connection", async socket => {
   //array_all_users.push(socket.id);
   //var board_id = 1;
+  // let user_id=false;
+  // const response = await axios.get('http://localhost:5000/check_user_id/');
+  // console.log( response.data );
 
   arrayAllUsers.push(socket.id);
+  
   arrayOfUserCursorCoordinates.push({
       userId: socket.id,
       cursorCoordinates: {
@@ -108,8 +115,58 @@ io.on("connection", async socket => {
     }
 });
 
+  socket.on("user:user_id",async (e) => {
+    // board_id = e;
+    // console.log(e);
+    socket.user_id = e;
+    // socket.join(e);
+  });
 
+  // запрос на разрешение к доске
+  socket.on("access:request", async (e)=>{
+    let response = {
+      role:'',
+      user:e.user,
+      board:e.board,
+    }
 
+    // console.log('+ board_'+e.board+'/user_'+e.user);
+    socket.join('board_'+e.board+'/user_'+e.user);
+
+    const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and users_id=$2',[response.board, response.user]);
+    if ( res.rows.length>0 ){
+      let r_ = res.rows[0];
+      response.role = r_.role;
+    }
+    // console.log(response);
+    // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
+    if ( response.role=='' ){
+      const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and role=\'creator\'',[response.board]);
+      
+      if ( res.rows.length>0 ){
+        let r_ = res.rows[0];
+        // console.log('-> board_'+e.board+'/user_'+r_.users_id);
+        io.sockets.in('board_'+e.board+'/user_'+r_.users_id).emit("creator:request",{ board_id:e.board, user_id:e.user });
+      }
+    }
+    // console.log('---> board_'+e.board+'/user_'+e.user);
+    io.sockets.in('board_'+e.board+'/user_'+e.user).emit("access:response",response)
+  })
+
+  // ответ от администратора комнаты
+  socket.on("creator:response", async (e)=>{
+    // creator_id
+    // user_id
+    // board_id
+    // role (accept)
+    const res = await client.query('INSERT INTO boards_users (boards_id, users_id, role) VALUES ($1,$2,$3)',[e.board_id,e.user_id,e.role]);
+    let response = {
+      role:e.role,
+      user:e.user_id,
+      board:e.board_id,
+    }
+    io.sockets.in('board_'+e.board_id+'/user_'+e.user_id).emit("access:response",response)
+  })
 
   socket.on("board:board_id",async (e) => {
     board_id = e;
@@ -285,15 +342,14 @@ io.on("connection", async socket => {
 
   socket.on("object:added", async canvas_pass => {
     const board = await client.query('SELECT * from boards WHERE id=$1',[canvas_pass.board_id]);
-    /*
-
-*/
+    let item_index=0;
+    // console.log(board);
     let board_stack = board.rows[0].board_stack;
-    let item_index = board_stack.canvas.indexOf(db_item =>
-      {
-      return db_item.id==canvas_pass.id;
-    })
-    console.log(item_index);
+    if ( board_stack !==undefined && board_stack ){
+      item_index = board_stack.canvas.indexOf(db_item => db_item.id==canvas_pass.id)
+      console.log(item_index);
+    }
+    
     if(item_index>=0)
     {
       

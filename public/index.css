@@ -81,3 +81,15 @@ html, body, .canvasWrapper
 .canvas-img {
     display: none;
 }
+
+.z-1020{
+    z-index: 1020;
+}
+#accept_user_notify{
+    position: fixed;
+    z-index: 1020;
+    left: 50%;
+    translate: -50%;
+    padding: 2rem;
+    top:20px;
+}
