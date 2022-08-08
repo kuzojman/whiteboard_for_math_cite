@@ -130,8 +130,13 @@ io.on("connection", async socket => {
       board:e.board,
     }
 
-    // console.log('+ board_'+e.board+'/user_'+e.user);
+    
+    if ( e.user==false ){
+      return;
+    }
+    e.user = parseInt(e.user);
     socket.join('board_'+e.board+'/user_'+e.user);
+    
 
     const res = await client.query('SELECT * from boards_users WHERE boards_id=$1 and users_id=$2',[response.board, response.user]);
     if ( res.rows.length>0 ){
@@ -223,12 +228,12 @@ io.on("connection", async socket => {
 
   socket.on("rect:edit", (rect_pass) => {
     socket.broadcast.to(socket.board_id).emit("rect:edit", rect_pass);
-    console.log(rect_pass);
+    // console.log(rect_pass);
   });
 
   socket.on("rect:add", (rect_pass) => {
     socket.broadcast.to(socket.board_id).emit("rect:add", rect_pass);
-    console.log(rect_pass);
+    // console.log(rect_pass);
   });
 
   socket.on("line:edit", (line_pass) => {
@@ -311,7 +316,7 @@ io.on("connection", async socket => {
         //s3.createBucket()
         // Загрузить объект
         const fileContent = Buffer.from(image_pass.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
-        console.log('start_upload');
+        // console.log('start_upload');
 
         let name_obj = makeid(32)+'.jpg';
         var params = {
@@ -341,11 +346,12 @@ io.on("connection", async socket => {
 
 
   socket.on("object:added", async canvas_pass => {
+    // console.log('SELECT * from boards WHERE id=',[canvas_pass.board_id]);
     const board = await client.query('SELECT * from boards WHERE id=$1',[canvas_pass.board_id]);
     let item_index=0;
     // console.log(board);
     let board_stack = board.rows[0].board_stack;
-    if ( board_stack !==undefined && board_stack ){
+    if ( board_stack !==undefined && board_stack && board_stack.canvas!==undefined && board_stack.canvas.length>0 ){
       item_index = board_stack.canvas.indexOf(db_item => db_item.id==canvas_pass.id)
       console.log(item_index);
     }
