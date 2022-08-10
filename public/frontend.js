@@ -459,7 +459,7 @@ function checkLoggedIn(){
     // console.log(e);
     // e.user=3;
     // если пользователь не залогинен - перенаправляем на страницу логина
-    if ( e===undefined || !e || e.user==false ){
+    if ( e===undefined || !e || e.user==false || e.user=='False' ){
       window.location.href=serverHostDebug+"/auth?parametr_enter=email";
       return;
     }
@@ -523,9 +523,16 @@ socket.on( 'connect', function()
     // запрос администратора на одобрение
     socket.on('creator:request', (e)=>{
       // { board_id:e.board, user_id:e.user }
-      // console.log(e);
+      console.log(e);
       notifyPopup.classList.remove('is-hidden');
-      notifyPopup.querySelector('#user_name').textContent=e.user_id
+      let userid = "";
+      if ( e.username && e.username!='' ){
+        userid += String(e.username)
+      }
+      if ( e.email && e.email!='' ){
+        userid += " ("+String(e.email)+")"
+      }
+      notifyPopup.querySelector('#user_name').textContent=userid
       notifyPopup.querySelector('#button-accept').dataset.user=e.user_id
       notifyPopup.querySelector('#button-accept').dataset.board=e.board_id
       notifyPopup.querySelector('#button-accept').addEventListener('click',acceptAccess, { once: true })

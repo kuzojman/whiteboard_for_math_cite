@@ -57,6 +57,8 @@ function closeImagesModal(){
 function insertImageOnBoard(url){
     fabric.Image.fromURL(url, function(myImg) {
       canvas.add(myImg).setActiveObject(myImg).renderAll(); 
+      console.log({src: url, id_of: myImg.id});
+      socket.emit("image:add", {src: url, id_of: myImg.id});
       // canvas.add(img)
     });
     closeAllModals();
