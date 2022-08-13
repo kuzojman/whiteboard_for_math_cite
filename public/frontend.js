@@ -1,3 +1,4 @@
+// import Cookies from "js-cookie";
 //const { set } = require("express/lib/application");
 
 //import { canvas } from "./some_functions.js"
@@ -49,13 +50,6 @@ canvas.on('touch:gesture',function(e){
   }
   
 });
-
-
-function ready() {
-  
-}
-document.addEventListener("DOMContentLoaded", ready);
-
 
 const MAX_ZOOM_IN  = 4;
 const MAX_ZOOM_OUT = 0.05;
@@ -464,7 +458,7 @@ function checkLoggedIn(){
       return;
     }
     // сохраняем пользователя через сокеты
-    socket.emit("user:user_id",e.user);
+    socket.emit("user:user_id",{user:e.user, board:board_id});
     // отправляем запрос на регистрацию на доске
     socket.emit("access:request", {user:e.user, board:board_id});
     // показываем оверлей ожидания
@@ -482,7 +476,7 @@ function checkLoggedInCookie(){
     return;
   }
   // сохраняем пользователя через сокеты
-  socket.emit("user:user_id",user_id);
+  socket.emit("user:user_id",{user:user_id, board:board_id});
   // отправляем запрос на регистрацию на доске
   socket.emit("access:request", {user:user_id, board:board_id});
   // показываем оверлей ожидания
@@ -494,7 +488,8 @@ function checkLoggedInCookie(){
  * @param {*} e 
  */
 function acceptAccess(e){
-  socket.emit("creator:response",{ board_id:e.currentTarget.dataset.board, user_id:e.currentTarget.dataset.user, role:'student' });
+  let creator_id = Cookies.get('user_id');
+  socket.emit("creator:response",{ board_id:e.currentTarget.dataset.board, user_id:e.currentTarget.dataset.user, creator_id: creator_id, role:'student' });
   notifyPopup.classList.add('is-hidden');
 }
 
@@ -503,7 +498,10 @@ function acceptAccess(e){
  * @param {*} e 
  */
 function declineAccess(e){
+  let creator_id = Cookies.get('user_id');
+  socket.emit("creator:decline",{ board_id:e.currentTarget.dataset.board, user_id:e.currentTarget.dataset.user, creator_id:creator_id });
   notifyPopup.classList.add('is-hidden');
+  // 
 }
 
 socket.on( 'connect', function()
@@ -516,8 +514,7 @@ socket.on( 'connect', function()
       if ( data.role!='' && data.role!='waiting' ){
         hideWaitingOverlay()
         socket.emit("board:board_id",board_id);
-      }
-      
+      }      
     });
 
     // запрос администратора на одобрение
@@ -535,6 +532,8 @@ socket.on( 'connect', function()
       notifyPopup.querySelector('#user_name').textContent=userid
       notifyPopup.querySelector('#button-accept').dataset.user=e.user_id
       notifyPopup.querySelector('#button-accept').dataset.board=e.board_id
+      notifyPopup.querySelector('#button-decline').dataset.user=e.user_id
+      notifyPopup.querySelector('#button-decline').dataset.board=e.board_id
       notifyPopup.querySelector('#button-accept').addEventListener('click',acceptAccess, { once: true })
       notifyPopup.querySelector('#button-decline').addEventListener('click',declineAccess, { once: true })
     });
@@ -672,24 +671,26 @@ let circle ;
 
     socket.on('image:add', function(img_taken)
     {
-      const image = document.createElement('img')
-      image.src = img_taken.src
+      window.insertImageOnBoard(img_taken.src, true);
 
-      document.body.append(image);
+      // const image = document.createElement('img')
+      // image.src = img_taken.src
 
-      image.onload = function() 
-      {
-        let img = new fabric.Image(image);
-        img.id = img_taken.id_of;
-        img.src = image.src;
-        img.set(
-        {
-          left: 100,
-          top: 60
-        });
-        img.scaleToWidth(600);
-        canvas.add(img).setActiveObject(img).renderAll();
-      }   
+      // document.body.append(image);
+
+      // image.onload = function() 
+      // {
+      //   let img = new fabric.Image(image);
+      //   img.id = img_taken.id_of;
+      //   img.src = image.src;
+      //   img.set(
+      //   {
+      //     left: 100,
+      //     top: 60
+      //   });
+      //   img.scaleToWidth(600);
+      //   canvas.add(img).setActiveObject(img).renderAll();
+      // }   
         //'canvas.freeDrawingBrush.width = width_taken'
     });
 
@@ -701,9 +702,9 @@ let circle ;
       }
       else
       {
-        console.log(data,'init_canvas');
+        // console.log(data,'init_canvas');
         let chunks = chunk(data?.canvas,30);
-        console.log(chunks);
+        // console.log(chunks);
         let chunk_index = 0;
         let init_interval = setInterval(function(){
             let chunk = chunks[chunk_index];
@@ -714,15 +715,35 @@ let circle ;
             chunk.forEach((object,id)=>{
               chunk[id]=deserialize(object);
             });
-            console.log(chunk,'chunk');
+            // console.log(chunk,'chunk');
             fabric.util.enlivenObjects(chunk,function(objects)
             {
-              console.log("5555555555!",objects);
+              // console.log("5555555555!",objects);
               objects.forEach(function(object)
               {
+                let obj_exists = false;
+
+                canvas._objects.every(function(obj_,indx_){
+                  // console.log(obj_.id,object.id);
+                    if ( obj_.id==object.id ){
+                      obj_exists = true;
+                      // console.log(object.id, "exists!");
+                      return false
+                    }
+                    return true;
+                });
+                // если такого объекта еще нет на канвасе, то добавляем
+                if ( obj_exists===false ){
+                  if ( object.type=='image' && object.src!==undefined && object.src!='' ){
+                    console.log(object.src,object.type);
+                    window.insertImageOnBoard(object.src, true);
+                  }else{
+                    canvas.add(object);
+                  }
+                }
                 //let deserialized_object =deserialize(object);
                 //console.log('deserialized_object',deserialized_object)
-                canvas.add(object);
+                
               })
               canvas.renderAll();
             });

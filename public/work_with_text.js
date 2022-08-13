@@ -233,8 +233,9 @@ const onSelectionChanged = () => {
     }
 }
 
-
-canvas.on('text:selection:changed', onSelectionChanged);
+if ( canvas!==undefined ){
+    canvas.on('text:selection:changed', onSelectionChanged);
+}
 
 const showTextEditPanel = () => {
     buttonText.classList.add('settings-panel__button_active');

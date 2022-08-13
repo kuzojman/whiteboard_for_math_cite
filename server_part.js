@@ -31,7 +31,11 @@ require('dotenv').config()
 const arrayAllUsers = [];
 const arrayOfUserCursorCoordinates = [];
 
-
+// все запросы пользователей на добавление к доске
+// для каждого пользователя/доски содается комната, в которую складываются все реквесты
+// реквесты не убираются пока создатель доски не нажмет "одобрить" или "отклонить"
+// эти реквесты постоянно передаются на фронтетд
+const roomRequestFromUser = {};
 
 const app = express();
 const server = http.createServer(app);
@@ -116,10 +120,36 @@ io.on("connection", async socket => {
 });
 
   socket.on("user:user_id",async (e) => {
-    // board_id = e;
+    // user:e.user, board:board_id
     // console.log(e);
-    socket.user_id = e;
+    socket.user_id = e.user;
     // socket.join(e);
+    const admin_board_id = 'board_'+e.board+'/user_'+e.user;
+    // console.log(admin_board_id, Object.keys(roomRequestFromUser), Object.keys(roomRequestFromUser).indexOf(admin_board_id)!==-1);
+    
+    if ( Object.keys(roomRequestFromUser).indexOf(admin_board_id)!==-1 && Object.keys(roomRequestFromUser[admin_board_id]).length>0 ){
+      // отправляем один реквест администратору
+      let keys_ = Object.keys(roomRequestFromUser[admin_board_id])
+
+      // console.log("keys", keys_[0]);
+      // console.log("request", roomRequestFromUser[admin_board_id][keys_[0]]);
+
+      socket.join(admin_board_id);
+      io.sockets.in(admin_board_id).emit("creator:request", roomRequestFromUser[admin_board_id][keys_[0]] ); 
+    }
+  });
+
+
+  socket.on("board:board_id",async (e) => {
+    board_id = e;
+
+    socket.board_id = board_id;
+    socket.join(board_id);
+
+   // console.log('>>', board_id, e);
+  //  console.log('>>', 'before select -- board_id = ' + board_id);
+    const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
+    socket.emit("take_data_from_json_file", res.rows[0].board_stack);
   });
 
   // запрос на разрешение к доске
@@ -162,11 +192,22 @@ io.on("connection", async socket => {
       if ( res.rows.length>0 ){
         for (let l = 0; l < res.rows.length; l++) {
           const r_ = res.rows[l];
+          const admin_board_id = 'board_'+e.board+'/user_'+r_.users_id;
+          // инициируем комнату
+          if ( Object.keys(roomRequestFromUser).indexOf(admin_board_id)===-1 ){
+            roomRequestFromUser[admin_board_id] = {}
+          }
+          // добавляем в массив
+          if ( Object.keys(roomRequestFromUser[admin_board_id]).indexOf(e.user)===-1 ){
+            roomRequestFromUser[admin_board_id][e.user] = { board_id:e.board, user_id:e.user, username:response.username, email:response.email };
+          }
+
           // console.log('-> board_'+e.board+'/user_'+r_.users_id);
-          io.sockets.in('board_'+e.board+'/user_'+r_.users_id).emit("creator:request",{ board_id:e.board, user_id:e.user, username:response.username, email:response.email }); 
+          io.sockets.in(admin_board_id).emit("creator:request",{ board_id:e.board, user_id:e.user, username:response.username, email:response.email }); 
         }
       }
     }
+
     // console.log('---> board_'+e.board+'/user_'+e.user);
     io.sockets.in('board_'+e.board+'/user_'+e.user).emit("access:response",response)
   })
@@ -177,6 +218,7 @@ io.on("connection", async socket => {
     // user_id
     // board_id
     // role (accept)
+    
     const res = await client.query('INSERT INTO boards_users (boards_id, users_id, role) VALUES ($1,$2,$3)',[e.board_id,e.user_id,e.role]);
     let response = {
       role:e.role,
@@ -184,19 +226,45 @@ io.on("connection", async socket => {
       board:e.board_id,
     }
     io.sockets.in('board_'+e.board_id+'/user_'+e.user_id).emit("access:response",response)
+    // убираем из массива ожидания
+    const admin_board_id = 'board_'+e.board_id+'/user_'+e.creator_id;
+    if ( Object.keys(roomRequestFromUser).indexOf(admin_board_id)!==-1 ){
+      if ( Object.keys(roomRequestFromUser[admin_board_id]).indexOf(e.user_id)!==-1 ){
+        // console.log(roomRequestFromUser[admin_board_id], e.user_id);
+        if ( roomRequestFromUser[admin_board_id]!==undefined ){
+          delete roomRequestFromUser[admin_board_id][e.user_id];
+        }
+        if ( Object.keys(roomRequestFromUser[admin_board_id]).length>0 ){
+          // отправляем один реквест администратору
+          let keys_ = Object.keys(roomRequestFromUser[admin_board_id])
+          io.sockets.in(admin_board_id).emit("creator:request", roomRequestFromUser[admin_board_id][keys_[0]] ); 
+        }
+      }
+    }
   })
 
-  socket.on("board:board_id",async (e) => {
-    board_id = e;
+  /**
+   * Убираем из листа ожидания
+   */
+  socket.on("creator:decline", async (e)=>{
+    // console.log(e);
+    // убираем из массива ожидания
+    const admin_board_id = 'board_'+e.board_id+'/user_'+e.creator_id;
+    // console.log(admin_board_id);
+    // удаляем отклоненного пользователя
+    if ( roomRequestFromUser[admin_board_id]!==undefined ){
+      delete roomRequestFromUser[admin_board_id][e.user_id];
+      // console.log(roomRequestFromUser[admin_board_id]);
+      if ( Object.keys(roomRequestFromUser[admin_board_id]).length>0 ){
+        // отправляем все реквесты администратору
+        // отправляем один реквест администратору
+        let keys_ = Object.keys(roomRequestFromUser[admin_board_id])
+        // console.log("send requrst", roomRequestFromUser[admin_board_id][keys_[0]]  );
+        io.sockets.in(admin_board_id).emit("creator:request", roomRequestFromUser[admin_board_id][keys_[0]] ); 
+      }
+    }
+  })
 
-    socket.board_id = board_id;
-    socket.join(board_id);
-
-   // console.log('>>', board_id, e);
-  //  console.log('>>', 'before select -- board_id = ' + board_id);
-    const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
-    socket.emit("take_data_from_json_file", res.rows[0].board_stack);
-  });
 
 
 //  console.log('>>', 'before select -- board_id = ' + board_id);
