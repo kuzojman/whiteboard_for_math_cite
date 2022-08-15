@@ -1,3 +1,4 @@
+import { fabricGif } from "./fabricGif.js";
 
 const openImagesModalBtn = document.querySelector('#modal_image_plugin');
 openImagesModalBtn.addEventListener("click", openImagesModal );
@@ -15,8 +16,8 @@ let simpleJson = {
       title:'Математика',
       icon:'fa-square-root-variable',
       images:[
-        'https://via.placeholder.com/300.png/09f/fff',
-        'https://via.placeholder.com/200.jpg/09f/fff',
+        'https://media1.giphy.com/media/i33719vyOjNYI/giphy.gif?cid=ecf05e47mfu21495ggkvcbstb1g3jvoic32l5bj7reyzt0rx&rid=giphy.gif&ct=g',
+        'https://media4.giphy.com/media/119pLwyWg8ScTK/giphy.gif?cid=ecf05e47xfzha64o895nsmu0m60fjunfpr1hh6x2nur90gj7&rid=giphy.gif&ct=g',
         'https://via.placeholder.com/250.gif/09f/fff',
       ]
     },
@@ -54,11 +55,36 @@ function closeImagesModal(){
  * Вставляем картинку на панель
  * @param {*} url 
  */
-function insertImageOnBoard(url){
+window.insertImageOnBoard = function (url, noemit=false){
     fabric.Image.fromURL(url, function(myImg) {
+
+      if (url.toLowerCase().match(/\.(gif)/g)){
+        fabricGif(
+          url,
+          200,
+          200
+        ).then( function(gif){
+          // console.log(gif);
+          // gif.set({ top: 50, left: 50 });
+          canvas.add(gif).setActiveObject(gif);
+          gif.play();
+          fabric.util.requestAnimFrame(function render() {
+            canvas.renderAll();
+            fabric.util.requestAnimFrame(render);
+          });
+          if (noemit==false){
+            socket.emit("image:add", {src: url, id_of: myImg.id});
+          }
+        } )
+        
+        return;
+      }      
+
       canvas.add(myImg).setActiveObject(myImg).renderAll(); 
-      console.log({src: url, id_of: myImg.id});
-      socket.emit("image:add", {src: url, id_of: myImg.id});
+      // console.log({src: url, id_of: myImg.id});
+      if (noemit==false){
+        socket.emit("image:add", {src: url, id_of: myImg.id});
+      }
       // canvas.add(img)
     });
     closeAllModals();
@@ -194,3 +220,5 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  export default {openImagesModal,    closeImagesModal,     insertImageOnBoard,     insertImageInModal,     changeTab,     hideAllTabs,     loadDataToModel,     openModal,     closeModal,     closeAllModals } 

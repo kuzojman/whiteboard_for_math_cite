@@ -76,26 +76,26 @@ function Paste() {
   });
 }
 
-function find_object_index(target_object) {
-  let target_index; 
-  let objects = canvas.getObjects();
-  console.log(objects,'objects',target_object)
-  objects.forEach(function (object, index) {
-    if (object == target_object) {
-      target_index = index;
-    }
-  });
-  if(!target_index)
-  {
-    objects.forEach(function (object, index) {
-      if (object.id == target_object.id) {
-        target_index = index;
-      }
-    });
-  }
-  console.log(target_index,'target_index')
-  return target_index;
-}
+// function find_object_index(target_object) {
+//   let target_index; 
+//   let objects = canvas.getObjects();
+//   console.log(objects,'objects',target_object)
+//   objects.forEach(function (object, index) {
+//     if (object == target_object) {
+//       target_index = index;
+//     }
+//   });
+//   if(!target_index)
+//   {
+//     objects.forEach(function (object, index) {
+//       if (object.id == target_object.id) {
+//         target_index = index;
+//       }
+//     });
+//   }
+//   console.log(target_index,'target_index')
+//   return target_index;
+// }
 
 
 

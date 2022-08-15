@@ -4,7 +4,7 @@
     position: absolute;
     top: 45px;
     left: 0;
-    width: 100%;
+    width: 200px;
     z-index: 2;
     transition: all 0.5s linear;
     font-size: 2rem;
