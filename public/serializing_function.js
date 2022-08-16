@@ -47,7 +47,7 @@ const to_image_add ={
     "skewY":"sY",
     "cropX":"cX",
     "cropY":"cY",
-    "src":"sr",
+    "src":"src",
     "crossOrigin": "cO",
     "filters":"fs" 
 }
@@ -110,6 +110,7 @@ const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,.
 function serialize_canvas(canvas)
 {
   let result =[];
+  
   canvas._objects.forEach(function(object)
   {
     let replaced_object ={};
@@ -121,6 +122,8 @@ function serialize_canvas(canvas)
     else if(object.type=="image")
     {
       my_dict=serializer_dictionary_image;
+      // console.log(object.src);
+      replaced_object['src'] = object.src;
     }
     else if(object.type=="circle")
     {
@@ -156,12 +159,6 @@ function serialize_canvas(canvas)
           }
         }
 
-
-        //  отсчечем нулевые значения if(object[key])
-        // if(typeof object[key] is number)
-        //{
-        //  Math.round
-        //}
         replaced_object[my_dict[key]]=object[key];
       }
  //     else{
@@ -190,6 +187,7 @@ function serialize_object(object)
     else if(object.type=="image")
     {
       my_dict=serializer_dictionary_image;
+      replaced_object['src']=object.getSrc()
     }
     else if(object.type=="circle")
     {
@@ -206,7 +204,6 @@ function serialize_object(object)
 
 
     for (const key in object) {
-
       if(my_dict[key])
       {
         
@@ -224,7 +221,7 @@ function serialize_object(object)
         replaced_object[my_dict[key]]=object[key];
       }
     }
-  console.log(replaced_object);
+  // console.log(replaced_object);
   return replaced_object;
 }
 
@@ -234,9 +231,13 @@ function deserialize(object)
   let result = {};
   for (const key in object) 
   {
-    result[get_long_property_by_short(key)]=object[key];
+    if ( key=='src' ){
+      result['src'] = object['src'];
+    }else{
+      result[get_long_property_by_short(key)]=object[key];
+    }
   }
-  console.log(result)
+  // console.log(result)
   return result;
 }
 

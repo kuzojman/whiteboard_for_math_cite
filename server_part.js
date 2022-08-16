@@ -149,7 +149,9 @@ io.on("connection", async socket => {
    // console.log('>>', board_id, e);
   //  console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
-    socket.emit("take_data_from_json_file", res.rows[0].board_stack);
+    if ( res.rows.length>0 ){
+      socket.emit("take_data_from_json_file", res.rows[0].board_stack);
+    }
   });
 
   // запрос на разрешение к доске
@@ -365,7 +367,7 @@ io.on("connection", async socket => {
 
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
     const data_saved = JSON.stringify(canvas_pass);
-//    console.log(canvas_pass);
+    console.log(data_saved);
     //await client.connect()
     //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
     const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
@@ -430,8 +432,11 @@ io.on("connection", async socket => {
     // console.log('SELECT * from boards WHERE id=',[canvas_pass.board_id]);
     const board = await client.query('SELECT * from boards WHERE id=$1',[canvas_pass.board_id]);
     let item_index=0;
+    let board_stack;
     // console.log(board);
-    let board_stack = board.rows[0].board_stack;
+    if ( board.rows.length>0 ){
+      board_stack = board.rows[0].board_stack;
+    }
     if ( board_stack !==undefined && board_stack && board_stack.canvas!==undefined && board_stack.canvas.length>0 ){
       item_index = board_stack.canvas.indexOf(db_item => db_item.id==canvas_pass.id)
       console.log(item_index);

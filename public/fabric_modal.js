@@ -64,6 +64,7 @@ window.insertImageOnBoard = function (url, noemit=false){
           200,
           200
         ).then( function(gif){
+          gif['src'] = url;
           // console.log(gif);
           // gif.set({ top: 50, left: 50 });
           canvas.add(gif).setActiveObject(gif);
@@ -74,6 +75,7 @@ window.insertImageOnBoard = function (url, noemit=false){
           });
           if (noemit==false){
             socket.emit("image:add", {src: url, id_of: myImg.id});
+            socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
           }
         } )
         

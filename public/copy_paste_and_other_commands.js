@@ -28,7 +28,7 @@ function Delete() {
       canvas.remove(obj);
     });
     console.log(ids);
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     socket.emit("figure_delete", ids);//canvas.toJSON());
   } else {
     var activeObject = canvas.getActiveObject();
@@ -36,7 +36,7 @@ function Delete() {
     if (activeObject !== null) {
       ids.push(find_object_index(activeObject));
       canvas.remove(activeObject);
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       socket.emit("figure_delete", ids);//canvas.toJSON());
     }
   }
@@ -60,13 +60,13 @@ function Paste() {
       clonedObj.forEachObject(function (obj) {
         canvas.add(obj);
       });
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       socket.emit("figure_copied", canvas.toJSON());
       // this should solve the unselectability
       clonedObj.setCoords();
     } else {
       canvas.add(clonedObj);
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       socket.emit("figure_copied",clonedObj) //canvas.toJSON());
     }
     _clipboard.top += 10;

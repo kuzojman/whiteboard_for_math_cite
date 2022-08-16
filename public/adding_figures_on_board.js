@@ -199,7 +199,7 @@ function adding_svg_figure(what_to_add)
     loadedObjects.scaleToWidth(400);
     loadedObjects.scaleToHeight(400);
     canvas.add(loadedObjects);
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     socket.emit("picture:add",canvas.toJSON());
     canvas.renderAll();
   },
@@ -235,7 +235,7 @@ svgAddButton?.addEventListener("click",(e) =>
     //i create an extra var for to change some image properties
     var img1 = myImg.set({ left: 0, top: 0 ,width:250,height:250});
     canvas.add(img1); 
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON()});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     socket.emit("picture:add",canvas.toJSON());
     canvas.renderAll();
    });
