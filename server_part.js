@@ -367,7 +367,7 @@ io.on("connection", async socket => {
 
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
     const data_saved = JSON.stringify(canvas_pass);
-    console.log(data_saved);
+    // console.log(data_saved);
     //await client.connect()
     //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
     const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
@@ -439,7 +439,7 @@ io.on("connection", async socket => {
     }
     if ( board_stack !==undefined && board_stack && board_stack.canvas!==undefined && board_stack.canvas.length>0 ){
       item_index = board_stack.canvas.indexOf(db_item => db_item.id==canvas_pass.id)
-      console.log(item_index);
+      // console.log(item_index);
     }
     
     if(item_index>=0)

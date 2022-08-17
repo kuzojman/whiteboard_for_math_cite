@@ -55,7 +55,7 @@ function closeImagesModal(){
  * Вставляем картинку на панель
  * @param {*} url 
  */
-window.insertImageOnBoard = function (url, noemit=false){
+window.insertImageOnBoard = function (url, noemit=false, id=false){
     fabric.Image.fromURL(url, function(myImg) {
 
       if (url.toLowerCase().match(/\.(gif)/g)){
@@ -65,6 +65,9 @@ window.insertImageOnBoard = function (url, noemit=false){
           200
         ).then( function(gif){
           gif['src'] = url;
+          if ( id!==false ){
+            gif['id'] = id;
+          }
           // console.log(gif);
           // gif.set({ top: 50, left: 50 });
           canvas.add(gif).setActiveObject(gif);
@@ -81,6 +84,12 @@ window.insertImageOnBoard = function (url, noemit=false){
         
         return;
       }      
+
+      myImg['src'] = url;
+      if ( id!==false ){
+        myImg['id'] = id;
+        console.log(id, myImg['id']);
+      }
 
       canvas.add(myImg).setActiveObject(myImg).renderAll(); 
       // console.log({src: url, id_of: myImg.id});

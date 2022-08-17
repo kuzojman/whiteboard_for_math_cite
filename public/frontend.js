@@ -736,7 +736,7 @@ let circle ;
                 if ( obj_exists===false ){
                   if ( object.type=='image' && object.src!==undefined && object.src!='' ){
                     // console.log(object.src,object.type);
-                    window.insertImageOnBoard(object.src, true);
+                    window.insertImageOnBoard(object.src, true, object.id);
                   }else{
                     canvas.add(object);
                   }
@@ -913,8 +913,7 @@ let circle ;
 
     socket.on('object:modified', e =>
     {
-        console.log('object:modified','fuck yeaa!!!',e);
-        
+
         recive_part_of_data(e);
     });
 
@@ -1569,10 +1568,9 @@ function recive_part_of_data(e) {
     }
   } else {
     //let d = canvas.item(e.index);
-    console.log(canvas._objects);
     // console.log(canvas._objects);
     let d = canvas._objects.find(item=>item.id==e.id);
-    // console.log(d,e.object.id)
+    // console.log(d,e.object.id, )
     //d.set(e.object);
     if(!d){
       return false
