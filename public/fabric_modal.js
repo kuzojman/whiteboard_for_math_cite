@@ -1,3 +1,4 @@
+import { fabricGif } from "./fabricGif.js";
 
 const openImagesModalBtn = document.querySelector('#modal_image_plugin');
 openImagesModalBtn.addEventListener("click", openImagesModal );
@@ -15,8 +16,8 @@ let simpleJson = {
       title:'Математика',
       icon:'fa-square-root-variable',
       images:[
-        'https://via.placeholder.com/300.png/09f/fff',
-        'https://via.placeholder.com/200.jpg/09f/fff',
+        'https://media1.giphy.com/media/i33719vyOjNYI/giphy.gif?cid=ecf05e47mfu21495ggkvcbstb1g3jvoic32l5bj7reyzt0rx&rid=giphy.gif&ct=g',
+        'https://media4.giphy.com/media/119pLwyWg8ScTK/giphy.gif?cid=ecf05e47xfzha64o895nsmu0m60fjunfpr1hh6x2nur90gj7&rid=giphy.gif&ct=g',
         'https://via.placeholder.com/250.gif/09f/fff',
       ]
     },
@@ -54,9 +55,69 @@ function closeImagesModal(){
  * Вставляем картинку на панель
  * @param {*} url 
  */
-function insertImageOnBoart(url){
+window.insertImageOnBoard = function (url, noemit=false, id=false, params=false){
     fabric.Image.fromURL(url, function(myImg) {
-      canvas.add(myImg); 
+
+      if (url.toLowerCase().match(/\.(gif)/g)){
+        fabricGif(
+          url,
+          200,
+          200
+        ).then( function(gif){
+          gif['src'] = url;
+          if ( id!==false ){
+            gif['id'] = id;
+          }
+          // console.log(gif);
+          // gif.set({ top: 50, left: 50 });
+          canvas.add(gif).setActiveObject(gif);
+          // перемещаем объект куда надо
+          if ( params!==false ){
+            gif.set({
+              top: params.top, //+object.object.top,
+              left: params.left, //+object.object.left
+              angle: params.angle,
+              scaleX: params.scaleX,
+              scaleY: params.scaleY,
+            });
+          }
+          gif.play();
+          fabric.util.requestAnimFrame(function render() {
+            canvas.renderAll();
+            fabric.util.requestAnimFrame(render);
+          });
+          
+          if (noemit==false){
+            socket.emit("image:add", {src: url, id_of: gif.id});
+            socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
+          }
+        } )
+        
+        return;
+      }      
+
+      myImg['src'] = url;
+      if ( id!==false ){
+        myImg['id'] = id;
+      }
+      
+      canvas.add(myImg)
+      // перемещаем объект куда надо
+      if ( params!==false ){
+        myImg.set({
+          top: params.top, //+object.object.top,
+          left: params.left, //+object.object.left
+          angle: params.angle,
+          scaleX: params.scaleX,
+          scaleY: params.scaleY,
+        });
+      }
+      canvas.setActiveObject(myImg).renderAll(); 
+      // console.log({src: url, id_of: myImg.id});
+      if (noemit==false){
+        socket.emit("image:add", {src: url, id_of: myImg.id});
+      }
+      // canvas.add(img)
     });
     closeAllModals();
 }
@@ -69,7 +130,7 @@ function insertImageOnBoart(url){
 function insertImageInModal(img,content){
     let div = document.createElement('div');
     div.setAttribute('class', 'modal_image');
-    div.innerHTML = `<img src="`+img+`" onClick="insertImageOnBoart('`+img+`')" />`
+    div.innerHTML = `<img src="`+img+`" onClick="insertImageOnBoard('`+img+`')" />`
     content.appendChild(div);
 }
 
@@ -191,3 +252,5 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  export default {openImagesModal,    closeImagesModal,     insertImageOnBoard,     insertImageInModal,     changeTab,     hideAllTabs,     loadDataToModel,     openModal,     closeModal,     closeAllModals } 

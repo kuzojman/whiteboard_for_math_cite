@@ -1,3 +1,4 @@
+// import Cookies from "js-cookie";
 //const { set } = require("express/lib/application");
 
 //import { canvas } from "./some_functions.js"
@@ -21,6 +22,13 @@
 //   }
 // });
 
+// для продакшна надо оставить пустым
+let serverHostDebug = "http://localhost:5000/"
+// есть ли доступ к доске? и в качестве какой роли
+let accessBoard = false;
+// ожидаем ли мы одобрения от учителя?
+let waitingOverlay = false;
+
 const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
   allowTouchScrolling: true,
 });
@@ -42,13 +50,6 @@ canvas.on('touch:gesture',function(e){
   }
   
 });
-
-
-function ready() {
-  
-}
-document.addEventListener("DOMContentLoaded", ready);
-
 
 const MAX_ZOOM_IN  = 4;
 const MAX_ZOOM_OUT = 0.05;
@@ -240,9 +241,13 @@ menu_grid.addEventListener('click', e=> e.currentTarget.classList.toggle('active
 
 
 //
+
+const socket = io('localhost:3000',{transports:['websocket']});
+
 //const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
-const socket = io();
+
+// const socket = io();
 
 function chunk (arr, len) {
 
@@ -420,10 +425,119 @@ lineDrawingButton.addEventListener("click",(e) => drawLine('trivial'));
 const lineDrawingButtonDOtted = document.querySelector('#line_drawing_button_dotted');
 lineDrawingButtonDOtted.addEventListener("click",(e) => drawLine('dotted'));
 
+const waitingOverlayBlock = document.querySelector('#waiting-overlay');
+// попап с подтверждением пользователя
+const notifyPopup = document.querySelector('#accept_user_notify')
+
+/**
+ * Показываем оверлей ожидания
+ */
+function showWaitingOverlay(){
+  waitingOverlay = true;
+  waitingOverlayBlock.classList.remove('is-hidden')
+}
+
+/**
+ * Скрываем оверлей ожидания
+ */
+function hideWaitingOverlay(){
+  waitingOverlay = false;
+  waitingOverlayBlock.classList.add('is-hidden')
+}
+
+/**
+ * Проверяем залогинен ли пользователь
+ */
+function checkLoggedIn(){
+  fetch(serverHostDebug+'/check_user_id/').then( data=>data.json()).then(e=>{
+    // console.log(e);
+    // e.user=3;
+    // если пользователь не залогинен - перенаправляем на страницу логина
+    if ( e===undefined || !e || e.user==false || e.user=='False' ){
+      window.location.href=serverHostDebug+"/auth?parametr_enter=email";
+      return;
+    }
+    // сохраняем пользователя через сокеты
+    socket.emit("user:user_id",{user:e.user, board:board_id});
+    // отправляем запрос на регистрацию на доске
+    socket.emit("access:request", {user:e.user, board:board_id});
+    // показываем оверлей ожидания
+    showWaitingOverlay()
+    
+  });
+}
+
+function checkLoggedInCookie(){
+  let user_id = Cookies.get('user_id');
+
+  // если пользователь не залогинен - перенаправляем на страницу логина
+  if ( user_id===undefined || !user_id || user_id==false ){
+    window.location.href=serverHostDebug+"/auth?parametr_enter=email";
+    return;
+  }
+  // сохраняем пользователя через сокеты
+  socket.emit("user:user_id",{user:user_id, board:board_id});
+  // отправляем запрос на регистрацию на доске
+  socket.emit("access:request", {user:user_id, board:board_id});
+  // показываем оверлей ожидания
+  showWaitingOverlay()
+}
+
+/**
+ * Разрешаю пользователю войти в доску
+ * @param {*} e 
+ */
+function acceptAccess(e){
+  let creator_id = Cookies.get('user_id');
+  socket.emit("creator:response",{ board_id:e.currentTarget.dataset.board, user_id:e.currentTarget.dataset.user, creator_id: creator_id, role:'student' });
+  notifyPopup.classList.add('is-hidden');
+}
+
+/**
+ * Запрещаем доступ
+ * @param {*} e 
+ */
+function declineAccess(e){
+  let creator_id = Cookies.get('user_id');
+  socket.emit("creator:decline",{ board_id:e.currentTarget.dataset.board, user_id:e.currentTarget.dataset.user, creator_id:creator_id });
+  notifyPopup.classList.add('is-hidden');
+  // 
+}
 
 socket.on( 'connect', function()
 {
-    socket.emit("board:board_id",board_id);
+    // checkLoggedIn();
+    checkLoggedInCookie()
+    // получаем ответ на наш запрос - можно на доску заходить или нет?
+    socket.on('access:response', function(data){
+      // console.log(data);
+      if ( data.role!='' && data.role!='waiting' ){
+        hideWaitingOverlay()
+        socket.emit("board:board_id",board_id);
+      }      
+    });
+
+    // запрос администратора на одобрение
+    socket.on('creator:request', (e)=>{
+      // { board_id:e.board, user_id:e.user }
+      console.log(e);
+      notifyPopup.classList.remove('is-hidden');
+      let userid = "";
+      if ( e.username && e.username!='' ){
+        userid += String(e.username)
+      }
+      if ( e.email && e.email!='' ){
+        userid += " ("+String(e.email)+")"
+      }
+      notifyPopup.querySelector('#user_name').textContent=userid
+      notifyPopup.querySelector('#button-accept').dataset.user=e.user_id
+      notifyPopup.querySelector('#button-accept').dataset.board=e.board_id
+      notifyPopup.querySelector('#button-decline').dataset.user=e.user_id
+      notifyPopup.querySelector('#button-decline').dataset.board=e.board_id
+      notifyPopup.querySelector('#button-accept').addEventListener('click',acceptAccess, { once: true })
+      notifyPopup.querySelector('#button-decline').addEventListener('click',declineAccess, { once: true })
+    });
+
     socket.on('mouse:up', function(pointer)
     {
       canvas.freeDrawingBrush.onMouseUp({e:{}});
@@ -443,11 +557,11 @@ socket.on( 'connect', function()
       canvas.freeDrawingBrush.color = e.color;
       canvas.freeDrawingBrush.width = e.width;
       canvas.freeDrawingBrush.onMouseMove(e.pointer,{e:{}});
-      console.log('recieved',  canvas.freeDrawingBrush._points.length)
+      // console.log('recieved',  canvas.freeDrawingBrush._points.length)
     });
     socket.on('color:change', function(colour_taken)
     {
-        console.log('recieved colour',colour_taken)
+        // console.log('recieved colour',colour_taken)
         canvas.freeDrawingBrush.color = colour_taken;
         
     });
@@ -557,24 +671,26 @@ let circle ;
 
     socket.on('image:add', function(img_taken)
     {
-      const image = document.createElement('img')
-      image.src = img_taken.src
+      window.insertImageOnBoard(img_taken.src, true, img_taken.id_of);
 
-      document.body.append(image);
+      // const image = document.createElement('img')
+      // image.src = img_taken.src
 
-      image.onload = function() 
-      {
-        let img = new fabric.Image(image);
-        img.id = img_taken.id_of;
-        img.src = image.src;
-        img.set(
-        {
-          left: 100,
-          top: 60
-        });
-        img.scaleToWidth(600);
-        canvas.add(img).setActiveObject(img).renderAll();
-      }   
+      // document.body.append(image);
+
+      // image.onload = function() 
+      // {
+      //   let img = new fabric.Image(image);
+      //   img.id = img_taken.id_of;
+      //   img.src = image.src;
+      //   img.set(
+      //   {
+      //     left: 100,
+      //     top: 60
+      //   });
+      //   img.scaleToWidth(600);
+      //   canvas.add(img).setActiveObject(img).renderAll();
+      // }   
         //'canvas.freeDrawingBrush.width = width_taken'
     });
 
@@ -586,9 +702,9 @@ let circle ;
       }
       else
       {
-        console.log(data,'init_canvas');
+        // console.log(data,'init_canvas');
         let chunks = chunk(data?.canvas,30);
-        console.log(chunks);
+        // console.log(chunks);
         let chunk_index = 0;
         let init_interval = setInterval(function(){
             let chunk = chunks[chunk_index];
@@ -599,15 +715,35 @@ let circle ;
             chunk.forEach((object,id)=>{
               chunk[id]=deserialize(object);
             });
-            console.log(chunk,'chunk');
+            // console.log(chunk,'chunk');
             fabric.util.enlivenObjects(chunk,function(objects)
             {
-              console.log("5555555555!",objects);
+              // console.log("5555555555!",objects);
               objects.forEach(function(object)
               {
+                let obj_exists = false;
+
+                canvas._objects.every(function(obj_,indx_){
+                  // console.log(obj_.id,object.id);
+                    if ( obj_.id==object.id ){
+                      obj_exists = true;
+                      // console.log(object.id, "exists!");
+                      return false
+                    }
+                    return true;
+                });
+                // если такого объекта еще нет на канвасе, то добавляем
+                if ( obj_exists===false ){
+                  if ( object.type=='image' && object.src!==undefined && object.src!='' ){
+                    // console.log(object.src,object.type);
+                    window.insertImageOnBoard(object.src, true, object.id, object);
+                  }else{
+                    canvas.add(object);
+                  }
+                }
                 //let deserialized_object =deserialize(object);
                 //console.log('deserialized_object',deserialized_object)
-                canvas.add(object);
+                
               })
               canvas.renderAll();
             });
@@ -631,6 +767,7 @@ let circle ;
     canvas.on('object:added',e =>
     {
       let object = e.target;
+      console.log(object.id);
       if(!object.id)
       {
         object.set('id',Date.now().toString(36) + Math.random().toString(36).substring(2));
@@ -777,8 +914,7 @@ let circle ;
 
     socket.on('object:modified', e =>
     {
-        console.log('object:modified','fuck yeaa!!!',e);
-        
+
         recive_part_of_data(e);
     });
 
@@ -1401,7 +1537,8 @@ function send_part_of_data(e) {
     let object_index = find_object_index(e.target);
 
     e.target.object_index = object_index;
-    console.log('sending_object',canvas._objects[object_index])
+    // console.log('sending_object',canvas._objects[object_index])
+    // console.log('sending_object',canvas._objects[object_index].id)
 
     socket.emit("object:modified", {
       //object: e.target,
@@ -1414,7 +1551,7 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
-  console.log("get something", e);
+  // console.log("get something", e);
   if (e.objects) {
     for (const object of e.objects) {
       //let d = canvas.item(object.index);
@@ -1433,8 +1570,9 @@ function recive_part_of_data(e) {
     }
   } else {
     //let d = canvas.item(e.index);
+    // console.log(canvas._objects);
     let d = canvas._objects.find(item=>item.id==e.id);
-    console.log(d,e.object.id)
+    // console.log(d,e.object.id, )
     //d.set(e.object);
     if(!d){
       return false

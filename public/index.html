@@ -19,12 +19,16 @@
           accurateTrackBounce:true,
           webvisor:true
       });
+
     </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/88316168" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
 </head>
 
 <body>
+  <div id="waiting-overlay" class="is-overlay is-hidden is-size-1 z-1020 wv-100 vh-100 is-white is-fullwidth is-fullheight has-background-white is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+      Отправлено подтверждение на доступ к доске, ожидайте...
+  </div>
 <div id="board_id" board="{{ board_id }}" hidden></div>
 <div class="top-panel">
   <div class="top-panel__logo">
@@ -437,6 +441,14 @@
   </div>
 </div>
 
+<div class="notification is-info is-light is-size-3  is-hidden" id="accept_user_notify">
+  Пользователь <strong id="user_name"></strong> запрашивает доступ к доске.
+  <div class="buttons mt-2">
+    <button class="button is-primary is-size-5" id="button-accept" data-board="" data-user="" >Разрешить</button>
+    <button class="button is-link ml-2 is-size-5" id="button-decline" data-board="" data-user="" >Отклонить</button>
+  </div>
+</div>
+
 <div class="canvasWrapper">
     <canvas id="canvasId"></canvas>
 </div>
@@ -453,27 +465,23 @@
 
 <script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.X.X/dist/protobuf.js"></script>
 <script src="./fabric.js"></script>
-<!-- <script src="https://unpkg.com/fabric@4.6.0/dist/fabric.js"></script> -->
+<!-- <script type="module" src="./gif.min.js"></script> -->
+<!-- <script src="./fabricGif.js"></script> -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-
 <script defer src="//unpkg.com/mathlive/dist/mathlive.min.js"></script>
-
 <script src="./fabric_plugin_undo_redo.js"></script>
-<script src="./fabric_modal.js"></script>
-
-<!--- <script src="./some_functions.js" type="module"></script> -->
+<script type="module" src="./fabric_modal.js"></script>
 <script src="adding_figures_on_board.js" ></script>
-
-
-
 <script src="change_grid.js" ></script>
 <script src="fit_curve.js" ></script>
-
+<script src="js.cookie.min.js" ></script>
 <script src="serializing_function.js" ></script>
 <script src="frontend.js" ></script>
 <script src="formula_adding.js" ></script>
 <script src="work_with_text.js" ></script>
 <script src="copy_paste_and_other_commands.js" ></script>
+
+
 
 </body>
 </html>

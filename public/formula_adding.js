@@ -20,8 +20,8 @@ buttonAddFormulas.addEventListener('click', (event) => {
  //i create an extra var for to change some image properties
         var img1 = myImg.set({ left: 100, top: 100 ,width:docss.offsetWidth,height:docss.offsetHeight});
         fabric_canvas.add(img1); 
-        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": fabric_canvas.toJSON()});
-        socket.emit("picture:add",fabric_canvas.toJSON());
+        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(fabric_canvas)});
+        socket.emit("picture:add",serialize_canvas(fabric_canvas));
         formFormulasWrapper.classList.remove('form-formulas__wrapper_visible');
 });
     });
