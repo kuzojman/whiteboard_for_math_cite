@@ -671,7 +671,7 @@ let circle ;
 
     socket.on('image:add', function(img_taken)
     {
-      window.insertImageOnBoard(img_taken.src, true);
+      window.insertImageOnBoard(img_taken.src, true, img_taken.id_of);
 
       // const image = document.createElement('img')
       // image.src = img_taken.src
@@ -767,6 +767,7 @@ let circle ;
     canvas.on('object:added',e =>
     {
       let object = e.target;
+      console.log(object.id);
       if(!object.id)
       {
         object.set('id',Date.now().toString(36) + Math.random().toString(36).substring(2));
@@ -1536,7 +1537,8 @@ function send_part_of_data(e) {
     let object_index = find_object_index(e.target);
 
     e.target.object_index = object_index;
-    console.log('sending_object',canvas._objects[object_index])
+    // console.log('sending_object',canvas._objects[object_index])
+    // console.log('sending_object',canvas._objects[object_index].id)
 
     socket.emit("object:modified", {
       //object: e.target,
@@ -1549,7 +1551,7 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
-  console.log("get something", e);
+  // console.log("get something", e);
   if (e.objects) {
     for (const object of e.objects) {
       //let d = canvas.item(object.index);

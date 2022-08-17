@@ -77,7 +77,7 @@ window.insertImageOnBoard = function (url, noemit=false, id=false){
             fabric.util.requestAnimFrame(render);
           });
           if (noemit==false){
-            socket.emit("image:add", {src: url, id_of: myImg.id});
+            socket.emit("image:add", {src: url, id_of: gif.id});
             socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
           }
         } )
@@ -88,7 +88,6 @@ window.insertImageOnBoard = function (url, noemit=false, id=false){
       myImg['src'] = url;
       if ( id!==false ){
         myImg['id'] = id;
-        console.log(id, myImg['id']);
       }
 
       canvas.add(myImg).setActiveObject(myImg).renderAll(); 
