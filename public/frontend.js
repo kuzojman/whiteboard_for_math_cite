@@ -736,7 +736,7 @@ let circle ;
                 if ( obj_exists===false ){
                   if ( object.type=='image' && object.src!==undefined && object.src!='' ){
                     // console.log(object.src,object.type);
-                    window.insertImageOnBoard(object.src, true, object.id);
+                    window.insertImageOnBoard(object.src, true, object.id, object);
                   }else{
                     canvas.add(object);
                   }

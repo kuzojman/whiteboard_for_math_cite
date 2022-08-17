@@ -55,7 +55,7 @@ function closeImagesModal(){
  * Вставляем картинку на панель
  * @param {*} url 
  */
-window.insertImageOnBoard = function (url, noemit=false, id=false){
+window.insertImageOnBoard = function (url, noemit=false, id=false, params=false){
     fabric.Image.fromURL(url, function(myImg) {
 
       if (url.toLowerCase().match(/\.(gif)/g)){
@@ -71,11 +71,22 @@ window.insertImageOnBoard = function (url, noemit=false, id=false){
           // console.log(gif);
           // gif.set({ top: 50, left: 50 });
           canvas.add(gif).setActiveObject(gif);
+          // перемещаем объект куда надо
+          if ( params!==false ){
+            gif.set({
+              top: params.top, //+object.object.top,
+              left: params.left, //+object.object.left
+              angle: params.angle,
+              scaleX: params.scaleX,
+              scaleY: params.scaleY,
+            });
+          }
           gif.play();
           fabric.util.requestAnimFrame(function render() {
             canvas.renderAll();
             fabric.util.requestAnimFrame(render);
           });
+          
           if (noemit==false){
             socket.emit("image:add", {src: url, id_of: gif.id});
             socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
@@ -89,8 +100,19 @@ window.insertImageOnBoard = function (url, noemit=false, id=false){
       if ( id!==false ){
         myImg['id'] = id;
       }
-
-      canvas.add(myImg).setActiveObject(myImg).renderAll(); 
+      
+      canvas.add(myImg)
+      // перемещаем объект куда надо
+      if ( params!==false ){
+        myImg.set({
+          top: params.top, //+object.object.top,
+          left: params.left, //+object.object.left
+          angle: params.angle,
+          scaleX: params.scaleX,
+          scaleY: params.scaleY,
+        });
+      }
+      canvas.setActiveObject(myImg).renderAll(); 
       // console.log({src: url, id_of: myImg.id});
       if (noemit==false){
         socket.emit("image:add", {src: url, id_of: myImg.id});
