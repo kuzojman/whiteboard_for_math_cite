@@ -19,13 +19,16 @@ let simpleJson = {
         'https://media1.giphy.com/media/i33719vyOjNYI/giphy.gif?cid=ecf05e47mfu21495ggkvcbstb1g3jvoic32l5bj7reyzt0rx&rid=giphy.gif&ct=g',
         'https://media4.giphy.com/media/119pLwyWg8ScTK/giphy.gif?cid=ecf05e47xfzha64o895nsmu0m60fjunfpr1hh6x2nur90gj7&rid=giphy.gif&ct=g',
         'https://via.placeholder.com/250.gif/09f/fff',
+        'https://hot_data_kuzovkin_info_private.hb.bizmrg.com/photo_to_board/physics/solid_liquid.gif',
+        'https://hot_data_kuzovkin_info_private.hb.bizmrg.com/photo_to_board/physics/electricity-physics.gif',
+        'https://hot_data_kuzovkin_info_private.hb.bizmrg.com/photo_to_board/physics/diffusion.gif'
       ]
     },
     {
       title:'Физика',
       icon:'fa-atom',
       images:[
-        'https://www.fillmurray.com/640/461',
+        'https://hot_data_kuzovkin_info_private.hb.bizmrg.com/photo_to_board/physics/inertnost.png',
         'https://www.fillmurray.com/640/361',
         'https://www.fillmurray.com/640/261',
         'https://www.fillmurray.com/540/461',

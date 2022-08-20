@@ -23,7 +23,7 @@
 // });
 
 // для продакшна надо оставить пустым
-let serverHostDebug = "http://localhost:5000/"
+let serverHostDebug = "https://kuzovkin.info"  //"http://localhost:5000/"
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
@@ -242,9 +242,9 @@ menu_grid.addEventListener('click', e=> e.currentTarget.classList.toggle('active
 
 //
 
-const socket = io('localhost:3000',{transports:['websocket']});
+//const socket = io('http://localhost:3000',{transports:['websocket']});
 
-//const socket = io('https://kuzovkin.info',{transports:['websocket']});
+const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
 
 // const socket = io();
