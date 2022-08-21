@@ -151,7 +151,6 @@ const handleMouseMovement = (event) => {
  */
 const handleMouseOut = (ev)=>{
   if (ev.e.type=='mouseout'){
-    console.log(ev);
     const cursorCoordinate = canvas.getPointer(ev.e);
     let data = {
         userId: socket.id,
@@ -160,7 +159,6 @@ const handleMouseOut = (ev)=>{
     }
     socket.emit('cursor-data', data);
   }
-  // console.log(ev);
 }
 
 let colors = ['#ff0000','#0f71d3','#14ff00'];
@@ -241,7 +239,6 @@ let isCursorMove = false;
 
 function get_board_id() {
   const board_id =  document.getElementById("board_id").attributes["board"].value;
-  // console.log('>>>>>>' + board_id);
   return board_id;
 }
 
@@ -249,8 +246,6 @@ let board_id = get_board_id();
 let isDown = false;
 
 const buttonCursorMove = document.querySelector('#moving_our_board'); 
-// console.log(buttonCursorMove);
-
 
 let isRendering = false;
 const render = canvas.renderAll.bind(canvas);
@@ -349,12 +344,7 @@ fabric.Canvas.prototype.toggleDragMode = function () {
       });
       // When the mouse moves, and we're panning (mouse down), we continue
       this.on("mouse:move", (e) => {
-          // console.log(state,lastClientX,lastClientY);
           if (state === STATE_PANNING && e && e.e) {
-              // let delta = new fabric.Point(e.e.movementX, e.e.movementY); // No Safari support for movementX and movementY
-              // For cross-browser compatibility, I had to manually keep track of the delta
-              // console.log(e.e)
-              // Calculate deltas
               let x_,y_;
               if ( e.e.changedTouches!==undefined && e.e.changedTouches.length==1 ){ 
                 let lt_ = e.e.changedTouches[0];
@@ -423,19 +413,6 @@ const downloadImage = () =>
  };
 
 
-/*
-function downloadImage()
-{
-  let dataURL = canvas.toDataURL();
-  alert(typeof dataURL);
-  console.log(type(dataURL));
-}
-*/
-
-
-
-
-
 const circleDrawingButton = document.querySelector('#circle_drawing_empty_button');
 circleDrawingButton.addEventListener("click",(e) =>  drawcle("empty"));
 
@@ -485,8 +462,6 @@ function hideWaitingOverlay(){
  */
 function checkLoggedIn(){
   fetch(serverHostDebug+'/check_user_id/').then( data=>data.json()).then(e=>{
-    // console.log(e);
-    // e.user=3;
     // если пользователь не залогинен - перенаправляем на страницу логина
     if ( e===undefined || !e || e.user==false || e.user=='False' ){
       window.location.href=serverHostDebug+"/auth?parametr_enter=email";
@@ -545,7 +520,6 @@ socket.on( 'connect', function()
     checkLoggedInCookie()
     // получаем ответ на наш запрос - можно на доску заходить или нет?
     socket.on('access:response', function(data){
-      // console.log(data);
       if ( data.role!='' && data.role!='waiting' ){
         hideWaitingOverlay()
         socket.emit("board:board_id",board_id);
@@ -555,7 +529,6 @@ socket.on( 'connect', function()
     // запрос администратора на одобрение
     socket.on('creator:request', (e)=>{
       // { board_id:e.board, user_id:e.user }
-      console.log(e);
       notifyPopup.classList.remove('is-hidden');
       let userid = "";
       if ( e.username && e.username!='' ){
@@ -575,36 +548,47 @@ socket.on( 'connect', function()
 
     socket.on('mouse:up', function(pointer)
     {
-      canvas.freeDrawingBrush.onMouseUp({e:{}});
+      canvas.remoteDrawingBrush.onMouseUp({e:{}});
     });
 
     socket.on('mouse:down', function(pointer)
     {
-      canvas.freeDrawingBrush.color = pointer.color;
-      canvas.freeDrawingBrush.width = pointer.width;
-      canvas.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
+      if ( canvas.remoteDrawingBrush===undefined ){
+        canvas.remoteDrawingBrush = new fabric.PencilBrush(canvas)
+      }
+      if (canvas.remoteDrawingBrush.btype ===undefined || canvas.remoteDrawingBrush.btype!='eraser' ){
+        if (pointer.type!==undefined && pointer.type=='eraser'){
+          canvas.remoteDrawingBrush = new fabric.EraserBrush(canvas)
+          canvas.remoteDrawingBrush.btype = 'eraser'
+        }
+      }else{
+        if (pointer.type!==undefined && pointer.type=='brush'){
+          canvas.remoteDrawingBrush = new fabric.PencilBrush(canvas)
+          canvas.remoteDrawingBrush.btype = 'brush'
+        }
+      }
+      canvas.remoteDrawingBrush.color = pointer.color;
+      canvas.remoteDrawingBrush.width = pointer.width;
+      canvas.remoteDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
 
     });
 
 
     socket.on('mouse:move', function(e)
     {
-      canvas.freeDrawingBrush.color = e.color;
-      canvas.freeDrawingBrush.width = e.width;
-      canvas.freeDrawingBrush.onMouseMove(e.pointer,{e:{}});
-      // console.log('recieved',  canvas.freeDrawingBrush._points.length)
+      canvas.remoteDrawingBrush.color = e.color;
+      canvas.remoteDrawingBrush.width = e.width;
+      canvas.remoteDrawingBrush.onMouseMove(e.pointer,{e:{}});
     });
     socket.on('color:change', function(colour_taken)
     {
-        // console.log('recieved colour',colour_taken)
-        canvas.freeDrawingBrush.color = colour_taken;
+        canvas.remoteDrawingBrush.color = colour_taken;
         
     });
 
     socket.on('width:change', function(width_taken)
     {
-        console.log('width:change',width_taken)
-        canvas.freeDrawingBrush.width = width_taken;
+        canvas.remoteDrawingBrush.width = width_taken;
 
     });
 
@@ -615,18 +599,12 @@ let circle ;
         radius: circle_taken.radius
       });
       canvas.renderAll();
-
-        console.log('circle:edit',circle_taken)
-        //'canvas.freeDrawingBrush.width = width_taken'
     });
     
     socket.on('circle:add', function(circle_taken)
     {
-        console.log('circle:add',circle_taken)
         circle = new fabric.Circle(circle_taken)
         canvas.add(circle)
-          
-        //'canvas.freeDrawingBrush.width = width_taken'
     });
 
     let rect ;
@@ -647,7 +625,6 @@ let circle ;
         height: rect_taken.height
       });
       canvas.renderAll();
-      console.log('rect:edit',rect_taken)
     });
     socket.on('rect:add', function(rect_taken)
     {
@@ -669,15 +646,9 @@ let circle ;
         y2: line_taken.y2
       });
       canvas.renderAll();
-      console.log('line:edit',line_taken.x2, line_taken.y2,line_taken,line)
-
-      //console.log('line:edit',line_taken.x2)
-        //'canvas.freeDrawingBrush.width = width_taken'
     });
     socket.on('line:add', function(line_taken)
     {
-        console.log('line:add',line_taken)
-
         line = new fabric.Line(line_taken.points, {
           id: line_taken.id,
           strokeWidth: line_taken.width,
@@ -697,11 +668,6 @@ let circle ;
     socket.on('picture:add', function(img_taken)
     {
       canvas.loadFromJSON(img_taken);
-    /*  
-      console.log("picture:add",img);
-        var img = new fabric.Image(img_taken);       
-        canvas.add(img)          
-*/
     });
 
     socket.on('image:add', function(img_taken)
@@ -717,9 +683,7 @@ let circle ;
       }
       else
       {
-        // console.log(data,'init_canvas');
         let chunks = chunk(data?.canvas,30);
-        // console.log(chunks);
         let chunk_index = 0;
         let init_interval = setInterval(function(){
             let chunk = chunks[chunk_index];
@@ -730,19 +694,15 @@ let circle ;
             chunk.forEach((object,id)=>{
               chunk[id]=deserialize(object);
             });
-            // console.log(chunk,'chunk');
             fabric.util.enlivenObjects(chunk,function(objects)
             {
-              // console.log("5555555555!",objects);
               objects.forEach(function(object)
               {
                 let obj_exists = false;
 
                 canvas._objects.every(function(obj_,indx_){
-                  // console.log(obj_.id,object.id);
                     if ( obj_.id==object.id ){
                       obj_exists = true;
-                      // console.log(object.id, "exists!");
                       return false
                     }
                     return true;
@@ -750,15 +710,11 @@ let circle ;
                 // если такого объекта еще нет на канвасе, то добавляем
                 if ( obj_exists===false ){
                   if ( object.type=='image' && object.src!==undefined && object.src!='' ){
-                    // console.log(object.src,object.type);
                     window.insertImageOnBoard(object.src, true, object.id, object);
                   }else{
                     canvas.add(object);
                   }
-                }
-                //let deserialized_object =deserialize(object);
-                //console.log('deserialized_object',deserialized_object)
-                
+                }                
               })
               canvas.renderAll();
             });
@@ -782,18 +738,14 @@ let circle ;
     canvas.on('object:added',e =>
     {
       let object = e.target;
-      console.log(object.id);
       if(!object.id)
       {
         object.set('id',Date.now().toString(36) + Math.random().toString(36).substring(2));
-        console.log("create new id",object.id)
         object.toJSON = (function(toJSON){
           return function(){
             return fabric.util.object.extend(toJSON.call(this),{"id":this.id})
           }
         })(object.toJSON)
-        console.log(e);
-        
 
         if(object.path)
         {
@@ -865,7 +817,6 @@ let circle ;
 
     socket.on('figure_delete', e =>
     {
-        console.log('figure_delete',e)
         e.forEach(function(id)
         {
           canvas._objects.forEach(function(object,index)
@@ -881,8 +832,6 @@ let circle ;
 
     socket.on('figure_copied', e =>
     {
-        console.log('figure_copied',e,new fabric.Object(e));
-        
         canvas.add(new fabric.Object(e));
         canvas.renderAll();
         //canvas.loadFromJSON(e);
@@ -912,14 +861,12 @@ let circle ;
 
     socket.on('object:rotating', e =>
     {
-        console.log('object:rotating',e);
         recive_part_of_data(e);
         //canvas.loadFromJSON(e);
     });
 
     socket.on('text:added', e =>
     {
-        console.log('text:added',e);
         const text = new fabric.IText(e);
         canvas.add(text);
         canvas.renderAll();
@@ -942,8 +889,9 @@ function enableFreeDrawing()
   let array_of_points = [];
   removeEvents();
   canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+  canvas.remoteDrawingBrush = new fabric.PencilBrush(canvas);
   canvas.isDrawingMode = true;
-
+  canvas.freeDrawingBrush.btype = "brush"
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
@@ -954,7 +902,7 @@ function enableFreeDrawing()
   {
     isDrawing = true;
     const pointer = canvas.getPointer(e);
-    socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
+    socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
   })
   canvas.on('mouse:up', e => 
   {
@@ -962,7 +910,7 @@ function enableFreeDrawing()
     const pointer = canvas.getPointer(e);
     //socket.emit('canvas_save_to_json',canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
+    socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
     //array_of_points = [];
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
@@ -973,7 +921,7 @@ function enableFreeDrawing()
     if (isDrawing) 
     {
       const pointer = canvas.getPointer(e);
-      socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
     }
   })
 }
@@ -982,7 +930,6 @@ function enableFreeDrawing()
  * Выбираем ластик
  */
 function enableEraser(){
-  console.log("Eraser selected!");
   removeEvents();
   canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
   canvas.isDrawingMode = true;
@@ -993,18 +940,18 @@ function enableEraser(){
   canvas.on('mouse:down', e => {
     isDrawing = true;
     const pointer = canvas.getPointer(e);
-    // socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
+    socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});
   })
   canvas.on('mouse:up', e => {
     isDrawing = false;
     const pointer = canvas.getPointer(e);
-    // socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
+    socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   })
   canvas.on('mouse:move', (e)=> {
     if (isDrawing)     {
       const pointer = canvas.getPointer(e);
-      // socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points); 
     }
   })
 }
@@ -1222,12 +1169,9 @@ function handle_mouse_move(e) {
     return new fabric.Point(item.x, item.y);
   });
   canvas._onMouseUpInDrawingMode({ target: canvas.upperCanvasEl });
-
-  console.log("recieved", canvas.freeDrawingBrush._points.length);
 }
 
 function change_colour_of_brush(colour_taken) {
-  console.log("recieved colour", colour_taken);
   canvas.freeDrawingBrush.color = colour_taken;
   localStorage.setItem("color",colour_taken);
 }
@@ -1246,7 +1190,6 @@ function handle_editing_rectangle(rect_taken) {
     height: rect_taken.height,
   });
   canvas.renderAll();
-  console.log("rect:edit", rect_taken);
 }
 
 function editing_passing_rectangle(rect_taken) {
@@ -1256,8 +1199,6 @@ function editing_passing_rectangle(rect_taken) {
 }
 
 function adding_line_to_partner_board(line_taken) {
-  console.log("line:add", line_taken);
-
   line = new fabric.Line(line_taken, {
     strokeWidth: 15,
     fill: "#07ff11a3",
@@ -1281,14 +1222,9 @@ function editing_added_line_to_board(line_taken) {
     fill: line_taken.fill
   });
   canvas.renderAll();
-  console.log("line:edit", line_taken.x2, line_taken.y2, line_taken, line);
-
-  //console.log('line:edit',line_taken.x2)
-  //'canvas.freeDrawingBrush.width = width_taken'
 }
 
 function width_of_line_passed_taken(width_taken) {
-  console.log("width:change", width_taken);
   canvas.freeDrawingBrush.width = width_taken;
 }
 
@@ -1297,13 +1233,9 @@ function circle_passed_to_board(circle_taken) {
     radius: circle_taken.radius,
   });
   canvas.renderAll();
-
-  console.log("circle:edit", circle_taken);
-  //'canvas.freeDrawingBrush.width = width_taken'
 }
 
 function adding_circle_on_the_board(circle_taken) {
-  console.log("circle:add", circle_taken);
   circle = new fabric.Circle(circle_taken);
   canvas.add(circle);
 
@@ -1342,7 +1274,6 @@ if (localStorageWidth)
 
 drawingColorEl.oninput = function() 
 {
-  console.log("color:change",drawingColorEl.value);
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   localStorage.setItem('color',drawingColorEl.value)
   socket.emit("color:change",drawingColorEl.value);
@@ -1363,9 +1294,7 @@ drawingLineWidthEl.oninput = function()
 
 
 function drawLine(type_of_line) {
-  console.log(type_of_line);
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-  // console.log(drawingLineWidthEl.value,canvas.freeDrawingBrush.width);
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   drawingLineWidthEl.onchange = function() 
   {
@@ -1379,7 +1308,6 @@ function drawLine(type_of_line) {
     canvas.freeDrawingBrush.color = drawingColorEl.value;
     socket.emit("color:change",drawingColorEl.value);
   };
-  // console.log(type_of_line);
   if (type_of_line == "trivial")
   {
     colour_inside = hexToRgbA('#000dff',5);
@@ -1390,8 +1318,6 @@ function drawLine(type_of_line) {
     colour_inside = hexToRgbA('#000dff',5);
     stroke_line = 20;
   }
-
-  // console.log(stroke_line);
 
   removeEvents();
   changeObjectSelection(false);
@@ -1417,7 +1343,6 @@ function drawLine(type_of_line) {
       width: line.strokeWidth,
       strokeDashArray: [stroke_line, stroke_line],
       stroke: line.stroke});
-    console.log("line:add", points);
   });
   canvas.on("mouse:move", function (o) {
     if (!isDown) return;
@@ -1435,12 +1360,6 @@ function drawLine(type_of_line) {
       stroke: line.stroke,
       fill: line.fill
     });
-    //socket.emit("line:edit",line);
-    console.log(
-      "line:edit",
-      { x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2 },
-      line
-    );
   });
 
   canvas.on("mouse:up", function (o) {
@@ -1512,7 +1431,6 @@ function print_Text() {
 function find_object_index(target_object) {
   let target_index; 
   let objects = canvas.getObjects();
-  console.log(objects,'objects',target_object)
   objects.forEach(function (object, index) {
     if (object.id == target_object.id) {
       target_index = index;
@@ -1526,7 +1444,7 @@ function find_object_index(target_object) {
       }
     });
   }
-  console.log(target_index,'target_index')
+
   return target_index;
 }
 
@@ -1534,11 +1452,9 @@ function send_part_of_data(e) {
   if (e.target._objects) {
     let data = { objects: [] };
     let json_canvas = canvas.toJSON(['id']);
-    console.log(e,'send_part_of_data');
     if(e.transform.target.type=='group')
     {
         let object_index = find_object_index(e.transform.target);
-        //console.log('group_index',find_object_index(e.transform.target));
         e.transform.target.object_index = find_object_index(e.transform.target);
         data.objects.push({
           id: e.transform.target.id,
@@ -1567,15 +1483,11 @@ function send_part_of_data(e) {
       });
     }
     socket.emit("object:modified", data);
-    console.log("data send", data);
-    //console.log('e send',e);
   } else {
     let object_index = find_object_index(e.target);
 
     e.target.object_index = object_index;
-    // console.log('sending_object',canvas._objects[object_index])
-    // console.log('sending_object',canvas._objects[object_index].id)
-
+    
     socket.emit("object:modified", {
       //object: e.target,
       id: canvas._objects[object_index].id,
@@ -1587,12 +1499,10 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
-  // console.log("get something", e);
   if (e.objects) {
     for (const object of e.objects) {
       //let d = canvas.item(object.index);
       let d = canvas._objects.find(item=>item.id==object.id);
-      console.log(object.id,d);
       if(!d){
         continue;
       }
@@ -1606,9 +1516,7 @@ function recive_part_of_data(e) {
     }
   } else {
     //let d = canvas.item(e.index);
-    // console.log(canvas._objects);
     let d = canvas._objects.find(item=>item.id==e.id);
-    // console.log(d,e.object.id, )
     //d.set(e.object);
     if(!d){
       return false
