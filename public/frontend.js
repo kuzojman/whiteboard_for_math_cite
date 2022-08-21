@@ -23,7 +23,7 @@
 // });
 
 // для продакшна надо оставить пустым
-let serverHostDebug = "https://kuzovkin.info"  //"http://localhost:5000/"
+let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
@@ -129,6 +129,24 @@ const handleMouseMovement = (event) => {
   socket.emit('cursor-data', data);
 }   
 
+/**
+ * Ловим курсор когда он вышел за пределы канваса
+ * @param {*} ev 
+ */
+const handleMouseOut = (ev)=>{
+  if (ev.e.type=='mouseout'){
+    console.log(ev);
+    const cursorCoordinate = canvas.getPointer(ev.e);
+    let data = {
+        userId: socket.id,
+        coords: cursorCoordinate,
+        cursor:'leave'
+    }
+    socket.emit('cursor-data', data);
+  }
+  // console.log(ev);
+}
+
 let colors = ['#ff0000','#0f71d3','#14ff00'];
 let color_index =0;                                            // Курсор
 const getCursorData = (data) => {
@@ -149,6 +167,24 @@ const getCursorData = (data) => {
       top:  data.cursorCoordinates.y,
       left: data.cursorCoordinates.x,
     }); 
+    // console.log(data);
+    // strokeWidth: line_taken.width,
+    // fill: line_taken.fill,
+    // stroke: line_taken.stroke,
+    if ( data.cursor!==undefined && data.cursor=='leave' ){
+      existing_coursor.set({
+        // stroke: existing_coursor.fill,
+        // strokeWidth: 2,
+        // fill: 'rgba(0,0,0,0)'
+        opacity: 0.2
+      })
+    }else{
+      existing_coursor.set({
+        // strokeWidth: 0,
+        // fill:existing_coursor.stroke,
+        opacity: 1
+      })
+    }
   }
 
 
@@ -242,9 +278,9 @@ menu_grid.addEventListener('click', e=> e.currentTarget.classList.toggle('active
 
 //
 
-//const socket = io('http://localhost:3000',{transports:['websocket']});
+const socket = io('http://localhost:3000',{transports:['websocket']});
 
-const socket = io('https://kuzovkin.info',{transports:['websocket']});
+// const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
 
 // const socket = io();
@@ -965,10 +1001,6 @@ function enableFreeDrawing()
     {
       const pointer = canvas.getPointer(e);
       socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});//canvas.freeDrawingBrush._points); 
-      console.log(pointer);
-      //console.log(array_of_points);
-      //console.log(canvas.freeDrawingBrush._points);
-      //socket.emit('mouse:move', canvas.freeDrawingBrush._points);       
     }
   })
 }
@@ -1666,6 +1698,7 @@ toolPanelList.addEventListener('click', (event) => {
 })
 
 
+canvas.on('mouse:out', handleMouseOut);         // Отображение чужих курсоров
 canvas.on('mouse:move', handleMouseMovement);         // Отображение чужих курсоров
 socket.on('cursor-data', getCursorData);              // отображаем курсоры чужих пользователей
 

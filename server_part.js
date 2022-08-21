@@ -115,6 +115,11 @@ io.on("connection", async socket => {
     if(cursorDataUser) 
     {
         cursorDataUser.cursorCoordinates = data.coords;
+        if ( data.cursor!==undefined ){
+          cursorDataUser.cursor = data.cursor
+        }else{
+          cursorDataUser.cursor = ""
+        }
         socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
 });
