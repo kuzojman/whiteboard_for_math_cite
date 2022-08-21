@@ -1545,6 +1545,10 @@ const handleButtonCursorMoveClick = () => {
 } 
 buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 
+document.addEventListener('DOMContentLoaded',(e)=>{
+  buttonCursorMove.click()
+});
+
 
 const toolPanelList = document.querySelector('.tool-panel__list');
 
