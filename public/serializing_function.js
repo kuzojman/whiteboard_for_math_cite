@@ -15,7 +15,8 @@ const serializer_dictionary_for_bezier = {
     "id": "id",
     "fill": "f",
     "strokeLineCap": "slp",
-    "strokeLineJoin": "slj"
+    "strokeLineJoin": "slj",
+    "eraser":"eraser"
   };
 
 const rect_and_line_add ={
@@ -29,7 +30,8 @@ const rect_and_line_add ={
     "width":"w",	
     "height":"h",	
     "top":"tp",	
-    "left":"lt"
+    "left":"lt",
+    "eraser":"eraser"
   }
 
 const to_image_add ={
@@ -65,7 +67,8 @@ const to_circle_add ={
     "globalCompositeOperation":"gCO",
     "radius":"rs",
     "startAngle":"sA",
-    "endAngle":"eA"
+    "endAngle":"eA",
+    "eraser":"eraser"
 }
 
 const to_text_add ={

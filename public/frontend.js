@@ -59,15 +59,31 @@ let currentValueZoom = 1;
 
 let currentRadiusCursor = 10;
 
-const cursorUser = new fabric.Circle({              // Представление курсора
-  radius: currentRadiusCursor,
-  fill: 'red',
-  left: -10,
-  top: -10,
-  originX: 'center',
-  originY: 'center',
-});
+const cursorUser = createCursor()
 
+function createCursor(){
+  let curs_ =  new fabric.Circle({              // Представление курсора
+    radius: currentRadiusCursor,
+    fill: 'red',
+    left: 0,
+    top: 0,
+    originX: 'center',
+    originY: 'center',
+  });
+  let text_ = new fabric.Text("Username", {
+    fontFamily: 'Calibri',
+    fontSize: 14,
+    textAlign: 'left',
+    originX: 'center',
+    originY: 'center',
+    left: currentRadiusCursor*2,
+    top: currentRadiusCursor*2  });
+  let cursor_ = new fabric.Group([curs_,text_],{
+    left: -10,
+    top: -10,
+  })
+  return cursor_
+}
 
 
 canvas.on('mouse:wheel',function(opt){
@@ -154,8 +170,10 @@ const getCursorData = (data) => {
   let existing_coursor = canvas._objects.find(item=>item.socket_id==data.userId)
   if(!existing_coursor)
   {
+    
     cursorUser.socket_id=data.userId;
-    cursorUser.fill=colors[color_index];
+    cursorUser.item(0).fill=colors[color_index];
+    cursorUser.item(1).text = data.username
     color_index++;
     if(!colors[color_index]){
       color_index=0;
@@ -167,37 +185,16 @@ const getCursorData = (data) => {
       top:  data.cursorCoordinates.y,
       left: data.cursorCoordinates.x,
     }); 
-    // console.log(data);
-    // strokeWidth: line_taken.width,
-    // fill: line_taken.fill,
-    // stroke: line_taken.stroke,
     if ( data.cursor!==undefined && data.cursor=='leave' ){
       existing_coursor.set({
-        // stroke: existing_coursor.fill,
-        // strokeWidth: 2,
-        // fill: 'rgba(0,0,0,0)'
         opacity: 0.2
       })
     }else{
       existing_coursor.set({
-        // strokeWidth: 0,
-        // fill:existing_coursor.stroke,
         opacity: 1
       })
     }
   }
-
-
-
-/*
-  if(data.userId !== socket.id) {
-
-      cursorCoordinateOtherUsers = data.cursorCoordinates;
-      cursorUser.left = data.cursorCoordinates.x;
-      cursorUser.top = data.cursorCoordinates.y;
-      canvas.add(cursorUser);
-  }
-  */
   canvas.renderAll();
 }                                                   // Получение координат курсора
 
@@ -405,6 +402,8 @@ fabric.Canvas.prototype.toggleDragMode = function () {
 
 const freeDrawingButton   = document.querySelector('#free_drawing_button');
 freeDrawingButton.onclick = enableFreeDrawing;
+const freeEraseingButton   = document.querySelector('#free_erasing_button');
+freeEraseingButton.onclick = enableEraser;
 const selectionButton     = document.querySelector('#selection_button');
 selectionButton.onclick   = enableSelection;
 
@@ -494,7 +493,7 @@ function checkLoggedIn(){
       return;
     }
     // сохраняем пользователя через сокеты
-    socket.emit("user:user_id",{user:e.user, board:board_id});
+    socket.emit("user:user_id",{user:e.user, board:board_id, socket_id: socket.id});
     // отправляем запрос на регистрацию на доске
     socket.emit("access:request", {user:e.user, board:board_id});
     // показываем оверлей ожидания
@@ -512,7 +511,7 @@ function checkLoggedInCookie(){
     return;
   }
   // сохраняем пользователя через сокеты
-  socket.emit("user:user_id",{user:user_id, board:board_id});
+  socket.emit("user:user_id",{user:user_id, board:board_id, socket_id: socket.id});
   // отправляем запрос на регистрацию на доске
   socket.emit("access:request", {user:user_id, board:board_id});
   // показываем оверлей ожидания
@@ -708,26 +707,6 @@ let circle ;
     socket.on('image:add', function(img_taken)
     {
       window.insertImageOnBoard(img_taken.src, true, img_taken.id_of);
-
-      // const image = document.createElement('img')
-      // image.src = img_taken.src
-
-      // document.body.append(image);
-
-      // image.onload = function() 
-      // {
-      //   let img = new fabric.Image(image);
-      //   img.id = img_taken.id_of;
-      //   img.src = image.src;
-      //   img.set(
-      //   {
-      //     left: 100,
-      //     top: 60
-      //   });
-      //   img.scaleToWidth(600);
-      //   canvas.add(img).setActiveObject(img).renderAll();
-      // }   
-        //'canvas.freeDrawingBrush.width = width_taken'
     });
 
     socket.on('take_data_from_json_file',function(data)
@@ -962,6 +941,7 @@ function enableFreeDrawing()
 {
   let array_of_points = [];
   removeEvents();
+  canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
   canvas.isDrawingMode = true;
 
   canvas.freeDrawingBrush.color = drawingColorEl.value;
@@ -974,13 +954,6 @@ function enableFreeDrawing()
   {
     isDrawing = true;
     const pointer = canvas.getPointer(e);
-
-
-    //const newline = new fabric.Point(e.pointer.x,e.pointer.y);
-    //const newline = canvas.freeDrawingBrush._points[0];
-    ///array_of_points.push(newline);
-    ///console.log(array_of_points);
-    //socket.emit('mouse:down', e);
     socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
   })
   canvas.on('mouse:up', e => 
@@ -1001,6 +974,37 @@ function enableFreeDrawing()
     {
       const pointer = canvas.getPointer(e);
       socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});//canvas.freeDrawingBrush._points); 
+    }
+  })
+}
+
+/**
+ * Выбираем ластик
+ */
+function enableEraser(){
+  console.log("Eraser selected!");
+  removeEvents();
+  canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
+  canvas.isDrawingMode = true;
+  canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+
+  let isDrawing = false
+
+  canvas.on('mouse:down', e => {
+    isDrawing = true;
+    const pointer = canvas.getPointer(e);
+    // socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
+  })
+  canvas.on('mouse:up', e => {
+    isDrawing = false;
+    const pointer = canvas.getPointer(e);
+    // socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  })
+  canvas.on('mouse:move', (e)=> {
+    if (isDrawing)     {
+      const pointer = canvas.getPointer(e);
+      // socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color});//canvas.freeDrawingBrush._points); 
     }
   })
 }

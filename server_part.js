@@ -92,7 +92,20 @@ app.get("/", (req, res) => {
 });
 app.use(express.static(path.join(__dirname, "public")));
 
-
+async function getUserData(user_id){
+  let response = {
+    user:user_id,
+    username:'',
+    email:'',
+  }
+  res = await client.query("SELECT users.username,users.email FROM users WHERE  users.id=$1",[user_id])
+    if ( res.rows.length>0 ){
+      let r_                = res.rows[0];
+          response.username = r_.username;
+          response.email    = r_.email;
+    }
+  return response;
+}
 
 io.on("connection", async socket => {
   //array_all_users.push(socket.id);
@@ -128,6 +141,12 @@ io.on("connection", async socket => {
     // user:e.user, board:board_id
     // console.log(e);
     socket.user_id = e.user;
+    
+    let userdata = await getUserData(e.user);
+    const cursorDataUser = arrayOfUserCursorCoordinates.find(item => item.userId === e.socket_id);
+    cursorDataUser.username = userdata.username;
+    cursorDataUser.email = userdata.email;
+
     // socket.join(e);
     const admin_board_id = 'board_'+e.board+'/user_'+e.user;
     // console.log(admin_board_id, Object.keys(roomRequestFromUser), Object.keys(roomRequestFromUser).indexOf(admin_board_id)!==-1);
@@ -185,12 +204,9 @@ io.on("connection", async socket => {
           response.role     = r_.role;
     }
     // получаем информацию от пользователя 
-    res = await client.query("SELECT users.username,users.email FROM users WHERE  users.id=$1",[e.user])
-    if ( res.rows.length>0 ){
-      let r_                = res.rows[0];
-          response.username = r_.username;
-          response.email    = r_.email;
-    }
+    let r_            = await getUserData(e.user);
+    response.username = r_.username;
+    response.email    = r_.email;
     // console.log(response);
     // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
     if ( response.role=='' ){
