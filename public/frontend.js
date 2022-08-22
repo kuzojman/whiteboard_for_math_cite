@@ -867,12 +867,21 @@ let circle ;
         //canvas.loadFromJSON(e);
     });
 
-    socket.on('text:added', e =>
-    {
-        const text = new fabric.IText(e);
-        canvas.add(text);
+    socket.on('text:added', e => {
+      const text = new fabric.IText(e.object.text,e.object);
+      canvas.add(text);
+      canvas.renderAll();
+    });
+
+    /**
+     * ловим изменения текста
+     */
+    socket.on('text:edited', e => {
+      let t = canvas._objects.find( item => item.id==e.id )
+      if ( t ){
+        t.set({...e.object});
         canvas.renderAll();
-        //canvas.loadFromJSON(e);
+      }
     });
 
 

@@ -385,6 +385,10 @@ io.on("connection", async socket => {
   socket.on("text:added", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("text:added", object_pass);
   });
+  
+  socket.on("text:edited", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("text:edited", object_pass);
+  });
 
   socket.on("canvas_save_to_json", async canvas_pass => {
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);

@@ -12,6 +12,11 @@ const buttonOpenListFontFamily = document.querySelector('.text-settings__button-
 const fontFamilyListWrapper = document.querySelector('.text-settings__font-family-list_wrapper');
 //const fontFamilyList = document.querySelector('.text-settings__font-family-list');
 
+/**
+ * ID текстового блока, который редактируется
+ */
+let textEditId = false;
+
 
 //let selectedFontFamily = "Open Sans";
 //let newFontSizeValue = "25";
@@ -211,6 +216,7 @@ textSettings.addEventListener('click', (e) => {
                 canvas.getActiveObject().set('fontSize', newFontSizeValue)
             }
             canvas.renderAll();
+            socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
         default:
             return
 
@@ -292,11 +298,12 @@ buttonText.addEventListener('click', () => {
                     textDecoration: 'underline',
                     editable: true,
                 })
+                
                 canvas.add(text);
+                
                 //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-                socket.emit("text:added", {"board_id": board_id, "object": serialize_object(text)});
+                socket.emit("text:added", {"board_id": board_id, "object": text});
  //               socket.emit('text:added',text)
-                console.log(text);
 
                 canvas.setActiveObject(text);
                 text.enterEditing();
@@ -309,24 +316,24 @@ buttonText.addEventListener('click', () => {
         canvas.on('mouse:up', function(o) {
             if(o.target !== null){
                 if(o.target.isType('i-text') && isEditing) {
-                    console.log('IT IS TEXT!!!! - 1');
+                    // console.log('IT IS TEXT!!!! - 1');
                 }
                 else {
                     if(!firstTouch) {
                         firstTouch = true;
                     } else {
-                        console.log('NOT TEXT!!!! - 1');
+                        // console.log('NOT TEXT!!!! - 1');
                         hideTextEditPanel();
                         firstTouch = false;
                     }
                 }
             } else {
                 if(isEditing && !firstTouch) {
-                    console.log('IT IS TEXT!!!! - 2')
+                    // console.log('IT IS TEXT!!!! - 2')
                     firstTouch = true;
 
                 } else {
-                    console.log('NOT TEXT!!!! - 2');
+                    // console.log('NOT TEXT!!!! - 2');
                     hideTextEditPanel();
                     isEditing = false;
                 }
@@ -343,19 +350,19 @@ buttonText.addEventListener('click', () => {
     }
 })
 
-canvas.on('text:editing:entered', () => {
-    console.log('text:editing:entered')
+canvas.on('text:editing:entered', (e) => {
+    textEditId = e.target.id;
     showTextEditPanel();
     isDown = true;
-    document.body.addEventListener('keyup', (e) => {
-        if(e.code === 'Escape') {
-            hideTextEditPanel();    
-        }
-    }, { once: true })
-    canvas.on('mouse:down', function(o) {
-        console.log('mouse:up')
-        if(o.target === null ? true : !o.target.isType('i-text')){
-            hideTextEditPanel();
-        }
-    });
 });
+
+canvas.on('text:editing:exited',()=>{
+    hideTextEditPanel(); 
+    textEditId = false;   
+})
+
+canvas.on('text:changed',(e)=>{
+    // if(e.target.isType('i-text') && textEditId) {
+        socket.emit("text:edited",  {"board_id": board_id, "object": e.target, 'id':textEditId})
+    // }
+})
