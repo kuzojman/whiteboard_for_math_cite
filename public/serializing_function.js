@@ -118,62 +118,50 @@ function serialize_canvas(canvas)
   {
     let replaced_object ={};
     let my_dict = {};
-    if(object.type=="path")
-    {
+    if(object.type=="path")    {
       my_dict=serializer_dictionary_for_bezier;
     }
-    else if(object.type=="image")
-    {
+    else if(object.type=="image")    {
       my_dict=serializer_dictionary_image;
       // console.log(object.src);
       replaced_object['src'] = object.src;
     }
-    else if(object.type=="circle")
-    {
+    else if(object.type=="circle")    {
       my_dict=serializer_dictionary_for_circle;
     }
-    else if(object.type=="i-text")
-    {
+    else if(object.type=="i-text")    {
       my_dict=serializer_dictionary_for_text;
     }
-    else
-    {
+    else    {
       my_dict=serializer_dictionary;
     }
     
-    if(!object.socket_id)
-    {
-
-
-    for (const key in object) {
-
-      if(my_dict[key])
-      {
+    if(!object.socket_id)    {
+      // if(object.type=="path"){
+      //   console.log();
+      // }
+      for (const key in object) {
         
-        if(typeof(object[key]) === 'number')
-        {
-          if(Math.abs(object[key])<3 )
-          {
-            object[key]=Math.trunc(object[key] * 1000) / 1000;
+        if(my_dict[key])      {          
+          if(typeof(object[key]) === 'number')        {
+            if(Math.abs(object[key])<3 )          {
+              object[key]=Math.trunc(object[key] * 1000) / 1000;
+            }
+            else          {
+              object[key]=Math.round(object[key]);
+            }
           }
-          else
-          {
-            object[key]=Math.round(object[key]);
-          }
+          
+          replaced_object[my_dict[key]]=object[key];
+          
         }
-
-        replaced_object[my_dict[key]]=object[key];
-      }
- //     else{
- //       replaced_object[key]=object[key]
- //     }
+      }    
+      // result.push(object.toJSON());
+      result.push(replaced_object);
     }
-  
-    result.push(replaced_object);
-  }
 });
   
-  console.log('new_result',result);
+  // console.log('new_result',result);
   return result//JSON.stringify(result);
 }
 

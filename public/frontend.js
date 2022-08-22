@@ -664,6 +664,14 @@ let circle ;
         //'canvas.freeDrawingBrush.width = width_taken'
     });
 
+    /**
+     * добавляем произвольный штрих
+     * @data {"board_id": board_id, "object": options }
+     */
+    socket.on("path:created", (data)=>{
+      let compare_ = {...data.object.path};
+      canvas.isWaitingPath = compare_;
+    } );
 
     socket.on('picture:add', function(img_taken)
     {
@@ -763,8 +771,7 @@ let circle ;
           })
           const error = 30;
           let bezierCurves = fitCurve(massiv_of_points, error);
-          if(!bezierCurves[0])
-          {
+          if(!bezierCurves[0]) {
             console.log('bezier error',bezierCurves,massiv_of_points);
           }
           let bezierProcessedPath = [
@@ -804,7 +811,6 @@ let circle ;
 
     canvas.on('object:moving',e =>
     {
-      
       socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
@@ -876,11 +882,27 @@ let circle ;
 
     socket.on('object:modified', e =>
     {
-
         recive_part_of_data(e);
     });
 
-
+    /**
+     * Эмитим событие когда закончили рисовать произвольный путь
+     * прогблема в том, что на остальных досках во время рисования объект еще не создан, а когда
+     * рисование завершено, то объект создается под своим айди на каждой доске. Поэтому редактирование и перемещение
+     * на других досках не работает. Надо передать готовый объект и на досках пересвоить айди
+     */
+    canvas.on("path:created", function(options) {
+      if ( canvas.isDrawingMode ){
+        socket.emit("path:created", {"board_id": board_id, "object": options });
+        return;
+      }
+      if ( canvas.isWaitingPath!==undefined && canvas.isWaitingPath!=false ){
+        if ( compare_path(options.path,canvas.isWaitingPath) ){
+          options.path.id = canvas.isWaitingPath.id;
+        }
+        canvas.isWaitingPath = false
+      }
+    });
 });
 
 
@@ -888,24 +910,21 @@ function enableFreeDrawing()
 {
   let array_of_points = [];
   removeEvents();
-  canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-  canvas.remoteDrawingBrush = new fabric.PencilBrush(canvas);
-  canvas.isDrawingMode = true;
+  canvas.freeDrawingBrush       = new fabric.PencilBrush(canvas);
+  canvas.remoteDrawingBrush     = new fabric.PencilBrush(canvas);
+  canvas.isDrawingMode          = true;
   canvas.freeDrawingBrush.btype = "brush"
   canvas.freeDrawingBrush.color = drawingColorEl.value;
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
-
   let isDrawing = false
 
-  canvas.on('mouse:down', e => 
-  {
+  canvas.on('mouse:down', e => {
     isDrawing = true;
     const pointer = canvas.getPointer(e);
     socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
   })
-  canvas.on('mouse:up', e => 
-  {
+  canvas.on('mouse:up', e => {
     isDrawing = false;
     const pointer = canvas.getPointer(e);
     //socket.emit('canvas_save_to_json',canvas.toJSON(['id']));
@@ -916,8 +935,7 @@ function enableFreeDrawing()
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
 
   })
-  canvas.on('mouse:move', function (e)
-  {
+  canvas.on('mouse:move', function (e) {
     if (isDrawing) 
     {
       const pointer = canvas.getPointer(e);
@@ -1270,8 +1288,6 @@ if (localStorageWidth)
   drawingLineWidthEl.value = localStorageWidth;
 }
 
-
-
 drawingColorEl.oninput = function() 
 {
   canvas.freeDrawingBrush.color = drawingColorEl.value;
@@ -1286,11 +1302,6 @@ drawingLineWidthEl.oninput = function()
   socket.emit("width:change", canvas.freeDrawingBrush.width);
   localStorage.setItem('width',canvas.freeDrawingBrush.width)
 };
-
-
-
-
-
 
 
 function drawLine(type_of_line) {
@@ -1487,7 +1498,6 @@ function send_part_of_data(e) {
     let object_index = find_object_index(e.target);
 
     e.target.object_index = object_index;
-    
     socket.emit("object:modified", {
       //object: e.target,
       id: canvas._objects[object_index].id,
@@ -1620,10 +1630,11 @@ socket.on('cursor-data', getCursorData);              // отображаем к
 
 
 socket.on('coursour_disconected', function(user_id){
-
   let index_of_existing_coursor = canvas._objects.findIndex(item=>item.socket_id==user_id);
-  (canvas._objects).splice(index_of_existing_coursor,1);
-  canvas.renderAll();
+  if (index_of_existing_coursor!==-1){
+    (canvas._objects).splice(index_of_existing_coursor,1);
+    canvas.renderAll();
+  }
 }
 
 );
@@ -1690,3 +1701,62 @@ buttonDecreaseScale.addEventListener("click", (event) => {
   canvas.zoomToPoint(centerPoint, currentValueZoom);
   as.textContent = (currentValueZoom * 100).toFixed(0) + '%';
 })
+
+
+/**
+ * Сравнение объектов
+ * https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+ * @param {*} x 
+ * @param {*} y 
+ * @returns 
+ */
+function object_equals( x, y ) {
+  if ( x === y ) return true;
+    // if both x and y are null or undefined and exactly the same
+
+  if ( ! ( x instanceof Object ) || ! ( y instanceof Object ) ) return false;
+    // if they are not strictly equal, they both need to be Objects
+
+  if ( x.constructor !== y.constructor ) return false;
+    // they must have the exact same prototype chain, the closest we can do is
+    // test there constructor.
+
+  for ( var p in x ) {
+    if ( ! x.hasOwnProperty( p ) ) continue;
+      // other properties were tested using x.constructor === y.constructor
+
+    if ( ! y.hasOwnProperty( p ) ) return false;
+      // allows to compare x[ p ] and y[ p ] when set to undefined
+
+    if ( x[ p ] === y[ p ] ) continue;
+      // if they have the same strict value or identity then they are equal
+
+    if ( typeof( x[ p ] ) !== "object" ) return false;
+      // Numbers, Strings, Functions, Booleans must be strictly equal
+
+    if ( ! object_equals( x[ p ],  y[ p ] ) ) return false;
+      // Objects and Arrays must be tested recursively
+  }
+
+  for ( p in y )
+    if ( y.hasOwnProperty( p ) && ! x.hasOwnProperty( p ) )
+      return false;
+        // allows x[ p ] to be set to undefined
+
+  return true;
+}
+
+/**
+ * Назодим тот-же путь
+ * @param {*} f 
+ * @param {*} s 
+ */
+function compare_path(f,s){
+  if ( f.type!='path' || s.type!=f.type )
+    return false
+  if ( f.path.length!=s.path.length )
+    return false
+  if ( !object_equals(f.path,s.path) )
+    return false
+  return true
+}

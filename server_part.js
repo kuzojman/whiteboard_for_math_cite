@@ -312,7 +312,9 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("mouse:up", e);
   });
 
-
+  socket.on("path:created", (e) => {
+    socket.broadcast.to(socket.board_id).emit("path:created", e);
+  });
 
   socket.on("color:change", (colour) => {
     socket.broadcast.to(socket.board_id).emit("color:change", colour);
