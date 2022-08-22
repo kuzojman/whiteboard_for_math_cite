@@ -53,7 +53,7 @@
   <ul class="tool-panel__list">
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button tool-panel__item-button-moving" id="selection_button">
+      <button class="tool-panel__item-button tool-panel__item-button-moving" data-tool="selection" id="selection_button">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-selection-by-mouse-coloured"></use>
         </svg>
@@ -61,21 +61,21 @@
     </li>
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button tool-panel__item-button-moving" id="moving_our_board">
+      <button class="tool-panel__item-button tool-panel__item-button-moving"  data-tool="moving" id="moving_our_board">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-hand-yellow"></use>
         </svg>
       </button>
     </li>
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" id="free_drawing_button">
+      <button class="tool-panel__item-button" id="free_drawing_button" data-tool="freedraw">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-free-drawing-coloured"></use>
         </svg>
       </button>
     </li>
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" id="free_erasing_button">
+      <button class="tool-panel__item-button" id="free_erasing_button" data-tool="erase">
         <i class="fas fa-eraser fa-2x has-text-link" aria-hidden="true" ></i>
       </button>
     </li>
@@ -92,7 +92,7 @@
     </li>
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button js-modal-trigger" id="modal_image_plugin" data-target="modal_window">
+      <button class="tool-panel__item-button js-modal-trigger" id="modal_image_plugin"  data-tool="modal" data-target="modal_window">
         <i class="fas fa-image fa-2x has-text-link" aria-hidden="true" ></i>
         <!-- <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-text"></use>
@@ -102,7 +102,7 @@
 
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button">
+      <button class="tool-panel__item-button"  data-tool="insertsvg">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-hexagon-coloured"></use>
         </svg>
@@ -162,7 +162,7 @@
       </div>
     </li>
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button">
+      <button class="tool-panel__item-button" data-tool="insertline">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-horizontal-line-coloured"></use>
         </svg>
@@ -206,7 +206,7 @@
       </div>
     </li>
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" >
+      <button class="tool-panel__item-button" data-tool="insertfig">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-circle-with-solid-border-coloured"></use>
         </svg>
@@ -240,7 +240,7 @@
 <!--  !!!!!!!!!!!!     --->
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" >
+      <button class="tool-panel__item-button" data-tool="insertrect">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-rectangle-coloured"></use>
         </svg>
@@ -273,7 +273,7 @@
     </li>
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button tool-panel__item-button-text">
+      <button class="tool-panel__item-button tool-panel__item-button-text" data-tool="text">
           <svg class="tool-panel__item-icon-button">
               <use xlink:href="./icons/sprite.svg#icon-text-coloured"></use>
           </svg>
@@ -284,7 +284,7 @@
     </li>
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" id="button_change_width">
+      <button class="tool-panel__item-button" id="button_change_width" data-tool="changewidth">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#line-thickness-svgrepo-com"></use>
         </svg>
@@ -304,7 +304,7 @@
 
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button button__show-modal-window-formulas">
+      <button class="tool-panel__item-button button__show-modal-window-formulas" data-tool="formula">
           <svg class="tool-panel__item-icon-button">
               <use xlink:href="./icons/sprite.svg#icon-formula"></use>
           </svg>
@@ -312,7 +312,7 @@
     
       <div class="form-formulas__wrapper">
           <form class="form-formulas">
-              <math-field virtual-keyboard-mode=manual class="form-formulas__field">
+              <math-field virtual-keyboard-mode=manual class="form-formulas__field" id="formula">
                   x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}
               </math-field>
               <button class="button__add-formulas">Добавить</button>
@@ -322,7 +322,7 @@
 
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button">
+      <button class="tool-panel__item-button" data-tool="color">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-color-palette"></use>
         </svg>
@@ -473,9 +473,13 @@
 <!-- <script type="module" src="./gif.min.js"></script> -->
 <!-- <script src="./fabricGif.js"></script> -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<!-- <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
 <script defer src="//unpkg.com/mathlive/dist/mathlive.min.js"></script>
 <script src="./fabric_plugin_undo_redo.js"></script>
 <script type="module" src="./fabric_modal.js"></script>
+<!-- <script src="fabric.FText.js" ></script> -->
 <script src="adding_figures_on_board.js" ></script>
 <script src="change_grid.js" ></script>
 <script src="fit_curve.js" ></script>

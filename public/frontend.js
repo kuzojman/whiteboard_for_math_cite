@@ -1,26 +1,3 @@
-// import Cookies from "js-cookie";
-//const { set } = require("express/lib/application");
-
-//import { canvas } from "./some_functions.js"
-
-
-// var defaultOnTouchStartHandler = fabric.Canvas.prototype._onTouchStart;
-// fabric.util.object.extend(fabric.Canvas.prototype, {
-//   _onTouchStart: function(e) {
-//     var target = this.findTarget(e);
-//     // if allowTouchScrolling is enabled, no object was at the
-//     // the touch position and we're not in drawing mode, then
-//     // let the event skip the fabricjs canvas and do default
-//     // behavior
-//     if (this.allowTouchScrolling && !target && !this.isDrawingMode) {
-//       // returning here should allow the event to propagate and be handled
-//       // normally by the browser
-//       return;
-//     }
-//     // otherwise call the default behavior
-//     defaultOnTouchStartHandler.call(this, e);
-//   }
-// });
 
 // для продакшна надо оставить пустым
 let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
@@ -34,6 +11,62 @@ const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
 });
 
 let selectionTimer = null;
+
+let selectedTool = "";
+
+/**
+ * Нажатие на кнопку выбора инструмента
+ */
+function selectTool(event){
+    let currentButton = event.target.closest('.tool-panel__item-button');
+    if( currentButton) {
+
+      let currentAction = currentButton.dataset.tool;
+
+      if ( currentAction ){
+        if (currentAction==selectedTool){
+          selectedTool=""
+        }else{
+          selectedTool=currentAction
+        }
+      }
+
+
+      let siblings = getSiblings(currentButton);
+      if ( siblings.length>0 ){
+        if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
+          if(selectedButton === currentButton) {
+            toolPanel.classList.toggle('full-screen');
+          }else{
+            toolPanel.classList.add('full-screen');
+          }
+        }else{
+          toolPanel.classList.remove('full-screen')
+        }
+      }else{
+        toolPanel.classList.remove('full-screen')
+      }
+    }else{
+      toolPanel.classList.remove('full-screen')
+    }
+
+    if(selectedButton === currentButton && selectedButton) {
+        if ( !selectedButton.classList.contains('js-modal-trigger') ){
+          selectedButton.classList.toggle('settings-panel__button_active');
+        }
+    } else {
+        if(currentButton) {
+          if ( !currentButton.classList.contains('js-modal-trigger') ){
+            currentButton.classList.toggle('settings-panel__button_active');
+          }
+        }
+        if(selectedButton) {
+            selectedButton.classList.remove('settings-panel__button_active');
+        }
+        selectedButton = currentButton;
+    }
+
+}
 
 canvas.on('touch:gesture',function(e){
   isGestureEvent = true;
@@ -225,11 +258,6 @@ function handleScale (delta)
         }
     }
 }
-
-///"path"
-
-
-
 
 //const canvas = new fabric.Canvas(document.getElementById("canvasId"),{ renderOnAddRemove: false });
 const as = document.querySelector(".scale__value");
@@ -1590,43 +1618,7 @@ let getSiblings = function (e) {
 
 
 
-toolPanelList.addEventListener('click', (event) => {
-    let currentButton = event.target.closest('.tool-panel__item-button');
-    if(currentButton) {
-      let siblings = getSiblings(currentButton);
-      if ( siblings.length>0 ){
-        if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
-          if(selectedButton === currentButton) {
-            toolPanel.classList.toggle('full-screen');
-          }else{
-            toolPanel.classList.add('full-screen');
-          }
-        }else{
-          toolPanel.classList.remove('full-screen')
-        }
-      }else{
-        toolPanel.classList.remove('full-screen')
-      }
-    }else{
-      toolPanel.classList.remove('full-screen')
-    }
-
-    if(selectedButton === currentButton && selectedButton) {
-        if ( !selectedButton.classList.contains('js-modal-trigger') ){
-          selectedButton.classList.toggle('settings-panel__button_active');
-        }
-    } else {
-        if(currentButton) {
-          if ( !currentButton.classList.contains('js-modal-trigger') ){
-            currentButton.classList.toggle('settings-panel__button_active');
-          }
-        }
-        if(selectedButton) {
-            selectedButton.classList.remove('settings-panel__button_active');
-        }
-        selectedButton = currentButton;
-    }
-})
+toolPanelList.addEventListener('click', selectTool)
 
 
 canvas.on('mouse:out', handleMouseOut);         // Отображение чужих курсоров
