@@ -387,7 +387,6 @@ io.on("connection", async socket => {
   });
 
   socket.on("canvas_save_to_json", async canvas_pass => {
-
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
     const data_saved = JSON.stringify(canvas_pass);
     // console.log(data_saved);

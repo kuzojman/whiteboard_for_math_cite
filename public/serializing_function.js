@@ -16,7 +16,10 @@ const serializer_dictionary_for_bezier = {
     "fill": "f",
     "strokeLineCap": "slp",
     "strokeLineJoin": "slj",
-    "eraser":"eraser"
+    "eraser":"eraser",
+    "pathOffset":"pO",
+    "top":"tp",
+    "left":"lt",
   };
 
 const rect_and_line_add ={
@@ -119,7 +122,8 @@ function serialize_canvas(canvas)
     let replaced_object ={};
     let my_dict = {};
     if(object.type=="path")    {
-      my_dict=serializer_dictionary_for_bezier;
+      
+      my_dict=serializer_dictionary;
     }
     else if(object.type=="image")    {
       my_dict=serializer_dictionary_image;
@@ -156,6 +160,7 @@ function serialize_canvas(canvas)
           
         }
       }    
+      // console.log(replaced_object);
       // result.push(object.toJSON());
       result.push(replaced_object);
     }
@@ -173,7 +178,7 @@ function serialize_object(object)
     
     if(object.type=="path")
     {
-      my_dict=serializer_dictionary_for_bezier;
+      my_dict=serializer_dictionary;      
     }
     else if(object.type=="image")
     {

@@ -328,7 +328,6 @@ fabric.Canvas.prototype.toggleDragMode = function () {
       // // When MouseUp fires, we set the state to idle
       this.on("mouse:up", function (e) {
           state = STATE_IDLE;
-
       });
       // // When MouseDown fires, we set the state to panning
       this.on("mouse:down", (e) => {
@@ -734,10 +733,7 @@ let circle ;
       }
     })
 
-    canvas.on('object:modified', e =>
-    {
-      //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
-      
+    canvas.on('object:modified', e =>    {
       socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       send_part_of_data(e);
     });
