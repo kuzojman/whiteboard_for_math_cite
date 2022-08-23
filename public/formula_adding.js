@@ -12,7 +12,10 @@ const fieldFormFormulas             = document.querySelector('.form-formulas__fi
 // айди объекта, который редактируется в настоящий момент
 let formulaEditMode=false
 
-window.addFormula = function(formula, id=false, object=false){
+window.addFormula = function(formula, id=false, object=false, emit=true){
+    if ( formula===undefined || formula=='' ){
+        return
+    }
     let svg = MathJax.tex2svg(formula);
         svg = svg.childNodes[0]
     let s = new XMLSerializer().serializeToString(svg);
@@ -32,8 +35,33 @@ window.addFormula = function(formula, id=false, object=false){
               scaleY: object.scaleY,
             });
         }
+        if ( emit ){
+            socket.emit("formula:added", {"board_id": board_id,'formula':myImg.formula, "object": myImg});
+        }
         canvas.renderAll()
     });
+}
+
+/**
+ * Редактирование формулы объекта
+ * @param {*} new_formula 
+ * @param {*} object_id 
+ */
+function editFormula( new_formula, object_id ){
+    if ( new_formula===undefined || new_formula=='' ){
+        return
+    }
+    var svg = MathJax.tex2svg(new_formula);
+        svg = svg.childNodes[0]
+    let s = new XMLSerializer().serializeToString(svg);
+    let b64 = "data:image/svg+xml;base64, " + window.btoa(unescape(encodeURIComponent(s)))
+    myImg = canvas._objects.find( item => item.id==object_id )
+    
+    if ( myImg ){
+        myImg['formula'] = new_formula
+        myImg.setSrc(b64, ()=> canvas.renderAll());
+    }
+    return myImg
 }
 
 /**
@@ -41,21 +69,12 @@ window.addFormula = function(formula, id=false, object=false){
  */
 buttonSaveFormulas.addEventListener('click',(ev)=>{
     ev.preventDefault();
-    var svg = MathJax.tex2svg(mf.value);
-        svg = svg.childNodes[0]
-    let s = new XMLSerializer().serializeToString(svg);
-    let b64 = "data:image/svg+xml;base64, " + window.btoa(unescape(encodeURIComponent(s)))
-    myImg = canvas._objects.find( item => item.id==formulaEditMode )
-    
-    if ( myImg ){
-        myImg['formula'] = mf.value
-        myImg.setSrc(b64, ()=> canvas.renderAll());
-    }
+    let img_ = editFormula(mf.value,formulaEditMode)
     formulaEditMode=false;
     editMode(false)
     formFormulasWrapper.classList.remove('form-formulas__wrapper_visible');
-    
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("formula:edited", {"board_id": get_board_id(), 'formula':img_.formula, "object": img_});
+    socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
 });
 
 /**
@@ -85,48 +104,24 @@ function editMode(on){
 }
 
 buttonAddFormulas.addEventListener('click', (event) => {
-    // console.log(mf.value);
     event.preventDefault();
-    var svg = MathJax.tex2svg(mf.value);
-        svg = svg.childNodes[0]
-    let s = new XMLSerializer().serializeToString(svg);
-    let b64 = "data:image/svg+xml;base64, " + window.btoa(unescape(encodeURIComponent(s)))
-    fabric.Image.fromURL(b64, function(myImg) {
-        myImg['formula'] = mf.value
-        canvas.add(myImg)
-        myImg.set({
-            left: mouseCursorCoordinatesCanvas.x-myImg.width,
-            top: mouseCursorCoordinatesCanvas.y-myImg.height,
-        })
-        canvas.renderAll()
-    });
-    canvas.renderAll()
-    return;
-
-    
-    //formFormulasWrapper.classList.remove('form-formulas__wrapper_visible');
-    let docss = document.querySelector('math-field').shadowRoot.querySelector('.ML__fieldcontainer__field');
-    html2canvas(docss).then(function(canvas) {
-
-        let image = canvas.toDataURL('image/png');
-        console.log('Drew on the existing canvas',image);
-        fabric.Image.fromURL(image, function(myImg) {
- //i create an extra var for to change some image properties
-                var img1 = myImg.set({ left: 100, top: 100 ,width:docss.offsetWidth,height:docss.offsetHeight});
-                fabric_canvas.add(img1); 
-                socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(fabric_canvas)});
-                socket.emit("picture:add",serialize_canvas(fabric_canvas));
-                formFormulasWrapper.classList.remove('form-formulas__wrapper_visible');
-        });
-    });
-    
+    addFormula( mf.value, false, {
+        left: mouseCursorCoordinatesCanvas.x,
+        top: mouseCursorCoordinatesCanvas.y,
+        angle: 0,
+        scaleX: 1,
+        scaleY: 1,
+    } )
+    editMode(false)
+    formFormulasWrapper.classList.remove('form-formulas__wrapper_visible');
+    canvas.off('mouse:down');
+    canvas.off('mouse:up');
 })
 
 
 
 buttonShowModalWindowFormulas.addEventListener('click', (event) => {
     let origX, origY;
-    console.log(selectedTool);
     if(selectedTool=='formula') {
         formFormulasWrapper.classList.remove('form-formulas__wrapper_visible');
         canvas.off('mouse:down');
@@ -135,7 +130,6 @@ buttonShowModalWindowFormulas.addEventListener('click', (event) => {
         changeObjectSelection(false);
         removeEvents();
         canvas.on('mouse:down', function(o) {
-            console.log('mouse:down');
             const pointer = canvas.getPointer(o.e);
             // if(formulaTextarea.value !== ''){
             //     canvas.renderAll();
@@ -154,7 +148,7 @@ buttonShowModalWindowFormulas.addEventListener('click', (event) => {
 
         });
         canvas.on('mouse:up', function(o) {
-            console.log('mouse:up');
+
         });
     }
     // isDown = true;

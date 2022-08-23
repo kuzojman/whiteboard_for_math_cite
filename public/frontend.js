@@ -705,8 +705,7 @@ let circle ;
       canvas.loadFromJSON(img_taken);
     });
 
-    socket.on('image:add', function(img_taken)
-    {
+    socket.on('image:add', function(img_taken)    {
       window.insertImageOnBoard(img_taken.src, true, img_taken.id_of);
     });
 
@@ -749,7 +748,7 @@ let circle ;
                       window.insertImageOnBoard(object.src, true, object.id, object);
                     }else{
                       if (object.formula!==undefined && object.formula!=''){
-                        window.addFormula(object.formula, object.id, object)
+                        window.addFormula(object.formula, object.id, object,false)
                       }
                     }
                   }else{
@@ -776,6 +775,9 @@ let circle ;
     canvas.on('object:added',e =>
     {
       let object = e.target;
+      if ( object.formula!==undefined ){
+        return;
+      }
       if(!object.id)
       {
         object.set('id',Date.now().toString(36) + Math.random().toString(36).substring(2));
@@ -918,6 +920,17 @@ let circle ;
       }
     });
 
+
+    socket.on('formula:added', e => {
+      window.addFormula( e.formula, e.object.id, e.object, false )
+    });
+
+    /**
+     * ловим изменения текста
+     */
+    socket.on('formula:edited', e => {
+      editFormula( e.formula, e.object.id )
+    });
 
     socket.on('object:modified', e =>
     {

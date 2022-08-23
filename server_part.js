@@ -390,10 +390,18 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("text:edited", object_pass);
   });
 
+  socket.on("formula:added", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("formula:added", object_pass);
+  });
+  
+  socket.on("formula:edited", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("formula:edited", object_pass);
+  });
+
   socket.on("canvas_save_to_json", async canvas_pass => {
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
     const data_saved = JSON.stringify(canvas_pass);
-    // console.log(data_saved);
+    // console.log(canvas_pass);
     //await client.connect()
     //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
     const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
