@@ -744,8 +744,14 @@ let circle ;
                 });
                 // если такого объекта еще нет на канвасе, то добавляем
                 if ( obj_exists===false ){
-                  if ( object.type=='image' && object.src!==undefined && object.src!='' ){
-                    window.insertImageOnBoard(object.src, true, object.id, object);
+                  if ( object.type=='image'  ){
+                    if ( object.src!==undefined && object.src!='' ){
+                      window.insertImageOnBoard(object.src, true, object.id, object);
+                    }else{
+                      if (object.formula!==undefined && object.formula!=''){
+                        window.addFormula(object.formula, object.id, object)
+                      }
+                    }
                   }else{
                     canvas.add(object);
                   }

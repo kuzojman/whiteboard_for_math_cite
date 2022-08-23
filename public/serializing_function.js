@@ -54,7 +54,8 @@ const to_image_add ={
     "cropY":"cY",
     "src":"src",
     "crossOrigin": "cO",
-    "filters":"fs" 
+    "filters":"fs" ,
+    "formula":"fm"
 }
 
 
@@ -128,7 +129,12 @@ function serialize_canvas(canvas)
     else if(object.type=="image")    {
       my_dict=serializer_dictionary_image;
       // console.log(object.src);
-      replaced_object['src'] = object.src;
+      if ( object.formula!==undefined && object.formula!="" ){
+        replaced_object['src'] = "";
+      }else{
+        replaced_object['src'] = object.src;
+      }
+      
     }
     else if(object.type=="circle")    {
       my_dict=serializer_dictionary_for_circle;
@@ -162,6 +168,9 @@ function serialize_canvas(canvas)
       }    
       // console.log(replaced_object);
       // result.push(object.toJSON());
+      // if ( object.formula!==undefined && object.formula!="" ){
+      //   // console.log(replaced_object);
+      // }
       result.push(replaced_object);
     }
 });
@@ -183,7 +192,11 @@ function serialize_object(object)
     else if(object.type=="image")
     {
       my_dict=serializer_dictionary_image;
-      replaced_object['src']=object.getSrc()
+      if ( object.formula!==undefined && object.formula!="" ){
+        // console.log(replaced_object);
+      }else{
+        replaced_object['src']=object.getSrc()
+      }
     }
     else if(object.type=="circle")
     {
