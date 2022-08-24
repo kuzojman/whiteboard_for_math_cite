@@ -92,7 +92,20 @@ app.get("/", (req, res) => {
 });
 app.use(express.static(path.join(__dirname, "public")));
 
-
+async function getUserData(user_id){
+  let response = {
+    user:user_id,
+    username:'',
+    email:'',
+  }
+  res = await client.query("SELECT users.username,users.email FROM users WHERE  users.id=$1",[user_id])
+    if ( res.rows.length>0 ){
+      let r_                = res.rows[0];
+          response.username = r_.username;
+          response.email    = r_.email;
+    }
+  return response;
+}
 
 io.on("connection", async socket => {
   //array_all_users.push(socket.id);
@@ -115,6 +128,11 @@ io.on("connection", async socket => {
     if(cursorDataUser) 
     {
         cursorDataUser.cursorCoordinates = data.coords;
+        if ( data.cursor!==undefined ){
+          cursorDataUser.cursor = data.cursor
+        }else{
+          cursorDataUser.cursor = ""
+        }
         socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
 });
@@ -123,6 +141,12 @@ io.on("connection", async socket => {
     // user:e.user, board:board_id
     // console.log(e);
     socket.user_id = e.user;
+    
+    let userdata = await getUserData(e.user);
+    const cursorDataUser = arrayOfUserCursorCoordinates.find(item => item.userId === e.socket_id);
+    cursorDataUser.username = userdata.username;
+    cursorDataUser.email = userdata.email;
+
     // socket.join(e);
     const admin_board_id = 'board_'+e.board+'/user_'+e.user;
     // console.log(admin_board_id, Object.keys(roomRequestFromUser), Object.keys(roomRequestFromUser).indexOf(admin_board_id)!==-1);
@@ -180,12 +204,9 @@ io.on("connection", async socket => {
           response.role     = r_.role;
     }
     // получаем информацию от пользователя 
-    res = await client.query("SELECT users.username,users.email FROM users WHERE  users.id=$1",[e.user])
-    if ( res.rows.length>0 ){
-      let r_                = res.rows[0];
-          response.username = r_.username;
-          response.email    = r_.email;
-    }
+    let r_            = await getUserData(e.user);
+    response.username = r_.username;
+    response.email    = r_.email;
     // console.log(response);
     // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
     if ( response.role=='' ){
@@ -291,7 +312,9 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("mouse:up", e);
   });
 
-
+  socket.on("path:created", (e) => {
+    socket.broadcast.to(socket.board_id).emit("path:created", e);
+  });
 
   socket.on("color:change", (colour) => {
     socket.broadcast.to(socket.board_id).emit("color:change", colour);
@@ -362,12 +385,23 @@ io.on("connection", async socket => {
   socket.on("text:added", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("text:added", object_pass);
   });
+  
+  socket.on("text:edited", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("text:edited", object_pass);
+  });
+
+  socket.on("formula:added", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("formula:added", object_pass);
+  });
+  
+  socket.on("formula:edited", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("formula:edited", object_pass);
+  });
 
   socket.on("canvas_save_to_json", async canvas_pass => {
-
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
     const data_saved = JSON.stringify(canvas_pass);
-    // console.log(data_saved);
+    // console.log(canvas_pass);
     //await client.connect()
     //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
     const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);

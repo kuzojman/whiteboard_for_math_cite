@@ -18,10 +18,13 @@ function getMouse(e) {
 }
 
 function Delete() {
+  if ( formulaEditMode!==false ){
+    return;
+  }
   var doomedObj = canvas.getActiveObject();
   let ids = [];
   console.log(doomedObj);
-  if (doomedObj.type === "activeSelection") {
+  if (doomedObj.type === "activeSelection" ) {
     doomedObj.canvas = canvas;
     doomedObj.forEachObject(function (obj) {
       ids.push(find_object_index(obj));

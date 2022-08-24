@@ -93,3 +93,7 @@ html, body, .canvasWrapper
     padding: 2rem;
     top:20px;
 }
+
+.d-none{
+    display: none !important;
+}

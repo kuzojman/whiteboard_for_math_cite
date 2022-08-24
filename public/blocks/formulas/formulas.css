@@ -31,3 +31,20 @@
     border: none;
     padding: 15px;
 }
+
+.button__save-formulas {
+    width: 48%;
+    font-size: 17px;
+    border-radius: 15px;
+    border: none;
+    padding: 10px;
+    display: inline-block;
+}
+.button__cancel-formulas {
+    width: 48%;
+    font-size: 17px;
+    border-radius: 15px;
+    border: none;
+    padding: 10px;
+    display: inline-block;
+}
