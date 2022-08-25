@@ -203,8 +203,8 @@ const getCursorData = (data) => {
   {
     
     cursorUser.socket_id=data.userId;
-    cursorUser.item(0).fill=colors[color_index];
-    cursorUser.item(1).text = data.username
+    cursorUser.item(0).fill = colors[color_index];
+    cursorUser.item(1).text = data.username || "unknown"
     color_index++;
     if(!colors[color_index]){
       color_index=0;
