@@ -164,8 +164,8 @@ function formulaDblClicked(e){
 
     // edit mode
     editMode(true)
-    formFormulasWrapper.style.top = e.top-20 + 'px';
-    formFormulasWrapper.style.left = e.left-20 + 'px';    
+    formFormulasWrapper.style.top = e.oCoords.tl.y-20 + 'px';
+    formFormulasWrapper.style.left = e.oCoords.tl.x-20 + 'px';    
     formFormulasWrapper.classList.add('form-formulas__wrapper_visible');
 }
 
