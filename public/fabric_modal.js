@@ -122,7 +122,9 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
       }
       // canvas.add(img)
     });
+    
     closeAllModals();
+    moveCursorsToFront = true;
 }
 
 /**

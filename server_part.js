@@ -118,6 +118,8 @@ io.on("connection", async socket => {
   
   arrayOfUserCursorCoordinates.push({
       userId: socket.id,
+      username: '',
+      email: '',
       cursorCoordinates: {
           x: 0,
           y: 0,

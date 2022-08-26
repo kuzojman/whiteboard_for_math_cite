@@ -14,12 +14,23 @@ const serializer_dictionary_for_bezier = {
     "stroke": "s",
     "id": "id",
     "fill": "f",
+    "fillRule": "fr",
+    "paintFirst": "pf",
+    "globalCompositeOperation": "gCO",
     "strokeLineCap": "slp",
     "strokeLineJoin": "slj",
     "eraser":"eraser",
     "pathOffset":"pO",
     "top":"tp",
     "left":"lt",
+    "objects":"obj",
+    "strokeUniform":"su",
+    "strokeMiterLimit":"sml",
+    "strokeDashOffset":"sdo",
+    "flipX":"fX",
+    "flipY":"fY",
+    "visible":"vi",
+    "erasable":"esbl"
   };
 
 const rect_and_line_add ={
@@ -120,10 +131,10 @@ function serialize_canvas(canvas)
   
   canvas._objects.forEach(function(object)
   {
+    // console.log(object.toJSON());
     let replaced_object ={};
     let my_dict = {};
     if(object.type=="path")    {
-      
       my_dict=serializer_dictionary;
     }
     else if(object.type=="image")    {
@@ -151,7 +162,6 @@ function serialize_canvas(canvas)
       //   console.log();
       // }
       for (const key in object) {
-        
         if(my_dict[key])      {          
           if(typeof(object[key]) === 'number')        {
             if(Math.abs(object[key])<3 )          {
@@ -161,9 +171,15 @@ function serialize_canvas(canvas)
               object[key]=Math.round(object[key]);
             }
           }
-          
-          replaced_object[my_dict[key]]=object[key];
-          
+
+          if (key=='eraser' && object[key]!==undefined && Object.keys(object[key]).length>0 ){
+            // console.log(object[key].toJSON());
+            replaced_object[my_dict[key]] = serialize_object(object[key].toJSON())
+            // console.log(replaced_object[my_dict[key]]);
+          }else{
+            replaced_object[my_dict[key]]=object[key];
+          }
+          // replaced_object[my_dict[key]]=object[key];          
         }
       }    
       // console.log(replaced_object);
@@ -185,7 +201,7 @@ function serialize_object(object)
     let replaced_object ={};
     let my_dict = {};
     
-    if(object.type=="path")
+    if(object.type=="path" || object.type=="eraser")
     {
       my_dict=serializer_dictionary;      
     }
@@ -211,8 +227,11 @@ function serialize_object(object)
       my_dict=serializer_dictionary;
     }
 
-
+    // if (key=='objects'){
+      // console.log();
+    // }
     for (const key in object) {
+      // console.log(key);
       if(my_dict[key])
       {
         
@@ -227,7 +246,20 @@ function serialize_object(object)
             object[key]=Math.round(object[key]);
           }
         }
-        replaced_object[my_dict[key]]=object[key];
+        if (key=='objects'){
+          replaced_object[my_dict[key]] = []
+          if ( object[key].length>0 ){
+            for (const item in object[key]) {
+              replaced_object[my_dict[key]].push( serialize_object(object[key][item]) )
+            }
+          }
+        }else{
+          if (key=='eraser'&& object[key]!==undefined && Object.keys(object[key]).length>0 ){
+            replaced_object[my_dict[key]] = serialize_object(object[key].toJSON())          
+          }else{
+            replaced_object[my_dict[key]]=object[key];
+          }
+        }
       }
     }
   // console.log(replaced_object);
@@ -243,10 +275,20 @@ function deserialize(object)
     if ( key=='src' ){
       result['src'] = object['src'];
     }else{
-      result[get_long_property_by_short(key)]=object[key];
+      if (  key=='eraser' ){
+        result[get_long_property_by_short(key)]=deserialize(object[key]);
+      }else if ( key=='obj'){
+        result[get_long_property_by_short(key)] = []
+        if ( object[key].length>0 ){
+          for (const item in object[key]) {
+            result[get_long_property_by_short(key)].push( deserialize(object[key][item]) )
+          }
+        }
+      } else {
+        result[get_long_property_by_short(key)]=object[key];
+      }
     }
   }
-  // console.log(result)
   return result;
 }
 
