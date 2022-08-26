@@ -190,20 +190,7 @@ const handleMouseOut = (ev)=>{
   if (ev.e.type=='mouseout'){
     const cursorCoordinate = canvas.getPointer(ev.e);
     let w = canvas.getWidth()
-    let h = canvas.getHeight()
-    if (cursorCoordinate.x<3){
-      cursorCoordinate.x = 3
-    }
-    if (cursorCoordinate.x>=w){
-      cursorCoordinate.x = w-3
-    }
-    if (cursorCoordinate.y<3){
-      cursorCoordinate.y = 3
-    }
-    if (cursorCoordinate.y>=h){
-      cursorCoordinate.y = h-3
-    }
-    
+    let h = canvas.getHeight()    
     let data = {
         userId: socket.id,
         coords: cursorCoordinate,
@@ -221,7 +208,6 @@ const getCursorData = (data) => {
   let existing_coursor = canvas._objects.find(item=>item.socket_id==data.userId)
   if(!existing_coursor)
   {
-    
     cursorUser.socket_id=data.userId;
     cursorUser.item(0).fill = colors[color_index];
     cursorUser.item(1).text = data.username || "unknown"
@@ -234,6 +220,23 @@ const getCursorData = (data) => {
     existing_coursor = cursorUser;
     
   }else{
+    
+    let h = canvas.getHeight()-20;
+    let w = canvas.getWidth()-30;
+
+    console.log(h,w,data.cursorCoordinates);
+    if ( data.cursorCoordinates.x<0 || data.cursorCoordinates.x>w || data.cursorCoordinates.y<0 || data.cursorCoordinates.y>h ){
+      data.cursor='leave'
+      if ( data.cursorCoordinates.x<0  )
+        data.cursorCoordinates.x = 0
+      if ( data.cursorCoordinates.x>w  )
+        data.cursorCoordinates.x = w
+      if ( data.cursorCoordinates.y<0  )
+        data.cursorCoordinates.y = 0
+      if ( data.cursorCoordinates.y>h  )
+        data.cursorCoordinates.y = h
+    }
+      
     existing_coursor.set({
       top:  data.cursorCoordinates.y,
       left: data.cursorCoordinates.x,
@@ -250,7 +253,6 @@ const getCursorData = (data) => {
   }
   // помещаем курсор поверх всех элементов
   if ( moveCursorsToFront && existing_coursor){
-    console.log('move to front');
     canvas.bringToFront(existing_coursor)
     moveCursorsToFront = false;
   }
