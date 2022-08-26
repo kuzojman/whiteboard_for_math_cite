@@ -8,6 +8,7 @@ let waitingOverlay = false;
 
 const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
   allowTouchScrolling: true,
+  preserveObjectStacking: true
 });
 
 let selectionTimer = null;
@@ -102,6 +103,7 @@ function createCursor(){
     top: 0,
     originX: 'center',
     originY: 'center',
+    erasable:false,
   });
   let text_ = new fabric.Text("Username", {
     fontFamily: 'Calibri',
@@ -109,11 +111,13 @@ function createCursor(){
     textAlign: 'left',
     originX: 'center',
     originY: 'center',
+    erasable:false,
     left: currentRadiusCursor*2,
     top: currentRadiusCursor*2  });
   let cursor_ = new fabric.Group([curs_,text_],{
     left: -10,
     top: -10,
+    erasable:false,
   })
   return cursor_
 }
@@ -185,6 +189,21 @@ const handleMouseMovement = (event) => {
 const handleMouseOut = (ev)=>{
   if (ev.e.type=='mouseout'){
     const cursorCoordinate = canvas.getPointer(ev.e);
+    let w = canvas.getWidth()
+    let h = canvas.getHeight()
+    if (cursorCoordinate.x<3){
+      cursorCoordinate.x = 3
+    }
+    if (cursorCoordinate.x>=w){
+      cursorCoordinate.x = w-3
+    }
+    if (cursorCoordinate.y<3){
+      cursorCoordinate.y = 3
+    }
+    if (cursorCoordinate.y>=h){
+      cursorCoordinate.y = h-3
+    }
+    
     let data = {
         userId: socket.id,
         coords: cursorCoordinate,
@@ -196,6 +215,7 @@ const handleMouseOut = (ev)=>{
 
 let colors = ['#ff0000','#0f71d3','#14ff00'];
 let color_index =0;                                            // Курсор
+let moveCursorsToFront = false;
 const getCursorData = (data) => {
 
   let existing_coursor = canvas._objects.find(item=>item.socket_id==data.userId)
@@ -211,6 +231,8 @@ const getCursorData = (data) => {
     }
     //cursorUser.left = data.cursorCoordinates.x
     canvas.add(cursorUser);
+    existing_coursor = cursorUser;
+    
   }else{
     existing_coursor.set({
       top:  data.cursorCoordinates.y,
@@ -225,6 +247,12 @@ const getCursorData = (data) => {
         opacity: 1
       })
     }
+  }
+  // помещаем курсор поверх всех элементов
+  if ( moveCursorsToFront && existing_coursor){
+    console.log('move to front');
+    canvas.bringToFront(existing_coursor)
+    moveCursorsToFront = false;
   }
   canvas.renderAll();
 }                                                   // Получение координат курсора
@@ -727,6 +755,7 @@ let circle ;
             }
             chunk.forEach((object,id)=>{
               chunk[id]=deserialize(object);
+              // console.log(chunk[id]);
             });
             fabric.util.enlivenObjects(chunk,function(objects)
             {
@@ -775,6 +804,7 @@ let circle ;
     canvas.on('object:added',e =>
     {
       let object = e.target;
+      moveCursorsToFront = true;
       if ( object.formula!==undefined ){
         return;
       }
