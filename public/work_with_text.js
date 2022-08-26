@@ -147,7 +147,10 @@ fontColorInput.addEventListener('click', () => {
 })
 
 fontColorInput.addEventListener('change', (e) => {
-    canvas.getActiveObject().set("fill", e.target.value);
+    if ( canvas.getActiveObject() ){
+        canvas.getActiveObject().set("fill", e.target.value);
+        socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
+    }
 })
 
 textSettings.addEventListener('click', (e) => {
@@ -158,9 +161,13 @@ textSettings.addEventListener('click', (e) => {
                 selectedFontFamily = e.target.textContent;
                 buttonFontFamily.textContent = e.target.textContent;
                 e.target.classList.toggle('text-settings__font-item_active');
-                console.log(selectedFontFamily)
-                canvas.getActiveObject().set('fontFamily', selectedFontFamily);
-                canvas.renderAll();
+                // console.log(selectedFontFamily)
+                if ( canvas.getActiveObject() ){
+                    canvas.getActiveObject().set('fontFamily', selectedFontFamily);
+                    canvas.renderAll();
+                    socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
+                }
+
             } else if(e.target.classList.contains('setting-item__font-style-item')) {
                 const text = canvas.getActiveObject();
                 switch(+e.target.dataset.item) {
@@ -169,36 +176,51 @@ textSettings.addEventListener('click', (e) => {
                         const currentFontWeight = getStyle(text,'fontWeight')
                         const newFontWeight = currentFontWeight === "bold" ? "normal" : "bold";
                         e.target.classList.toggle('text-settings__font-item_active')
-                        canvas.getActiveObject().set("fontWeight", newFontWeight);
-                        canvas.renderAll();
-                        console.log('1');
+                        if ( canvas.getActiveObject() ){
+                            canvas.getActiveObject().set("fontWeight", newFontWeight);
+                            canvas.renderAll();
+                            // console.log('1');
+                            socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
+                        }
                         return;
                     }
                     case 2: {
                         const currentFontStyle = getStyle(text,'fontStyle');
                         const newFontStyle = currentFontStyle === "italic" ? "normal" : "italic";
-                        canvas.getActiveObject().set("fontStyle", newFontStyle);
+                        
                         e.target.classList.toggle('text-settings__font-item_active')
-                        canvas.renderAll();
-                        console.log('2');
+                        if ( canvas.getActiveObject() ){
+                            canvas.getActiveObject().set("fontStyle", newFontStyle);
+                            canvas.renderAll();
+                            // console.log('2');
+                            socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
+                        }
                         return;
                     }
                     case 3: {
                         const currentUnderline = getStyle(text,'underline');
                         const newUnderline = !currentUnderline;
-                        canvas.getActiveObject().set("underline", newUnderline);
+                        
                         e.target.classList.toggle('text-settings__font-item_active')
-                        canvas.renderAll();
-                        console.log('3');
+                        if ( canvas.getActiveObject() ){
+                            canvas.getActiveObject().set("underline", newUnderline);
+                            canvas.renderAll();
+                            // console.log('3');
+                            socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
+                        }
                         return;
                     }
                     case 4: {
                         const currentLinethrough = getStyle(text,'linethrough');
                         const newLinethrough = !currentLinethrough
-                        canvas.getActiveObject().set("linethrough", newLinethrough);
+                        
                         e.target.classList.toggle('text-settings__font-item_active')
-                        canvas.renderAll();
-                        console.log('4');
+                        if ( canvas.getActiveObject() ){
+                            canvas.getActiveObject().set("linethrough", newLinethrough);
+                            canvas.renderAll();
+                            // console.log('4');
+                            socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
+                        }
                         return;
                     }
                 }
@@ -208,12 +230,16 @@ textSettings.addEventListener('click', (e) => {
             if(e.target.classList.contains('setting-item__button-font-size-down')){
                 newFontSizeValue-=2;
                 fontSizeValue.textContent = newFontSizeValue
-                canvas.getActiveObject().set('fontSize', newFontSizeValue)
+                if ( canvas.getActiveObject() ){
+                    canvas.getActiveObject().set('fontSize', newFontSizeValue)
+                }
 
             } else if(e.target.classList.contains('setting-item__button-font-size-up')){
                 newFontSizeValue+=2;
                 fontSizeValue.textContent = newFontSizeValue
-                canvas.getActiveObject().set('fontSize', newFontSizeValue)
+                if ( canvas.getActiveObject() ){
+                    canvas.getActiveObject().set('fontSize', newFontSizeValue)
+                }
             }
             canvas.renderAll();
             socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})

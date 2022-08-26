@@ -71,28 +71,29 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
           if ( id!==false ){
             gif['id'] = id;
           }
-          // console.log(gif);
-          // gif.set({ top: 50, left: 50 });
-          canvas.add(gif).setActiveObject(gif);
-          // перемещаем объект куда надо
-          if ( params!==false ){
-            gif.set({
-              top: params.top, //+object.object.top,
-              left: params.left, //+object.object.left
-              angle: params.angle,
-              scaleX: params.scaleX,
-              scaleY: params.scaleY,
+          if ( gif.error===undefined ) {
+            // gif.set({ top: 50, left: 50 });
+            canvas.add(gif).setActiveObject(gif);
+            // перемещаем объект куда надо
+            if ( params!==false ){
+              gif.set({
+                top: params.top, //+object.object.top,
+                left: params.left, //+object.object.left
+                angle: params.angle,
+                scaleX: params.scaleX,
+                scaleY: params.scaleY,
+              });
+            }
+            gif.play();
+            fabric.util.requestAnimFrame(function render() {
+              canvas.renderAll();
+              fabric.util.requestAnimFrame(render);
             });
-          }
-          gif.play();
-          fabric.util.requestAnimFrame(function render() {
-            canvas.renderAll();
-            fabric.util.requestAnimFrame(render);
-          });
-          
-          if (noemit==false){
-            socket.emit("image:add", {src: url, id_of: gif.id});
-            socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
+            
+            if (noemit==false){
+              socket.emit("image:add", {src: url, id_of: gif.id});
+              socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
+            }
           }
         } )
         

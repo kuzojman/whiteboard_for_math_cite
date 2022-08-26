@@ -221,20 +221,17 @@ const getCursorData = (data) => {
     
   }else{
     
-    let h = canvas.getHeight()-20;
-    let w = canvas.getWidth()-30;
-
-    console.log(h,w,data.cursorCoordinates);
-    if ( data.cursorCoordinates.x<0 || data.cursorCoordinates.x>w || data.cursorCoordinates.y<0 || data.cursorCoordinates.y>h ){
+    // console.log(h,w,data.cursorCoordinates);
+    if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-20 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-20 ){
       data.cursor='leave'
-      if ( data.cursorCoordinates.x<0  )
-        data.cursorCoordinates.x = 0
-      if ( data.cursorCoordinates.x>w  )
-        data.cursorCoordinates.x = w
-      if ( data.cursorCoordinates.y<0  )
-        data.cursorCoordinates.y = 0
-      if ( data.cursorCoordinates.y>h  )
-        data.cursorCoordinates.y = h
+      if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )
+        data.cursorCoordinates.x = canvas.vptCoords.tl.x
+      if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-20  )
+        data.cursorCoordinates.x = canvas.vptCoords.tr.x-20
+      if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )
+        data.cursorCoordinates.y = canvas.vptCoords.tl.y
+      if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-20  )
+        data.cursorCoordinates.y = canvas.vptCoords.br.y-20
     }
       
     existing_coursor.set({
