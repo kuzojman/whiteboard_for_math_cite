@@ -82,6 +82,8 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
                 angle: params.angle,
                 scaleX: params.scaleX,
                 scaleY: params.scaleY,
+                erasable: params.erasable,
+                eraser: params.eraser,
               });
             }
             gif.play();
@@ -114,6 +116,8 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
           angle: params.angle,
           scaleX: params.scaleX,
           scaleY: params.scaleY,
+          erasable: params.erasable,
+          eraser: params.eraser,
         });
       }
       canvas.setActiveObject(myImg).renderAll(); 
