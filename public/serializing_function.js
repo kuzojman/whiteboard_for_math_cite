@@ -14,7 +14,7 @@ const serializer_dictionary_for_bezier = {
     "stroke": "s",
     "id": "id",
     "fill": "f",
-    "fillRule": "fr",
+    "fillRule": "fR",
     "paintFirst": "pf",
     "globalCompositeOperation": "gCO",
     "strokeLineCap": "slp",
@@ -117,7 +117,7 @@ const to_text_add ={
 
 
 const serializer_dictionary = {...serializer_dictionary_for_bezier,...rect_and_line_add}
-const serializer_dictionary_image = {...serializer_dictionary,...to_image_add};
+const serializer_dictionary_image = {...serializer_dictionary,...to_image_add, ...serializer_dictionary_for_bezier};
 const serializer_dictionary_for_circle =  {...serializer_dictionary,...to_circle_add};
 const serializer_dictionary_for_text =  {...serializer_dictionary,...to_text_add};
 const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,...serializer_dictionary_for_circle,...serializer_dictionary_for_text};
@@ -289,6 +289,7 @@ function deserialize(object)
       }
     }
   }
+  // console.log(result);
   return result;
 }
 
