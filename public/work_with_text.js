@@ -296,8 +296,9 @@ document.addEventListener('mousemove', (e) => {
 
 
 buttonText.addEventListener('click', () => {
-    
-    selectedButton.classList.remove('settings-panel__button_active');
+    if ( selectedButton ){
+        selectedButton.classList.remove('settings-panel__button_active');
+    }
     selectedButton = buttonText;
     removeEvents();
     console.log('buttonText > click');
@@ -305,6 +306,7 @@ buttonText.addEventListener('click', () => {
     let isEditing = false;
     let firstTouch = false;
     console.log(isDown)
+
 
     buttonText.classList.toggle('settings-panel__button_active');
 
@@ -329,7 +331,7 @@ buttonText.addEventListener('click', () => {
                 
                 //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
                 socket.emit("text:added", {"board_id": board_id, "object": text});
- //               socket.emit('text:added',text)
+//               socket.emit('text:added',text)
 
                 canvas.setActiveObject(text);
                 text.enterEditing();
@@ -374,6 +376,7 @@ buttonText.addEventListener('click', () => {
         changeObjectSelection(true);
         removeEvents();
     }
+    
 })
 
 canvas.on('text:editing:entered', (e) => {

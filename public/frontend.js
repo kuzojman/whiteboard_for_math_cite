@@ -602,7 +602,9 @@ socket.on( 'connect', function()
 
     socket.on('mouse:up', function(pointer)
     {
-      canvas.remoteDrawingBrush.onMouseUp({e:{}});
+      if ( canvas.remoteDrawingBrush!==undefined ){
+        canvas.remoteDrawingBrush.onMouseUp({e:{}});
+      }
     });
 
     socket.on('mouse:down', function(pointer)
@@ -630,20 +632,24 @@ socket.on( 'connect', function()
 
     socket.on('mouse:move', function(e)
     {
-      canvas.remoteDrawingBrush.color = e.color;
-      canvas.remoteDrawingBrush.width = e.width;
-      canvas.remoteDrawingBrush.onMouseMove(e.pointer,{e:{}});
+      if ( canvas.remoteDrawingBrush!==undefined ){
+        canvas.remoteDrawingBrush.color = e.color;
+        canvas.remoteDrawingBrush.width = e.width;
+        canvas.remoteDrawingBrush.onMouseMove(e.pointer,{e:{}});
+      }
     });
     socket.on('color:change', function(colour_taken)
     {
+      if ( canvas.remoteDrawingBrush!==undefined ){
         canvas.remoteDrawingBrush.color = colour_taken;
-        
+      }        
     });
 
     socket.on('width:change', function(width_taken)
     {
+      if ( canvas.remoteDrawingBrush!==undefined ){
         canvas.remoteDrawingBrush.width = width_taken;
-
+      }
     });
 
 let circle ;
@@ -1710,7 +1716,12 @@ inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
 
 fontColorInput2.addEventListener('click', () => { fontColorListWrapper2.classList.add('active') })
 
-fontColorInput2.addEventListener('change', (e) => { canvas.getActiveObject().set("fill", e.target.value) })
+fontColorInput2.addEventListener('change', (e) => { 
+  let obj_ = canvas.getActiveObject();
+  if ( obj_ ){
+    canvas.getActiveObject().set("fill", e.target.value) 
+  }
+})
 
 
 
