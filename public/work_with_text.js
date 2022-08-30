@@ -298,84 +298,85 @@ document.addEventListener('mousemove', (e) => {
 buttonText.addEventListener('click', () => {
     if ( selectedButton ){
         selectedButton.classList.remove('settings-panel__button_active');
-        selectedButton = buttonText;
-        removeEvents();
-        console.log('buttonText > click');
-        isDown = !isDown;
-        let isEditing = false;
-        let firstTouch = false;
-        console.log(isDown)
-    
-
-        buttonText.classList.toggle('settings-panel__button_active');
-
-        if(isDown) {
-            changeObjectSelection(false);
-            canvas.isDrawingMode = false;
-            canvas.on('mouse:down', function(o) {
-                if(!isEditing) {
-                    textSettings.classList.add('text-settings_active');
-                    console.log('mouse:down');
-                    const pointer = canvas.getPointer(o.e);
-                    const text = new fabric.IText('Tap and Type', { 
-                        fontFamily: selectedFontFamily,
-                        fontSize: newFontSizeValue,
-                        left: pointer.x, 
-                        top: pointer.y,
-                        textDecoration: 'underline',
-                        editable: true,
-                    })
-                    
-                    canvas.add(text);
-                    
-                    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-                    socket.emit("text:added", {"board_id": board_id, "object": text});
-    //               socket.emit('text:added',text)
-
-                    canvas.setActiveObject(text);
-                    text.enterEditing();
-                    text.selectAll();
-                    isEditing = text.isEditing;
-                }
-
-            });
-
-            canvas.on('mouse:up', function(o) {
-                if(o.target !== null){
-                    if(o.target.isType('i-text') && isEditing) {
-                        // console.log('IT IS TEXT!!!! - 1');
-                    }
-                    else {
-                        if(!firstTouch) {
-                            firstTouch = true;
-                        } else {
-                            // console.log('NOT TEXT!!!! - 1');
-                            hideTextEditPanel();
-                            firstTouch = false;
-                        }
-                    }
-                } else {
-                    if(isEditing && !firstTouch) {
-                        // console.log('IT IS TEXT!!!! - 2')
-                        firstTouch = true;
-
-                    } else {
-                        // console.log('NOT TEXT!!!! - 2');
-                        hideTextEditPanel();
-                        isEditing = false;
-                    }
-                    
-                }
-                console.log('mouse:up')
-            });
-
-        } else {
-            canvas.isDrawingMode = false;
-            textSettings.classList.remove('text-settings_active');
-            changeObjectSelection(true);
-            removeEvents();
-        }
     }
+    selectedButton = buttonText;
+    removeEvents();
+    console.log('buttonText > click');
+    isDown = !isDown;
+    let isEditing = false;
+    let firstTouch = false;
+    console.log(isDown)
+
+
+    buttonText.classList.toggle('settings-panel__button_active');
+
+    if(isDown) {
+        changeObjectSelection(false);
+        canvas.isDrawingMode = false;
+        canvas.on('mouse:down', function(o) {
+            if(!isEditing) {
+                textSettings.classList.add('text-settings_active');
+                console.log('mouse:down');
+                const pointer = canvas.getPointer(o.e);
+                const text = new fabric.IText('Tap and Type', { 
+                    fontFamily: selectedFontFamily,
+                    fontSize: newFontSizeValue,
+                    left: pointer.x, 
+                    top: pointer.y,
+                    textDecoration: 'underline',
+                    editable: true,
+                })
+                
+                canvas.add(text);
+                
+                //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+                socket.emit("text:added", {"board_id": board_id, "object": text});
+//               socket.emit('text:added',text)
+
+                canvas.setActiveObject(text);
+                text.enterEditing();
+                text.selectAll();
+                isEditing = text.isEditing;
+            }
+
+        });
+
+        canvas.on('mouse:up', function(o) {
+            if(o.target !== null){
+                if(o.target.isType('i-text') && isEditing) {
+                    // console.log('IT IS TEXT!!!! - 1');
+                }
+                else {
+                    if(!firstTouch) {
+                        firstTouch = true;
+                    } else {
+                        // console.log('NOT TEXT!!!! - 1');
+                        hideTextEditPanel();
+                        firstTouch = false;
+                    }
+                }
+            } else {
+                if(isEditing && !firstTouch) {
+                    // console.log('IT IS TEXT!!!! - 2')
+                    firstTouch = true;
+
+                } else {
+                    // console.log('NOT TEXT!!!! - 2');
+                    hideTextEditPanel();
+                    isEditing = false;
+                }
+                
+            }
+            console.log('mouse:up')
+        });
+
+    } else {
+        canvas.isDrawingMode = false;
+        textSettings.classList.remove('text-settings_active');
+        changeObjectSelection(true);
+        removeEvents();
+    }
+    
 })
 
 canvas.on('text:editing:entered', (e) => {
