@@ -20,8 +20,13 @@ window.addFormula = function(formula, id=false, object=false, emit=true){
         svg = svg.childNodes[0]
     let s = new XMLSerializer().serializeToString(svg);
     let b64 = "data:image/svg+xml;base64, " + window.btoa(unescape(encodeURIComponent(s)))
+    // console.log('add formula');
     fabric.Image.fromURL(b64, function(myImg) {
         myImg['formula'] = formula
+        if ( takedFirstData==false ){
+            myImg.set({ selectable: false })
+            decreaseRecievedObjects()
+        }
         canvas.add(myImg)
         if ( id!==false ){
             myImg['id'] = id;
@@ -34,7 +39,9 @@ window.addFormula = function(formula, id=false, object=false, emit=true){
               scaleX: object.scaleX,
               scaleY: object.scaleY,
             });
+            
         }
+        
         if ( emit ){
             socket.emit("formula:added", {"board_id": board_id,'formula':myImg.formula, "object": myImg});
         }

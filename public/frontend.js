@@ -15,6 +15,8 @@ let selectionTimer = null;
 
 let selectedTool = "";
 
+let panningGesture = false;
+
 /**
  * Нажатие на кнопку выбора инструмента
  */
@@ -71,16 +73,30 @@ function selectTool(event){
 
 canvas.on('touch:gesture',function(e){
   isGestureEvent = true;
-  if ( e.self.touches!==undefined && e.self.touches.length==2 ){
-    this.selection = false;
+  // console.log(selectedTool);
+  // console.log(e.self.touches, e.self.scale, currentValueZoom);
+  if ( e.self.touches!==undefined && e.self.touches.length==2 && selectedTool=='moving' ){
+    // this.selection = false;
     var lPinchScale = e.self.scale;  
-    var scaleDiff = (lPinchScale -1)/10 + 1;  // Slow down zoom speed    
+    // var scaleDiff = (lPinchScale -1)/10 + 1;  // Slow down zoom speed    
     const delta = e.self.scale-currentValueZoom;
     // alert(JSON.stringify(e.self));
+    // console.log('delta',delta);
     handleScale(delta);
     as.textContent = (currentValueZoom * 100).toFixed(0)+'%';
     canvas.zoomToPoint({x:e.self.x, y: e.self.y},currentValueZoom);
-    selectionTimer = setTimeout( enableSelection , 500);
+    // console.log({x:e.self.x, y: e.self.y},currentValueZoom);
+    // clearTimeout(selectionTimer)
+    // console.log(state);
+    if ( !panningGesture ){
+      canvas.toggleDragMode(true)
+      panningGesture = true
+    }
+    
+    // selectionTimer = setTimeout( ()=>canvas.toggleDragMode(true) , 500);
+    clearTimeout(selectionTimer)
+    selectionTimer = setTimeout( ()=>panningGesture = false , 100);
+    this.selection = false;
   }
   
 });
@@ -92,8 +108,18 @@ const SCALE_STEP = 0.05;
 let currentValueZoom = 1;
 
 let currentRadiusCursor = 10;
-
+// когда получили первые данные
+let takedFirstData = false;
+let allReceivedObjects = false;
 const cursorUser = createCursor()
+
+function decreaseRecievedObjects(){
+  if ( allReceivedObjects<=0 ){
+    takedFirstData=true;
+    return
+  }
+  allReceivedObjects-=1;
+}
 
 function createCursor(){
   let curs_ =  new fabric.Circle({              // Представление курсора
@@ -104,6 +130,7 @@ function createCursor(){
     originX: 'center',
     originY: 'center',
     erasable:false,
+    selectable:false,
   });
   let text_ = new fabric.Text("Username", {
     fontFamily: 'Calibri',
@@ -112,12 +139,15 @@ function createCursor(){
     originX: 'center',
     originY: 'center',
     erasable:false,
+    selectable:false,
     left: currentRadiusCursor*2,
     top: currentRadiusCursor*2  });
   let cursor_ = new fabric.Group([curs_,text_],{
     left: -10,
     top: -10,
     erasable:false,
+    selectable:false,
+    cursor:true,
   })
   return cursor_
 }
@@ -352,9 +382,13 @@ function chunk (arr, len) {
 const pathUsualGrid = "./images/grids/usual-grid.svg";
 const pathTriangularGrid = "./images/grids/triangular-grid.svg";
 
-fabric.Canvas.prototype.toggleDragMode = function () {
-  const STATE_IDLE = "idle";
-  const STATE_PANNING = "panning";
+/**
+ * Переопределение функции переключения режимов навигация/редактирование объектов
+ * @param {Bool} state_ если задано true то перемещение поля, если false то перемещение объектов
+ */
+fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
+  console.log('toggle');
+  
   // Remember the previous X and Y coordinates for delta calculations
   let lastClientX;
   let lastClientY;
@@ -362,13 +396,15 @@ fabric.Canvas.prototype.toggleDragMode = function () {
 
   let deltaX;
   let deltaY;
-
+  const STATE_IDLE = "idle";
+  const STATE_PANNING = "panning";
   let state = STATE_IDLE;
+  
   // We're entering dragmode
-  if (isCursorMove) {
+  if (  state_ ) {
       this.off('mouse:move');
       // Discard any active object
-      canvas.discardActiveObject();
+      this.discardActiveObject();
       // Set the cursor to 'move'
       this.defaultCursor = "move";
       // Loop over all objects and disable events / selectable. We remember its value in a temp variable stored on each object
@@ -435,9 +471,11 @@ fabric.Canvas.prototype.toggleDragMode = function () {
       // Reset the cursor
       this.defaultCursor = "default";
       // Remove the event listeners
+      
       this.off("mouse:up");
       this.off("mouse:down");
       this.off("mouse:move");
+    
       // Restore selection ability on the canvas
       this.selection = true;
   }
@@ -625,7 +663,7 @@ socket.on( 'connect', function()
       }
       canvas.remoteDrawingBrush.color = pointer.color;
       canvas.remoteDrawingBrush.width = pointer.width;
-      canvas.remoteDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
+      canvas.remoteDrawingBrush.onMouseDown(pointer.pointer,{e:{},pointer:pointer.pointer});
 
     });
 
@@ -635,7 +673,7 @@ socket.on( 'connect', function()
       if ( canvas.remoteDrawingBrush!==undefined ){
         canvas.remoteDrawingBrush.color = e.color;
         canvas.remoteDrawingBrush.width = e.width;
-        canvas.remoteDrawingBrush.onMouseMove(e.pointer,{e:{}});
+        canvas.remoteDrawingBrush.onMouseMove(e.pointer,{e:{},pointer:e.pointer});
       }
     });
     socket.on('color:change', function(colour_taken)
@@ -764,6 +802,8 @@ let circle ;
             });
             fabric.util.enlivenObjects(chunk,function(objects)
             {
+              // сохраняем количество объектов
+              allReceivedObjects = objects.length
               objects.forEach(function(object)
               {
                 let obj_exists = false;
@@ -787,6 +827,10 @@ let circle ;
                     }
                   }else{
                     canvas.add(object);
+                    if ( takedFirstData==false ){
+                      object.set({ selectable: false })
+                    }
+                    decreaseRecievedObjects()
                   }
                 }                
               })
@@ -794,7 +838,6 @@ let circle ;
             });
             chunk_index++;
         },50)
-
 
         //canvas.loadFromJSON(data);
       }
@@ -1007,6 +1050,7 @@ function enableFreeDrawing()
   let isDrawing = false
 
   canvas.on('mouse:down', e => {
+    console.log('mouse:down',e);
     isDrawing = true;
     const pointer = canvas.getPointer(e);
     socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
@@ -1064,9 +1108,9 @@ function enableEraser(){
 
 function enableSelection() {
   removeEvents();
+  canvas.toggleDragMode(false);
+  isCursorMove=false;
   changeObjectSelection(true);
-  canvas.selection = true;
-
   canvas.on("mouse:down", (e) => {
     let d = canvas.getActiveObject();
   });
@@ -1269,12 +1313,12 @@ canvas.isDrawingMode = false;
 //canvas.freeDrawingBrush.width = 5;
 //canvas.freeDrawingBrush.color = '#00aeff';
 
-function handle_mouse_move(e) {
-  canvas.freeDrawingBrush._points = e.map((item) => {
-    return new fabric.Point(item.x, item.y);
-  });
-  canvas._onMouseUpInDrawingMode({ target: canvas.upperCanvasEl });
-}
+// function handle_mouse_move(e) {
+//   canvas.freeDrawingBrush._points = e.map((item) => {
+//     return new fabric.Point(item.x, item.y);
+//   });
+//   canvas._onMouseUpInDrawingMode({ target: canvas.upperCanvasEl });
+// }
 
 function change_colour_of_brush(colour_taken) {
   canvas.freeDrawingBrush.color = colour_taken;
@@ -1475,7 +1519,10 @@ function drawLine(type_of_line) {
 
 function changeObjectSelection(value) {
   canvas.forEachObject(function (obj) {
-    obj.selectable = value;
+    if ( obj.cursor ===undefined || !obj.cursor ){
+      obj.set({selectable : value});
+    }
+    // console.log(obj.selectable);
   });
   canvas.renderAll();
 }
@@ -1633,17 +1680,25 @@ document.body.addEventListener('keydown', handleDownKeySpace);
 document.body.addEventListener('keyup', handleUpKeySpace);
 
 
-const handleButtonCursorMoveClick = () => {
+const handleButtonCursorMoveClick = (ev) => {
+  ev.preventDefault()
   isCursorMove = !isCursorMove;
-  canvas.toggleDragMode();
+  canvas.toggleDragMode(true);
   buttonCursorMove.classList.toggle('settings-panel__button-cursor-move_active');
   canvas.isDrawingMode = false
   canvas.allowTouchScrolling = true;
+  changeObjectSelection(false);
 } 
 buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 
 document.addEventListener('DOMContentLoaded',(e)=>{
-  buttonCursorMove.click()
+  isCursorMove= true;
+  canvas.toggleDragMode(true);
+  buttonCursorMove.classList.add('settings-panel__button-cursor-move_active');
+  selectedTool = buttonCursorMove.dataset.tool;
+  canvas.isDrawingMode = false
+  canvas.allowTouchScrolling = true;
+  changeObjectSelection(false);
 });
 
 
@@ -1722,9 +1777,6 @@ fontColorInput2.addEventListener('change', (e) => {
     canvas.getActiveObject().set("fill", e.target.value) 
   }
 })
-
-
-
 
 const buttonIncreaseScale = document.querySelector(".scale__button-increase-scale");
 const buttonDecreaseScale = document.querySelector(".scale__button-decrease-scale");
