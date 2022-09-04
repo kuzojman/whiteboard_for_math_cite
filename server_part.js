@@ -72,6 +72,8 @@ initdb()
 
 //app.use(express.static(path.join(__dirname, "public"),{index: false}));
 
+// const cookieParser = require('cookie-parser');
+// app.use(cookieParser());
 
 // Register '.html' extension with The Mustache Express
 app.engine('html', mustacheExpress());
@@ -88,7 +90,10 @@ app.get("/", (req, res) => {
     board_id = 1;
   }
   let role = req.query.role;
+  // res.cookie('user_id', '1');
+  // console.log('cookie exists', req.cookies.user_id);
   res.render(path.join(__dirname,"public/index.html"), {board_id: board_id});
+  
 });
 app.use(express.static(path.join(__dirname, "public")));
 

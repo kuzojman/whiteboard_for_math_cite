@@ -260,7 +260,7 @@ const getStyle = (object, styleName) => {
 const onSelectionChanged = () => {
     changeObjectSelection(false);
     const obj = canvas.getActiveObject();
-    if (obj.selectionStart>-1) {
+    if (obj && obj.selectionStart>-1) {
       console.log(getStyle(obj,'fontSize'));
     }
 }

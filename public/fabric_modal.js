@@ -74,6 +74,10 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
           if ( gif.error===undefined ) {
             // gif.set({ top: 50, left: 50 });
             canvas.add(gif).setActiveObject(gif);
+            if ( takedFirstData==false ){
+              gif.set({ selectable: false })
+              decreaseRecievedObjects()
+            }
             // перемещаем объект куда надо
             if ( params!==false ){
               gif.set({
@@ -85,8 +89,16 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
                 erasable: params.erasable,
                 eraser: params.eraser,
               });
+            }else{
+              let w2 = gif.width/2
+              let h2 = gif.height/2
+              gif.set({
+                top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
+                left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2
+              });
             }
             gif.play();
+            canvas.discardActiveObject(gif)
             fabric.util.requestAnimFrame(function render() {
               canvas.renderAll();
               fabric.util.requestAnimFrame(render);
@@ -106,7 +118,11 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
       if ( id!==false ){
         myImg['id'] = id;
       }
-      
+
+      if ( takedFirstData==false ){
+        myImg.set({ selectable: false })
+        decreaseRecievedObjects()
+      }      
       canvas.add(myImg)
       // перемещаем объект куда надо
       if ( params!==false ){
@@ -118,6 +134,13 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
           scaleY: params.scaleY,
           erasable: params.erasable,
           eraser: params.eraser,
+        });
+      }else{
+        let w2 = myImg.width/2
+        let h2 = myImg.height/2
+        myImg.set({
+          top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
+          left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2
         });
       }
       canvas.setActiveObject(myImg).renderAll(); 
