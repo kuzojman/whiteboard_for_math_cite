@@ -312,6 +312,9 @@ io.on("connection", async socket => {
   socket.on("mouse:move", (e) => {
     socket.broadcast.to(socket.board_id).emit("mouse:move", e);
   });
+  socket.on("mouse:draw", (e) => {
+    socket.broadcast.to(socket.board_id).emit("mouse:draw", e);
+  });
   socket.on("mouse:down", (e) => {
     socket.broadcast.to(socket.board_id).emit("mouse:down", e);
   });
