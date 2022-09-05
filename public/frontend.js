@@ -95,7 +95,7 @@ canvas.on('touch:gesture',function(e){
     
     // selectionTimer = setTimeout( ()=>canvas.toggleDragMode(true) , 500);
     clearTimeout(selectionTimer)
-    selectionTimer = setTimeout( ()=>panningGesture = false , 100);
+    selectionTimer = setTimeout( ()=>panningGesture = false , 50);
     this.selection = false;
   }
   
@@ -356,6 +356,7 @@ menu_grid.addEventListener('click', e=> e.currentTarget.classList.toggle('active
 //
 
 const socket = io('http://localhost:3000',{transports:['websocket']});
+// const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
 // const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
@@ -461,7 +462,9 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
               let delta = new fabric.Point(deltaX, deltaY);
               this.relativePan(delta);
           }
+          handleMouseMovement(e)
       });
+      // this.on("mouse:move", (event) => handleMouseMovement(event))
   } else {
       // When we exit dragmode, we restore the previous values on all objects
       this.forEachObject(function (object) {
@@ -475,7 +478,7 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
       this.off("mouse:up");
       this.off("mouse:down");
       this.off("mouse:move");
-    
+      this.on("mouse:move", (event) => handleMouseMovement(event))
       // Restore selection ability on the canvas
       this.selection = true;
   }
@@ -668,7 +671,7 @@ socket.on( 'connect', function()
     });
 
 
-    socket.on('mouse:move', function(e)
+    socket.on('mouse:draw', function(e)
     {
       if ( canvas.remoteDrawingBrush!==undefined ){
         canvas.remoteDrawingBrush.color = e.color;
@@ -1070,7 +1073,7 @@ function enableFreeDrawing()
     if (isDrawing) 
     {
       const pointer = canvas.getPointer(e);
-      socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
     }
   })
 }
@@ -1100,7 +1103,7 @@ function enableEraser(){
   canvas.on('mouse:move', (e)=> {
     if (isDrawing)     {
       const pointer = canvas.getPointer(e);
-      socket.emit('mouse:move',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points); 
     }
   })
 }
