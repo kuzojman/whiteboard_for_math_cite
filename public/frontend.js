@@ -89,7 +89,7 @@ canvas.on('touch:gesture',function(e){
     // clearTimeout(selectionTimer)
     // console.log(state);
     if ( !panningGesture ){
-      canvas.toggleDragMode(true)
+      // canvas.toggleDragMode(true)
       panningGesture = true
     }
     
@@ -388,11 +388,16 @@ const pathTriangularGrid = "./images/grids/triangular-grid.svg";
  * @param {Bool} state_ если задано true то перемещение поля, если false то перемещение объектов
  */
 fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
-  console.log('toggle');
+  // console.log('toggle');
   
   // Remember the previous X and Y coordinates for delta calculations
-  let lastClientX;
-  let lastClientY;
+  if ( this.lastClientX === undefined) {
+    this.lastClientX = 0
+  }
+  if ( this.lastClientY === undefined) {
+    this.lastClientY = 0
+  }
+  // let lastClientY;
   // Keep track of the state
 
   let deltaX;
@@ -420,49 +425,57 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
       // // When MouseUp fires, we set the state to idle
       this.on("mouse:up", function (e) {
           state = STATE_IDLE;
+          // console.log("mouse:up 1");
       });
       // // When MouseDown fires, we set the state to panning
       this.on("mouse:down", (e) => {
           state = STATE_PANNING;
           if ( e.e.changedTouches!==undefined && e.e.changedTouches.length==1 ){ 
             let lt_ = e.e.changedTouches[0];
-            lastClientX = lt_.clientX;
-            lastClientY = lt_.clientY;
+            this.lastClientX = lt_.clientX;
+            this.lastClientY = lt_.clientY;
           }else{
-            lastClientX = e.e.clientX;
-            lastClientY = e.e.clientY;
+            this.lastClientX = e.e.clientX;
+            this.lastClientY = e.e.clientY;
           }
+          // console.log("mouse:down 1");
       });
       // When the mouse moves, and we're panning (mouse down), we continue
       this.on("mouse:move", (e) => {
           if (state === STATE_PANNING && e && e.e) {
               let x_,y_;
-              if ( e.e.changedTouches!==undefined && e.e.changedTouches.length==1 ){ 
-                let lt_ = e.e.changedTouches[0];
-                x_ = lt_.clientX;
-                y_ = lt_.clientY;
+              if ( e.e.changedTouches!==undefined & e.e.changedTouches.length>0 ){ 
+                // if (e.e.changedTouches.length){
+                  let lt_ = e.e.changedTouches[0];
+                  x_ = lt_.clientX;
+                  y_ = lt_.clientY;
+                // }else{
+                //   x_ = (e.e.changedTouches[0].clientX+e.e.changedTouches[1].clientX)/2;
+                //   y_ = (e.e.changedTouches[0].clientY+e.e.changedTouches[1].clientY)/2;
+                // }
               }else{
                 x_ = e.e.clientX;
                 y_ = e.e.clientY;
               }
-
-              if (lastClientX) {
-                  deltaX = x_ - lastClientX; // смещение по оси X
+              if (this.lastClientX) {
+                  deltaX = x_ - this.lastClientX; // смещение по оси X
                                                       // (если вниз передвигаемся, то
                                                       // это значение уменьшается иначе увеличивается)
               }
-              if (lastClientY) {
-                  deltaY = y_ - lastClientY; // смещение по оси Y
+              if (this.lastClientY) {
+                  deltaY = y_ - this.lastClientY; // смещение по оси Y
                                                       // (если влево передвигаемся, то
                                                       // это значение увеличивается иначе уменьшается)
               }
               // Update the last X and Y values
-              lastClientX=x_;
-              lastClientY=y_;
+              this.lastClientX=x_;
+              this.lastClientY=y_;
               let delta = new fabric.Point(deltaX, deltaY);
+              console.log(delta);
               this.relativePan(delta);
           }
           handleMouseMovement(e)
+          // console.log("mouse:move 1");
       });
       // this.on("mouse:move", (event) => handleMouseMovement(event))
   } else {
@@ -474,7 +487,7 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
       // Reset the cursor
       this.defaultCursor = "default";
       // Remove the event listeners
-      
+      // console.log("off all");
       this.off("mouse:up");
       this.off("mouse:down");
       this.off("mouse:move");
