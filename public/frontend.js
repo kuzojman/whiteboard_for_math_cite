@@ -444,7 +444,7 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
       this.on("mouse:move", (e) => {
           if (state === STATE_PANNING && e && e.e) {
               let x_,y_;
-              if ( e.e.changedTouches!==undefined & e.e.changedTouches.length>0 ){ 
+              if ( e.e.changedTouches!==undefined && e.e.changedTouches.length>0 ){ 
                 // if (e.e.changedTouches.length){
                   let lt_ = e.e.changedTouches[0];
                   x_ = lt_.clientX;
@@ -471,7 +471,6 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
               this.lastClientX=x_;
               this.lastClientY=y_;
               let delta = new fabric.Point(deltaX, deltaY);
-              console.log(delta);
               this.relativePan(delta);
           }
           handleMouseMovement(e)
