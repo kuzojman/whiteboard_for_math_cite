@@ -909,7 +909,7 @@ let circle ;
           })
           const error = 30;
           let bezierCurves = fitCurve(massiv_of_points, error);
-          if(!bezierCurves[0]) {
+          if( bezierCurves===undefined || bezierCurves[0]===undefined || !bezierCurves[0]) {
             console.log('bezier error',bezierCurves,massiv_of_points);
           }
           let bezierProcessedPath = [
