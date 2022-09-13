@@ -18,6 +18,28 @@ let selectedTool = "";
 let panningGesture = false;
 
 /**
+ * Очистка доски
+ */
+function clearBoard(){
+  var canvasObjects = canvas.getObjects();
+  for (let i = 0; i < canvasObjects.length; i++) {
+    const element = canvasObjects[i];
+    // удаляем все объекты кроме курсоров
+    if ( !element.socket_id ){
+      canvas.remove(element);
+    }
+  }
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+}
+
+/**
+ * Перенаправление в личный кабинет
+ */
+function goUserBoard(){
+  window.location.href="/my_private_office?parametr_enter=profile_info"
+}
+
+/**
  * Центрируем объект по центру экрана
  * @param {*} obj 
  */
