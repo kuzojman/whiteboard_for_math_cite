@@ -1,4 +1,5 @@
 let mouse_coords;
+let _clipboard = null;
 
 function Copy() {
   canvas.getActiveObject().clone(function (cloned) {
@@ -46,37 +47,40 @@ function Delete() {
 }
 
 function Paste() {
-  // clone again, so you can do multiple copies.
-  _clipboard.clone(function (clonedObj) {
-    canvas.discardActiveObject();
+  if ( _clipboard ){
+    // clone again, so you can do multiple copies.
+    _clipboard.clone(function (clonedObj) {
+      canvas.discardActiveObject();
 
-    clonedObj.set({
-      left: mouse_coords.x, //clonedObj.left + 10,
-      top: mouse_coords.y, //clonedObj.top + 10,
-      evented: true,
-    });
-    //canvas.off('mouse:move');
-
-    if (clonedObj.type === "activeSelection") {
-      // active selection needs a reference to the canvas.
-      clonedObj.canvas = canvas;
-      clonedObj.forEachObject(function (obj) {
-        canvas.add(obj);
+      setObjectToCanvasCenter(clonedObj)
+      clonedObj.set({
+        evented: true,
       });
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-      socket.emit("figure_copied", canvas.toJSON());
-      // this should solve the unselectability
-      clonedObj.setCoords();
-    } else {
-      canvas.add(clonedObj);
-      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-      socket.emit("figure_copied",clonedObj) //canvas.toJSON());
-    }
-    _clipboard.top += 10;
-    _clipboard.left += 10;
-    canvas.setActiveObject(clonedObj);
-    canvas.requestRenderAll();
-  });
+      
+      if (clonedObj.type === "activeSelection") {
+        // active selection needs a reference to the canvas.
+        clonedObj.canvas = canvas;
+        clonedObj.forEachObject(function (obj) {
+          canvas.add(obj);
+        });
+        canvas.deactivateAll();
+        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+        socket.emit("figure_copied", canvas.toJSON());
+        // this should solve the unselectability
+        clonedObj.setCoords();
+      } else {
+        canvas.add(clonedObj);
+        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+        socket.emit("figure_copied",clonedObj) //canvas.toJSON());
+      }
+      // _clipboard.top += 10;
+      // _clipboard.left += 10;
+      setObjectToCanvasCenter(_clipboard)
+      
+      canvas.setActiveObject(clonedObj);
+      canvas.requestRenderAll();
+    });
+  }
 }
 
 // function find_object_index(target_object) {

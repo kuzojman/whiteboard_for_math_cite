@@ -90,12 +90,7 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
                 eraser: params.eraser,
               });
             }else{
-              let w2 = gif.width/2
-              let h2 = gif.height/2
-              gif.set({
-                top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
-                left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2
-              });
+              setObjectToCanvasCenter(gif)
             }
             gif.play();
             canvas.discardActiveObject(gif)
@@ -136,12 +131,7 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
           eraser: params.eraser,
         });
       }else{
-        let w2 = myImg.width/2
-        let h2 = myImg.height/2
-        myImg.set({
-          top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
-          left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2
-        });
+        setObjectToCanvasCenter(myImg)
       }
       canvas.setActiveObject(myImg).renderAll(); 
       // console.log({src: url, id_of: myImg.id});

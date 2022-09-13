@@ -4,6 +4,7 @@ const modalTextWrapper = document.querySelector('.modal-text-wrapper');
 const formTextInput = document.querySelector('.form-text__input');
 const textSettings = document.querySelector('.text-settings');
 const formTextButtonSubmit = document.querySelector('.form-text__button-submit');
+const fontsLiItems = document.querySelectorAll('.setting-item__font-family-item');
 
 const buttonFontSizeUp = document.querySelector('.text-settings__button-font-size-up');
 const buttonFontSizeDown = document.querySelector('.text-settings__button-font-size-down');
@@ -153,18 +154,43 @@ fontColorInput.addEventListener('change', (e) => {
     }
 })
 
+/**
+ * Функция выбора текста из меню
+ * @param {*} font 
+ */
+function selectFont(font){
+    let is_active = false;
+    for (let i = 0; i < fontsLiItems.length; i++) {
+        const element = fontsLiItems[i];
+        if ( font===element.textContent ){
+            is_active=element.classList.contains('text-settings__font-item_active')
+            if ( is_active ){
+                element.classList.remove('text-settings__font-item_active');
+            }else{
+                element.classList.add('text-settings__font-item_active');
+                buttonFontFamily.textContent = font;
+            }
+        }else{
+            element.classList.remove('text-settings__font-item_active')
+        }
+    }
+    
+}
+
 textSettings.addEventListener('click', (e) => {
     switch(e.target.tagName) {
         case "LI":
             if(e.target.classList.contains('setting-item__font-family-item')) {
-              
+                
+                
                 selectedFontFamily = e.target.textContent;
-                buttonFontFamily.textContent = e.target.textContent;
-                e.target.classList.toggle('text-settings__font-item_active');
+                buttonFontFamily.textContent = selectedFontFamily;
+                // выбираем шрифт
+                selectFont(selectedFontFamily)
                 // console.log(selectedFontFamily)
                 if ( canvas.getActiveObject() ){
                     canvas.getActiveObject().set('fontFamily', selectedFontFamily);
-                    canvas.renderAll();
+                    canvas.requestRenderAll();
                     socket.emit("text:edited",  {"board_id": board_id, "object": canvas.getActiveObject(), 'id':textEditId})
                 }
 
@@ -261,7 +287,7 @@ const onSelectionChanged = () => {
     changeObjectSelection(false);
     const obj = canvas.getActiveObject();
     if (obj && obj.selectionStart>-1) {
-      console.log(getStyle(obj,'fontSize'));
+    //   console.log(getStyle(obj,'fontSize'));
     }
 }
 
@@ -382,6 +408,9 @@ buttonText.addEventListener('click', () => {
 canvas.on('text:editing:entered', (e) => {
     textEditId = e.target.id;
     showTextEditPanel();
+    selectedFontFamily = canvas.getActiveObject().get('fontFamily');
+    console.log(selectedFontFamily);
+    selectFont(selectedFontFamily)
     isDown = true;
 });
 
