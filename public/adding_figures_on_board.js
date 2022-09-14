@@ -168,10 +168,16 @@ svgAddCubeButton.addEventListener("click",(e) =>
   adding_svg_figure("./icons/3d-cube-3d-design-3d-shape-cube-geometric-geometry-2-svgrepo-com.svg")
 });
 
+const svgAddHexagonButton = document.querySelector('#draw_hexagon_prism');
+svgAddHexagonButton.addEventListener("click",(e) => 
+{
+  adding_svg_figure("./icons/3d-shape-3d-hexagon-geometric-geometry-shape-2-svgrepo-com.svg")
+});
+
 const svgAdd3dSquarePyramidButton = document.querySelector('#add_3d_square_pyramid');
 svgAdd3dSquarePyramidButton.addEventListener("click",(e) => 
 {
-  adding_svg_figure("./icons/pyramid-svgrepo-com.svg")
+  adding_svg_figure("./icons/pyramid.svg")
 });
 
 const svgAdd3dCylinderButton = document.querySelector('#add_cylinder');

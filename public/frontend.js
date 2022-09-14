@@ -36,7 +36,7 @@ function clearBoard(){
  * Перенаправление в личный кабинет
  */
 function goUserBoard(){
-  window.location.href="/my_private_office?parametr_enter=profile_info"
+  window.location.href="/my_private_office?parametr_enter=my_board"
 }
 
 /**
