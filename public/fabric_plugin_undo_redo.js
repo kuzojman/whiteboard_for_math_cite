@@ -147,3 +147,112 @@ fabric.Canvas.prototype.onHistory = function () {
 
   this._historySaveAction();
 };
+
+fabric.Arrow = fabric.util.createClass(fabric.Line, {
+
+  type: 'Arrow',
+
+  initialize: function(element, options) {
+    options || (options = {});
+    this.callSuper('initialize', element, options);
+    this.padding=this.strokeWidth*1.5;
+  },
+
+  toObject: function() {
+    return fabric.util.object.extend(this.callSuper('toObject'));
+  },
+
+  _render: function(ctx){
+    this.callSuper('_render', ctx);
+
+    // do not render if width/height are zeros or object is not visible
+    if (this.width === 0 && this.height === 0 || !this.visible) return;
+
+    ctx.save();
+
+    var xDiff = this.x2 - this.x1;
+    var yDiff = this.y2 - this.y1;
+    var angle = Math.atan2(yDiff, xDiff);
+    ctx.translate((this.x2 - this.x1) / 2, (this.y2 - this.y1) / 2);
+    ctx.rotate(angle);
+    ctx.beginPath();
+    //move 10px in front of line to start the arrow so it does not have the square line end showing in front (0,0)
+    ctx.moveTo(this.strokeWidth*1.2,0);
+    ctx.lineTo(-this.strokeWidth*1.2, this.strokeWidth*1.2);
+    ctx.lineTo(-this.strokeWidth*1.2, -this.strokeWidth*1.2);
+    ctx.closePath();
+    ctx.fillStyle = this.stroke;
+    ctx.fill();
+
+    ctx.restore();
+  },
+
+  clipTo: function(ctx) {
+    this._render(ctx);
+  }
+});
+
+fabric.Arrow.fromObject = function (object, callback) {
+    callback && callback(new fabric.Arrow([object.x1, object.y1, object.x2, object.y2],object));
+};
+
+fabric.Arrow.async = true;
+
+
+fabric.ArrowTwo = fabric.util.createClass(fabric.Line, {
+
+  type: 'ArrowTwo',
+
+  initialize: function(element, options) {
+    options || (options = {});
+    this.callSuper('initialize', element, options);
+    this.padding=this.strokeWidth*1.5;
+  },
+
+  toObject: function() {
+    return fabric.util.object.extend(this.callSuper('toObject'));
+  },
+
+  _render: function(ctx){
+    this.ctx=ctx
+    this.callSuper('_render', ctx);
+    
+    // do not render if width/height are zeros or object is not visible
+    if (this.width === 0 && this.height === 0 || !this.visible) return;
+    let p = this.calcLinePoints();
+    let xDiff = this.x2 - this.x1;
+    let yDiff = this.y2 - this.y1;
+    let angle = Math.atan2(yDiff, xDiff);
+    this.drawArrow(angle, p.x2, p.y2);
+    ctx.save();
+    xDiff = -this.x2 + this.x1;
+    yDiff = -this.y2 + this.y1;
+    angle = Math.atan2(yDiff, xDiff);
+    this.drawArrow(angle, p.x1, p.y1);
+  },
+
+  drawArrow: function(angle, xPos, yPos) {
+    this.ctx.save();
+    this.ctx.translate(xPos, yPos);
+    this.ctx.rotate(angle);
+    this.ctx.beginPath();
+    // Move 5px in front of line to start the arrow so it does not have the square line end showing in front (0,0)
+    this.ctx.moveTo(this.strokeWidth,0);
+    this.ctx.lineTo(-this.strokeWidth*1.2, this.strokeWidth*1.2);
+    this.ctx.lineTo(-this.strokeWidth*1.2, -this.strokeWidth*1.2);
+    this.ctx.closePath();
+    this.ctx.fillStyle = this.stroke;
+    this.ctx.fill();
+    this.ctx.restore();
+  },
+
+  clipTo: function(ctx) {
+    this._render(ctx);
+  }
+});
+
+fabric.ArrowTwo.fromObject = function (object, callback) {
+    callback && callback(new fabric.ArrowTwo([object.x1, object.y1, object.x2, object.y2],object));
+};
+
+fabric.ArrowTwo.async = true;
