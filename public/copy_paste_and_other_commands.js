@@ -24,8 +24,10 @@ function Delete() {
   }
   var doomedObj = canvas.getActiveObject();
   let ids = [];
-  console.log(doomedObj);
-  if (doomedObj.type === "activeSelection" ) {
+  if ( doomedObj===undefined  ){
+    return;
+  }
+  if (  doomedObj.type === "activeSelection" ) {
     doomedObj.canvas = canvas;
     doomedObj.forEachObject(function (obj) {
       ids.push(find_object_index(obj));
@@ -49,6 +51,7 @@ function Delete() {
 }
 
 function Paste() {
+  console.log(_clipboard);
   if ( _clipboard ){
     // clone again, so you can do multiple copies.
     _clipboard.clone(function (clonedObj) {
@@ -165,10 +168,10 @@ document.body.addEventListener(
 
     if (key == 86 && ctrl) {
       //alert("Ctrl + V Pressed !");
-      Paste();
+      // Paste();
     } else if (key == 67 && ctrl) {
       //alert("Ctrl + C Pressed !");
-      Copy();
+      // Copy();
     } else if (key == 46) {
       //alert("delete Pressed !");
       Delete();
@@ -191,5 +194,39 @@ document.addEventListener("keyup", ({ keyCode, ctrlKey } = event) => {
   // Check pressed button is Y - Ctrl+Y.
   if (keyCode === 89) {
     canvas.redo();
+  }
+});
+
+// copy event
+addEventListener('copy', (e) => { 
+  Copy()
+});
+
+// paste from buffer
+addEventListener('paste', (e) => { 
+  if ( _clipboard ){
+    Paste();
+    _clipboard = null;
+    return;
+  }
+  let items=e.clipboardData.items;
+  // e.preventDefault();
+  // e.stopPropagation();
+  let paste = (e.clipboardData || window.clipboardData).getData('text');
+  if (paste){
+    // вставляем текст в центр экрана
+    
+    let txt = addTextField( {x:0,y:0}, paste);
+    setObjectToCanvasCenter(txt);
+    // return;
+  }
+
+  //Loop through files
+  for(var i=0;i<items.length;i++){
+    let tp = items[i].type;
+    if (tp.indexOf('image')!== -1) {
+      var imageData = items[i].getAsFile();      
+      insertImageOnBoard(window.webkitURL.createObjectURL(imageData));
+    }
   }
 });
