@@ -44,6 +44,8 @@ function Delete() {
       socket.emit("figure_delete", ids);//canvas.toJSON());
     }
   }
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
 }
 
 function Paste() {
@@ -63,7 +65,7 @@ function Paste() {
         clonedObj.forEachObject(function (obj) {
           canvas.add(obj);
         });
-        canvas.deactivateAll();
+        canvas.discardActiveObject();
         socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
         socket.emit("figure_copied", canvas.toJSON());
         // this should solve the unselectability
