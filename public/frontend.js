@@ -18,6 +18,41 @@ let selectedTool = "";
 let panningGesture = false;
 
 /**
+ * Очистка доски
+ */
+function clearBoard(){
+  var canvasObjects = canvas.getObjects();
+  for (let i = 0; i < canvasObjects.length; i++) {
+    const element = canvasObjects[i];
+    // удаляем все объекты кроме курсоров
+    if ( !element.socket_id ){
+      canvas.remove(element);
+    }
+  }
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+}
+
+/**
+ * Перенаправление в личный кабинет
+ */
+function goUserBoard(){
+  window.location.href="/my_private_office?parametr_enter=my_board"
+}
+
+/**
+ * Центрируем объект по центру экрана
+ * @param {*} obj 
+ */
+function setObjectToCanvasCenter(obj){
+  let w2 = obj.width/2
+  let h2 = obj.height/2
+  obj.set({
+    top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
+    left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2,
+  });
+}
+
+/**
  * Нажатие на кнопку выбора инструмента
  */
 function selectTool(event){
@@ -544,6 +579,12 @@ lineDrawingButton.addEventListener("click",(e) => drawLine('trivial'));
 const lineDrawingButtonDOtted = document.querySelector('#line_drawing_button_dotted');
 lineDrawingButtonDOtted.addEventListener("click",(e) => drawLine('dotted'));
 
+const lineDrawingButtonArrow = document.querySelector('#line_drawing_button_arrow');
+lineDrawingButtonArrow.addEventListener("click",(e) => drawLine('arrow'));
+
+const lineDrawingButtonArrowTwo = document.querySelector('#line_drawing_button_arrowtwo');
+lineDrawingButtonArrowTwo.addEventListener("click",(e) => drawLine('arrowtwo'));
+
 const waitingOverlayBlock = document.querySelector('#waiting-overlay');
 // попап с подтверждением пользователя
 const notifyPopup = document.querySelector('#accept_user_notify')
@@ -896,7 +937,7 @@ let circle ;
           })
           const error = 30;
           let bezierCurves = fitCurve(massiv_of_points, error);
-          if(!bezierCurves[0]) {
+          if( bezierCurves===undefined || bezierCurves[0]===undefined || !bezierCurves[0]) {
             console.log('bezier error',bezierCurves,massiv_of_points);
           }
           let bezierProcessedPath = [
@@ -1465,15 +1506,18 @@ function drawLine(type_of_line) {
     canvas.freeDrawingBrush.color = drawingColorEl.value;
     socket.emit("color:change",drawingColorEl.value);
   };
+  colour_inside = hexToRgbA('#000dff',5);
   if (type_of_line == "trivial")
-  {
-    colour_inside = hexToRgbA('#000dff',5);
+  { 
     stroke_line   = 0;
   }
   else if(type_of_line == "dotted")
   {
-    colour_inside = hexToRgbA('#000dff',5);
     stroke_line = 20;
+  }else if ( type_of_line == "arrow" ){
+
+  }else if ( type_of_line == "arrowtwo" ){
+
   }
 
   removeEvents();
@@ -1482,16 +1526,40 @@ function drawLine(type_of_line) {
     isDown = true;
     let pointer = canvas.getPointer(o.e);
     let points = [pointer.x, pointer.y, pointer.x, pointer.y];
-    line = new fabric.Line(points, {
-      strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
-      //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
-      stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
-      strokeDashArray: [stroke_line, stroke_line],
-      ///stroke: '#07ff11a3',
-      originX: "center",
-      originY: "center",
-      selectable: false,
-    });
+    if ( type_of_line == "arrow" ){
+      line = new fabric.Arrow(points, {
+        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
+        stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+        strokeDashArray: [stroke_line, stroke_line],
+        ///stroke: '#07ff11a3',
+        originX: "center",
+        originY: "center",
+        selectable: false,
+      });
+    }else if ( type_of_line == "arrowtwo" ){
+      line = new fabric.ArrowTwo(points, {
+        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
+        stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+        strokeDashArray: [stroke_line, stroke_line],
+        ///stroke: '#07ff11a3',
+        originX: "center",
+        originY: "center",
+        selectable: false,
+      });
+    }else{
+      line = new fabric.Line(points, {
+        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
+        stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+        strokeDashArray: [stroke_line, stroke_line],
+        ///stroke: '#07ff11a3',
+        originX: "center",
+        originY: "center",
+        selectable: false,
+      });
+    }
     canvas.add(line);
     socket.emit("line:add", {
       id: line.id,
@@ -1504,10 +1572,12 @@ function drawLine(type_of_line) {
   canvas.on("mouse:move", function (o) {
     if (!isDown) return;
     let pointer = canvas.getPointer(o.e);
-    line.set({
-      x2: pointer.x,
-      y2: pointer.y,
-    });
+    if ( line!==undefined ){
+      line.set({
+        x2: pointer.x,
+        y2: pointer.y,
+      });
+    }
     canvas.renderAll();
     socket.emit("line:edit", {
       x1: line.x1,

@@ -10,7 +10,7 @@
     padding: 1.25px 5px;
     max-height: 52.5px;
     align-items: stretch;
-    grid-template-columns: 130px 60px 50px 50px;
+    grid-template-columns: 130px 75px 50px 50px;
     grid-template-rows: 50px;
     column-gap: 10px;
     box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
@@ -161,6 +161,7 @@
 }
 
 .setting-item__font-size {
+    width: 75px;
     display: grid;
     column-gap: 10px;
     align-items: center;
@@ -169,6 +170,7 @@
 }
 
 .setting-item__font-size-value {
+    width: 45px;
     grid-row: span 2;
     justify-self: center;
     font-size: 25px;
