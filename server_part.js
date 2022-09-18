@@ -124,10 +124,11 @@ class AmazonCloud {
 
   upload = async ({file,path,fileName,fileType}) =>  {
     try {
+      const fileContent = Buffer.from(file.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
       const params = {
         Bucket: 'hot_data_kuzovkin_info_private', // название созданного bucket
         Key: `${path}/${fileName}`, // путь и название файла в облаке (path без слэша впереди)
-        Body: file, // сам файл
+        Body: fileContent, // сам файл
         ContentType: fileType, // тип файла
       }
       const result = await new Promise((resolve, reject)=> {
