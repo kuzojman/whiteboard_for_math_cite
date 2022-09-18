@@ -237,5 +237,7 @@ addEventListener('paste', (e) => {
  * После сохранения 
  */
 socket.on('cloud:image:saved', (data)=>{
-  insertImageOnBoard(data.Location);
+  if ( data && data.Location!==undefined ){
+    insertImageOnBoard(data.Location);
+  }
 })
