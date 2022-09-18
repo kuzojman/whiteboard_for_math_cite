@@ -61,7 +61,7 @@ function closeImagesModal(){
 window.insertImageOnBoard = function (url, noemit=false, id=false, params=false){
   // console.log(url.indexOf('/download/'));
   if (url.indexOf('/download/')!==0 ){
-    url = "/download/"+encodeURI(url)
+    url = "/download/"+encodeURIComponent(url)
   }
     fabric.Image.fromURL(url, function(myImg) {
 

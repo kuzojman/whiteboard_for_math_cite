@@ -182,7 +182,12 @@ app.get("/", (req, res) => {
  * перескачиваем файл для сохранения на доске
  */
 app.get("/download/:urldata", (req, response) => {
-  let url_ = decodeURI(req.params.urldata)
+  let url_ = decodeURIComponent(req.params.urldata)
+  if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
+    url_ = url_.replace('https:/','https://')
+  }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
+    url_ = url_.replace('http:/','http://')
+  }
   const request = https.get(url_, (res_)=>{
     res_.setEncoding('binary');
     response.contentType( res_.headers['content-type'] );
