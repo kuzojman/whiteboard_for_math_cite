@@ -541,9 +541,22 @@ selectionButton.onclick   = enableSelection;
 
 
 
-const downloadImage = () =>
-  {
+const downloadImage = () =>  {
    const ext = "png";
+  //  canvas._objects.forEach( (obj, index)=>{
+  //   if ( obj.src!==undefined ){
+  //     // obj._element.currentSrc = "/download/"+encodeURIComponent(obj.src)
+  //     // obj._element.src = "/download/"+encodeURIComponent(obj.src)
+  //     // obj._element.crossOrigin = 'anonymous'
+  //     // obj.src = "/download/"+encodeURIComponent(obj.src)
+  //   }
+  //  } )
+  //  canvas._objects.forEach( (obj, index)=>{
+  //   console.log(index, obj._element);
+  //   if ( obj.src!==undefined ){
+  //     console.log(obj._element.currentSrc);
+  //   }
+  //  })
    const base64 = canvas.toDataURL({
      format: ext,
      enableRetinaScaling: true

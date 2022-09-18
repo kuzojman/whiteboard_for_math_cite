@@ -225,8 +225,17 @@ addEventListener('paste', (e) => {
   for(var i=0;i<items.length;i++){
     let tp = items[i].type;
     if (tp.indexOf('image')!== -1) {
-      var imageData = items[i].getAsFile();      
-      insertImageOnBoard(window.webkitURL.createObjectURL(imageData));
+      var imageData = items[i].getAsFile(); 
+      // console.log(imageData);
+      socket.emit('cloud:image:add',{ name:imageData.name, file: imageData, type: imageData.type})
+      // insertImageOnBoard(window.webkitURL.createObjectURL(imageData));
     }
   }
 });
+
+/**
+ * После сохранения 
+ */
+socket.on('cloud:image:saved', (data)=>{
+  insertImageOnBoard(data.Location);
+})

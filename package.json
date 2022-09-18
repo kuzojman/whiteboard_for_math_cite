@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.1156.0",
+    "aws-sdk": "^2.1218.0",
     "axios": "^0.27.2",
     "bulma": "^0.9.4",
     "cookie-parser": "^1.4.6",

@@ -3,11 +3,12 @@ const express = require("express");
 const axios = require('axios');
 const { Server } = require("socket.io");
 const http = require("http");
+const https = require("https");
 const path = require("path");
 const fs = require("fs");
 const mustacheExpress = require('mustache-express');
 const S3 = require('aws-sdk/clients/s3');
-
+const AWS = require('aws-sdk');
 
 
 var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
@@ -68,6 +69,86 @@ initdb()
 ////////////////////////work with postresql end
 
 
+/**
+ *
+ * Доступ к яндекс облаку 
+ *
+ */
+class YandexCloud {
+  constructor () {
+    this.aws = new AWS.S3({
+      endpoint: 'https://storage.yandexcloud.net', 
+      accessKeyId: process.env.YA_STORAGE_ACCESS_KEY, // берем ключ из переменной окружения
+      secretAccessKey: process.env.YA_STORAGE_SECRET_KEY, // берем секрет из переменной окружения
+      region: 'ru-central1',
+      httpOptions: {
+        timeout: 10000,
+        connectTimeout: 10000
+      },
+    });
+  }
+
+  upload = async ({file,path,fileName,fileType}) =>  {
+    try {
+      const params = {
+        Bucket: process.env.YA_BUCKET_NAME, // название созданного bucket
+        Key: `${path}/${fileName}`, // путь и название файла в облаке (path без слэша впереди)
+        Body: file, // сам файл
+        ContentType: fileType, // тип файла
+      }
+      const result = await new Promise((resolve, reject)=> {
+        this.aws.upload(params, function(err, data) {
+          if (err) return reject(err);
+          return resolve(data);
+        });
+      });
+      return result;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+}
+
+class AmazonCloud {
+  constructor () {
+    this.aws = new AWS.S3({
+      endpoint: process.env.END_POINT, 
+      accessKeyId: process.env.ACCESS_KEY, // берем ключ из переменной окружения
+      secretAccessKey: process.env.SECRET_ACCESS_KEY, // берем секрет из переменной окружения
+      httpOptions: {
+        timeout: 10000,
+        connectTimeout: 10000
+      },
+    });
+  }
+
+  upload = async ({file,path,fileName,fileType}) =>  {
+    try {
+      const params = {
+        Bucket: 'hot_data_kuzovkin_info_private', // название созданного bucket
+        Key: `${path}/${fileName}`, // путь и название файла в облаке (path без слэша впереди)
+        Body: file, // сам файл
+        ContentType: fileType, // тип файла
+      }
+      const result = await new Promise((resolve, reject)=> {
+        this.aws.upload(params, function(err, data) {
+          if (err) return reject(err);
+          return resolve(data);
+        });
+      });
+      return result;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+}
+
+let AWSCloud = null;
+if ( process.env.YA_STORAGE_SECRET_KEY!==undefined ){
+  AWSCloud = new YandexCloud();
+} else{
+  AWSCloud = new AmazonCloud();
+}
 
 
 //app.use(express.static(path.join(__dirname, "public"),{index: false}));
@@ -93,8 +174,25 @@ app.get("/", (req, res) => {
   // res.cookie('user_id', '1');
   // console.log('cookie exists', req.cookies.user_id);
   res.render(path.join(__dirname,"public/index.html"), {board_id: board_id});
-  
 });
+
+/**
+ * перескачиваем файл для сохранения на доске
+ */
+app.get("/download/:urldata", (req, response) => {
+  let url_ = decodeURIComponent(req.params.urldata)
+  const request = https.get(url_, (res_)=>{
+    res_.setEncoding('binary');
+    response.contentType( res_.headers['content-type'] );
+    res_.on('data',  (body) =>{
+      response.write(body,'binary')
+    });
+    res_.on('end',()=> {
+      response.end()
+    })
+  } )
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 async function getUserData(user_id){
@@ -142,7 +240,30 @@ io.on("connection", async socket => {
         }
         socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
-});
+  });
+
+  /**
+   * Загрузка иображений в облако
+   * @data - { name: 'filename.jpg', file: ByteArray<>, type: mimetype }
+   */
+  socket.on('cloud:image:add', (data) =>{
+    
+    let fileFormat = data.name.split('.');
+    let savePath = data.name.replace(/\.[^/.]+$/, "") + '-' + Date.now() + '.' + fileFormat[fileFormat.length - 1];
+    AWSCloud.upload({
+      file: data.file, // файл
+      path: 'images',
+      fileName: savePath,
+      type: data.type
+    }).then( (data)=> {
+      socket.emit('cloud:image:saved', data)
+    } )
+    
+  } )
+
+  socket.on('cloud:image:list', (data) =>{
+
+  } )
 
   socket.on("user:user_id",async (e) => {
     // user:e.user, board:board_id
@@ -294,20 +415,6 @@ io.on("connection", async socket => {
       }
     }
   })
-
-
-
-//  console.log('>>', 'before select -- board_id = ' + board_id);
-//  const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
-
-//  socket.emit("take_data_from_json_file", res.rows[0].board_stack);
-
-  /*
-  fs.readFile("saved_data.json", "utf-8", (err, data) => {
-    if (err) throw err;
-    socket.emit("take_data_from_json_file", data);
-  });
-*/
 
   socket.on("mouse:move", (e) => {
     socket.broadcast.to(socket.board_id).emit("mouse:move", e);
@@ -467,10 +574,6 @@ io.on("connection", async socket => {
       
         callback ('https://hb.bizmrg.com/hot_data_kuzovkin_info_private/'+name_obj);
     })
-  
-
-
-
 
   socket.on("object:added", async canvas_pass => {
     // console.log('SELECT * from boards WHERE id=',[canvas_pass.board_id]);
@@ -498,10 +601,6 @@ io.on("connection", async socket => {
     const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
     
   });
-
-
-
-
 
   socket.on('disconnect', () => {
     io.to(socket.board_id).emit('coursour_disconected', socket.id);

@@ -59,6 +59,10 @@ function closeImagesModal(){
  * @param {*} url 
  */
 window.insertImageOnBoard = function (url, noemit=false, id=false, params=false){
+  // console.log(url.indexOf('/download/'));
+  if (url.indexOf('/download/')!==0 ){
+    url = "/download/"+encodeURIComponent(url)
+  }
     fabric.Image.fromURL(url, function(myImg) {
 
       if (url.toLowerCase().match(/\.(gif)/g)){
@@ -108,8 +112,8 @@ window.insertImageOnBoard = function (url, noemit=false, id=false, params=false)
         
         return;
       }      
-
-      myImg['src'] = url;
+      myImg.crossOrigin = 'anonymous'
+      myImg['src'] =  url;
       if ( id!==false ){
         myImg['id'] = id;
       }
