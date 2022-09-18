@@ -97,45 +97,18 @@ window.onerror = function(message, url, line, col, errorObj) {
 };
 const uploadButton = document.querySelector('.tool-panel__item-button-uploader');
 //uploadButton.addEventListener("click",(e) => {
-  document.getElementById("uploader").onchange = function(e) 
-  {
+  document.getElementById("uploader").onchange = function(e) {
     var reader = new FileReader();
-
-    reader.onload = function(e) 
-    {
-
-
-      socket.emit("upload_to_aws",e.target.result,response=>{
-  //      var image = new Image(1,1);
-        const image = document.createElement('img')
-        document.body.append(image);
-        setTimeout(() => {
-          image.src = response/////e.target.result;
-          console.log(response,image);
-        }, 1500);
-
-
-        image.onerror=function(e){
-          console.log("imageerror",e)
-        }
-        image.onload = function() 
-        {
-          let img = new fabric.Image(image);
-          img.src = image.src;
-          img.set(
-          {
-            left: 100,
-            top: 60
-          });
-          img.scaleToWidth(600);
-          canvas.add(img).setActiveObject(img).renderAll();
-          socket.emit("image:add", {src: img.src, id_of: img.id});
-        }
-      });
-
+    let file0 = e.target.files[0]
+    let file_ = new Blob([file0]);
+    // Pass the file to the blob, not the input[0].
+    // fileData = new Blob([files[0]]);
+    reader.onload = function(ev) {
+      socket.emit('cloud:image:add',{ name:file0.name, file:file_, type: file0.type})
+      // socket.emit("upload_to_aws",e.target.result);
     }
-    console.log(e.target.files);
-    reader.readAsDataURL(e.target.files[0]);
+    // console.log(e.target.files);
+    reader.readAsArrayBuffer(file_);
   }
   
 //}) 

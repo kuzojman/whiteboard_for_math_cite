@@ -124,11 +124,12 @@ class AmazonCloud {
 
   upload = async ({file,path,fileName,fileType}) =>  {
     try {
-      const fileContent = Buffer.from(file.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
+      // console.log(file);
+      // const fileContent = Buffer.from(file.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
       const params = {
         Bucket: 'hot_data_kuzovkin_info_private', // название созданного bucket
         Key: `${path}/${fileName}`, // путь и название файла в облаке (path без слэша впереди)
-        Body: fileContent, // сам файл
+        Body: file, // сам файл
         ContentType: fileType, // тип файла
       }
       const result = await new Promise((resolve, reject)=> {
@@ -250,10 +251,10 @@ io.on("connection", async socket => {
   socket.on('cloud:image:add', (data) =>{
     
     let fileFormat = data.name.split('.');
-    let savePath = data.name.replace(/\.[^/.]+$/, "") + '-' + Date.now() + '.' + fileFormat[fileFormat.length - 1];
+    let savePath = makeid(32) + '.' + fileFormat[fileFormat.length - 1];
     AWSCloud.upload({
       file: data.file, // файл
-      path: 'images',
+      path: 'images/'+socket.board_id,
       fileName: savePath,
       type: data.type
     }).then( (data)=> {
@@ -541,40 +542,17 @@ io.on("connection", async socket => {
 
 
   socket.on('upload_to_aws', (image_pass,callback) =>{
-
-        var s3 = new S3({
-            accessKeyId: process.env.ACCESS_KEY,
-            secretAccessKey: process.env.SECRET_ACCESS_KEY,
-            endpoint: process.env.END_POINT,
-            apiVersion: 'latest'
-        });
-        //s3.createBucket()
-        // Загрузить объект
-        const fileContent = Buffer.from(image_pass.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
-        // console.log('start_upload');
-
-        let name_obj = makeid(32)+'.jpg';
-        var params = {
-            Bucket: 'hot_data_kuzovkin_info_private',
-            Key: name_obj,
-            ContentType:'image/jpeg',
-            Body: fileContent
-        };
-        
-        s3.upload(params, (err, data) => {
-            if (err) 
-            {
-                console.log(err, err.stack);
-            } else 
-            {
-                global.loca=data['Location']; 
-                console.log(loca);
-                
-            }
-        });
-      
-        callback ('https://hb.bizmrg.com/hot_data_kuzovkin_info_private/'+name_obj);
-    })
+    let name_obj = makeid(32)
+    AWSCloud.upload({
+      file: image_pass, // файл
+      path: 'images',
+      fileName: savePath,
+      type: data.type
+    }).then( (data)=> {
+      socket.emit('cloud:image:saved', data)
+      callback ('https://hb.bizmrg.com/hot_data_kuzovkin_info_private/'+name_obj);
+    } )
+  })
 
   socket.on("object:added", async canvas_pass => {
     // console.log('SELECT * from boards WHERE id=',[canvas_pass.board_id]);
