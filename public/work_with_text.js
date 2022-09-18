@@ -276,9 +276,7 @@ textSettings.addEventListener('click', (e) => {
     
 })
 
-
-
-  
+ 
 const getStyle = (object, styleName) => {
     return object[styleName];
 }
@@ -327,12 +325,9 @@ buttonText.addEventListener('click', () => {
     }
     selectedButton = buttonText;
     removeEvents();
-    console.log('buttonText > click');
     isDown = !isDown;
     let isEditing = false;
     let firstTouch = false;
-    console.log(isDown)
-
 
     buttonText.classList.toggle('settings-panel__button_active');
 
@@ -341,28 +336,7 @@ buttonText.addEventListener('click', () => {
         canvas.isDrawingMode = false;
         canvas.on('mouse:down', function(o) {
             if(!isEditing) {
-                textSettings.classList.add('text-settings_active');
-                console.log('mouse:down');
-                const pointer = canvas.getPointer(o.e);
-                const text = new fabric.IText('Tap and Type', { 
-                    fontFamily: selectedFontFamily,
-                    fontSize: newFontSizeValue,
-                    left: pointer.x, 
-                    top: pointer.y,
-                    textDecoration: 'underline',
-                    editable: true,
-                })
-                
-                canvas.add(text);
-                
-                //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-                socket.emit("text:added", {"board_id": board_id, "object": text});
-//               socket.emit('text:added',text)
-
-                canvas.setActiveObject(text);
-                text.enterEditing();
-                text.selectAll();
-                isEditing = text.isEditing;
+                addTextField( canvas.getPointer(o.p) );
             }
 
         });
@@ -409,7 +383,6 @@ canvas.on('text:editing:entered', (e) => {
     textEditId = e.target.id;
     showTextEditPanel();
     selectedFontFamily = canvas.getActiveObject().get('fontFamily');
-    console.log(selectedFontFamily);
     selectFont(selectedFontFamily)
     isDown = true;
 });
@@ -424,3 +397,28 @@ canvas.on('text:changed',(e)=>{
         socket.emit("text:edited",  {"board_id": board_id, "object": e.target, 'id':textEditId})
     // }
 })
+
+/**
+ * Вставляем текст на доску
+ * @param {*} text_ тект для вставки по умолчанию
+ * @param {} pointer событие вставки откуда берем координаты мыши
+ * @return возвращаем вставленный объект
+ */
+function addTextField(pointer,text_="Tap and Type"){
+    textSettings.classList.add('text-settings_active');
+    const text = new fabric.IText(text_, { 
+        fontFamily: selectedFontFamily,
+        fontSize: newFontSizeValue,
+        left: pointer.x, 
+        top: pointer.y,
+        textDecoration: 'underline',
+        editable: true,
+    })
+    canvas.add(text);
+    socket.emit("text:added", {"board_id": board_id, "object": text});
+    canvas.setActiveObject(text);
+    text.enterEditing();
+    text.selectAll();
+    isEditing = text.isEditing;
+    return text
+}

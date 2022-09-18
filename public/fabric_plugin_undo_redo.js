@@ -177,9 +177,13 @@ fabric.Arrow = fabric.util.createClass(fabric.Line, {
     ctx.rotate(angle);
     ctx.beginPath();
     //move 10px in front of line to start the arrow so it does not have the square line end showing in front (0,0)
-    ctx.moveTo(this.strokeWidth*1.2,0);
-    ctx.lineTo(-this.strokeWidth*1.2, this.strokeWidth*1.2);
-    ctx.lineTo(-this.strokeWidth*1.2, -this.strokeWidth*1.2);
+    let linew = this.strokeWidth*1.2;
+    if ( this.strokeWidth<=5 ) {
+      linew = (this.strokeWidth+3)*1.2
+    }
+    ctx.moveTo(linew*1.2,0);
+    ctx.lineTo(-linew*1.2, linew*1.2);
+    ctx.lineTo(-linew*1.2, -linew*1.2);
     ctx.closePath();
     ctx.fillStyle = this.stroke;
     ctx.fill();
@@ -237,9 +241,13 @@ fabric.ArrowTwo = fabric.util.createClass(fabric.Line, {
     this.ctx.rotate(angle);
     this.ctx.beginPath();
     // Move 5px in front of line to start the arrow so it does not have the square line end showing in front (0,0)
-    this.ctx.moveTo(this.strokeWidth,0);
-    this.ctx.lineTo(-this.strokeWidth*1.2, this.strokeWidth*1.2);
-    this.ctx.lineTo(-this.strokeWidth*1.2, -this.strokeWidth*1.2);
+    let linew = this.strokeWidth*1.2;
+    if ( this.strokeWidth<=5 ) {
+      linew = (this.strokeWidth+3)*1.2
+    }
+    this.ctx.moveTo(linew,0);
+    this.ctx.lineTo(-linew*1.2, linew*1.2);
+    this.ctx.lineTo(-linew*1.2, -linew*1.2);
     this.ctx.closePath();
     this.ctx.fillStyle = this.stroke;
     this.ctx.fill();
