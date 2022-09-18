@@ -154,6 +154,9 @@ fontColorInput.addEventListener('change', (e) => {
     }
 })
 
+let isEditing;
+let firstTouch;
+
 /**
  * Функция выбора текста из меню
  * @param {*} font 
@@ -323,11 +326,13 @@ buttonText.addEventListener('click', () => {
     if ( selectedButton ){
         selectedButton.classList.remove('settings-panel__button_active');
     }
+
+    if (!isDown) isDown = true;
+
     selectedButton = buttonText;
     removeEvents();
-    isDown = !isDown;
-    let isEditing = false;
-    let firstTouch = false;
+    isEditing = false;
+    firstTouch = false;
 
     buttonText.classList.toggle('settings-panel__button_active');
 
@@ -335,6 +340,7 @@ buttonText.addEventListener('click', () => {
         changeObjectSelection(false);
         canvas.isDrawingMode = false;
         canvas.on('mouse:down', function(o) {
+            // console.log(isEditing);
             if(!isEditing) {
                 addTextField( canvas.getPointer(o.p) );
             }
@@ -342,6 +348,7 @@ buttonText.addEventListener('click', () => {
         });
 
         canvas.on('mouse:up', function(o) {
+            // console.log(o);
             if(o.target !== null){
                 if(o.target.isType('i-text') && isEditing) {
                     // console.log('IT IS TEXT!!!! - 1');
@@ -356,18 +363,19 @@ buttonText.addEventListener('click', () => {
                     }
                 }
             } else {
+                // console.log(isEditing , firstTouch);
                 if(isEditing && !firstTouch) {
                     // console.log('IT IS TEXT!!!! - 2')
                     firstTouch = true;
 
                 } else {
                     // console.log('NOT TEXT!!!! - 2');
-                    hideTextEditPanel();
+                    // hideTextEditPanel();
                     isEditing = false;
                 }
                 
             }
-            console.log('mouse:up')
+            // console.log('mouse:up')
         });
 
     } else {
@@ -380,9 +388,12 @@ buttonText.addEventListener('click', () => {
 })
 
 canvas.on('text:editing:entered', (e) => {
+    // console.log(e);
     textEditId = e.target.id;
+    isEditing = true
     showTextEditPanel();
     selectedFontFamily = canvas.getActiveObject().get('fontFamily');
+    // console.log(textEditId,selectedFontFamily);
     selectFont(selectedFontFamily)
     isDown = true;
 });
@@ -390,6 +401,7 @@ canvas.on('text:editing:entered', (e) => {
 canvas.on('text:editing:exited',()=>{
     hideTextEditPanel(); 
     textEditId = false;   
+    // console.log(textEditId);
 })
 
 canvas.on('text:changed',(e)=>{
