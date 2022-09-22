@@ -159,7 +159,13 @@ fabric.Arrow = fabric.util.createClass(fabric.Line, {
   },
 
   toObject: function() {
-    return fabric.util.object.extend(this.callSuper('toObject'));
+    let obj = {}
+    try{
+      obj = fabric.util.object.extend(this.callSuper('toObject'))
+    }catch (e){
+      console.error(e);
+    }
+    return obj;
   },
 
   _render: function(ctx){
@@ -214,7 +220,13 @@ fabric.ArrowTwo = fabric.util.createClass(fabric.Line, {
   },
 
   toObject: function() {
-    return fabric.util.object.extend(this.callSuper('toObject'));
+    let obj = {}
+    try{
+      obj = fabric.util.object.extend(this.callSuper('toObject'))
+    }catch (e){
+      console.error(e);
+    }
+    return obj;
   },
 
   _render: function(ctx){
