@@ -54,95 +54,108 @@ function closeImagesModal(){
   closeAllModals();
 }
 
+async function  getImgContentType (url) {
+  return await fetch(url, { method: 'HEAD' })
+    .then(response => {
+      return response.headers.get('Content-type')
+    })
+}
+
 /**
  * Вставляем картинку на панель
  * @param {*} url 
  */
-window.insertImageOnBoard = function (url, noemit=false, id=false, params=false){
+window.insertImageOnBoard = async function (url, noemit=false, id=false, params=false){
   // console.log(url.indexOf('/download/'));
   if (url.indexOf('/download/')!==0 ){
     url = "/download/"+window.btoa(url)
   }
     fabric.Image.fromURL(url, function(myImg) {
+      
+      getImgContentType(url).then( t =>{
+        if ( t.indexOf('gif')!==-1 ){
 
-      if (url.toLowerCase().match(/\.(gif)/g)){
-        fabricGif(
-          url,
-          200,
-          200
-        ).then( function(gif){
-          gif['src'] = url;
-          if ( id!==false ){
-            gif['id'] = id;
-          }
-          if ( gif.error===undefined ) {
-            // gif.set({ top: 50, left: 50 });
-            canvas.add(gif).setActiveObject(gif);
-            if ( takedFirstData==false ){
-              gif.set({ selectable: false })
-              decreaseRecievedObjects()
+          fabricGif(
+            url,
+            200,
+            200
+          ).then( function(gif){
+            gif['src'] = url;
+            if ( id!==false ){
+              gif['id'] = id;
             }
-            // перемещаем объект куда надо
-            if ( params!==false ){
-              gif.set({
-                top: params.top, //+object.object.top,
-                left: params.left, //+object.object.left
-                angle: params.angle,
-                scaleX: params.scaleX,
-                scaleY: params.scaleY,
-                erasable: params.erasable,
-                eraser: params.eraser,
+            if ( gif.error===undefined ) {
+              // gif.set({ top: 50, left: 50 });
+              canvas.add(gif).setActiveObject(gif);
+              if ( takedFirstData==false ){
+                gif.set({ selectable: false })
+                decreaseRecievedObjects()
+              }
+              // перемещаем объект куда надо
+              if ( params!==false ){
+                gif.set({
+                  top: params.top, //+object.object.top,
+                  left: params.left, //+object.object.left
+                  angle: params.angle,
+                  scaleX: params.scaleX,
+                  scaleY: params.scaleY,
+                  erasable: params.erasable,
+                  eraser: params.eraser,
+                });
+              }else{
+                setObjectToCanvasCenter(gif)
+              }
+              gif.play();
+              canvas.discardActiveObject(gif)
+              fabric.util.requestAnimFrame(function render() {
+                canvas.renderAll();
+                fabric.util.requestAnimFrame(render);
               });
-            }else{
-              setObjectToCanvasCenter(gif)
+              
+              if (noemit==false){
+                socket.emit("image:add", {src: url, id_of: gif.id});
+                socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
+              }
             }
-            gif.play();
-            canvas.discardActiveObject(gif)
-            fabric.util.requestAnimFrame(function render() {
-              canvas.renderAll();
-              fabric.util.requestAnimFrame(render);
-            });
-            
-            if (noemit==false){
-              socket.emit("image:add", {src: url, id_of: gif.id});
-              socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
-            }
-          }
-        } )
+          } )
+          
+          return;
         
-        return;
-      }      
-      myImg.crossOrigin = 'anonymous'
-      myImg['src'] =  url;
-      if ( id!==false ){
-        myImg['id'] = id;
-      }
+        }else{
 
-      if ( takedFirstData==false ){
-        myImg.set({ selectable: false })
-        decreaseRecievedObjects()
-      }      
-      canvas.add(myImg)
-      // перемещаем объект куда надо
-      if ( params!==false ){
-        myImg.set({
-          top: params.top, //+object.object.top,
-          left: params.left, //+object.object.left
-          angle: params.angle,
-          scaleX: params.scaleX,
-          scaleY: params.scaleY,
-          erasable: params.erasable,
-          eraser: params.eraser,
-        });
-      }else{
-        setObjectToCanvasCenter(myImg)
-      }
-      canvas.setActiveObject(myImg).renderAll(); 
-      // console.log({src: url, id_of: myImg.id});
-      if (noemit==false){
-        socket.emit("image:add", {src: url, id_of: myImg.id});
-      }
-      // canvas.add(img)
+          myImg.crossOrigin = 'anonymous'
+          myImg['src'] =  url;
+          if ( id!==false ){
+            myImg['id'] = id;
+          }
+
+          if ( takedFirstData==false ){
+            myImg.set({ selectable: false })
+            decreaseRecievedObjects()
+          }      
+          canvas.add(myImg)
+          // перемещаем объект куда надо
+          if ( params!==false ){
+            myImg.set({
+              top: params.top, //+object.object.top,
+              left: params.left, //+object.object.left
+              angle: params.angle,
+              scaleX: params.scaleX,
+              scaleY: params.scaleY,
+              erasable: params.erasable,
+              eraser: params.eraser,
+            });
+          }else{
+            setObjectToCanvasCenter(myImg)
+          }
+          canvas.setActiveObject(myImg).renderAll(); 
+          // console.log({src: url, id_of: myImg.id});
+          if (noemit==false){
+            socket.emit("image:add", {src: url, id_of: myImg.id});
+          }
+        }
+      } )
+      
     });
     
     closeAllModals();

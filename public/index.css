@@ -38,11 +38,22 @@ html, body, .canvasWrapper
     width: 100vw;
     height: 100vh;
 }
-
+.canvas-container{
+    z-index: 1;
+}
 #canvasId {
     border: 1px solid red;
     display: block;
     touch-action: manipulation;
+}
+#canvasId_bg{
+    display: block;
+}
+.absolute-container{
+    position: absolute!important;
+    top: 0px;
+    left: 0px;
+    z-index: 0;
 }
 
 .canvasWrapper {
