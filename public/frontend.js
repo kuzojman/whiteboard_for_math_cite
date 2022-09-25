@@ -25,9 +25,15 @@ let panningGesture = false;
 
 /**
  * Очистка доски
+ * @broadcast - оповещаем ли всех, о том что надо очищать доску
  */
-function clearBoard(){
+function clearBoard(broadcast=true){
+  // выпускаем сигнал на удаление
+  if ( broadcast ){
+    socket.emit("canvas:clear",board_id);
+  }
   var canvasObjects = canvas.getObjects();
+  canvas.renderOnAddRemove = false;
   for (let i = 0; i < canvasObjects.length; i++) {
     const element = canvasObjects[i];
     // удаляем все объекты кроме курсоров
@@ -35,7 +41,11 @@ function clearBoard(){
       canvas.remove(element);
     }
   }
-  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  canvas.renderOnAddRemove = true;
+  canvas.requestRenderAll();
+  if ( broadcast ){
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  }
 }
 
 /**
@@ -755,6 +765,9 @@ socket.on( 'connect', function()
       socket.emit("board:board_id",board_id);
     }      
   });
+
+  // очищаем доску по сигналу
+  socket.on("canvas:clear", (e)=>clearBoard(false) );
 
   // запрос администратора на одобрение
   socket.on('creator:request', (e)=>{
