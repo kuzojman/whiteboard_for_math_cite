@@ -513,6 +513,10 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("text:added", object_pass);
   });
   
+  socket.on("canvas:clear", (e) => {
+    socket.broadcast.to(socket.board_id).emit("canvas:clear",e);
+  });
+
   socket.on("text:edited", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("text:edited", object_pass);
   });
