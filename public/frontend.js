@@ -136,6 +136,7 @@ canvas.on('touch:gesture',function(e){
     handleScale(delta);
     as.textContent = (currentValueZoom * 100).toFixed(0)+'%';
     canvas.zoomToPoint({x:e.self.x, y: e.self.y},currentValueZoom);
+    canvasbg.zoomToPoint({x:e.self.x, y: e.self.y},currentValueZoom);
     // console.log({x:e.self.x, y: e.self.y},currentValueZoom);
     // clearTimeout(selectionTimer)
     // console.log(state);
@@ -209,6 +210,7 @@ canvas.on('mouse:wheel',function(opt){
   handleScale(delta);
   as.textContent = (currentValueZoom * 100).toFixed(0)+'%';
   canvas.zoomToPoint({x:opt.e.offsetX, y: opt.e.offsetY},currentValueZoom);
+  canvasbg.zoomToPoint({x:opt.e.offsetX, y: opt.e.offsetY},currentValueZoom);
   opt.e.preventDefault();
   opt.e.stopPropagation();
 })
@@ -523,6 +525,7 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
               this.lastClientY=y_;
               let delta = new fabric.Point(deltaX, deltaY);
               this.relativePan(delta);
+              canvasbg.relativePan(delta);
           }
           handleMouseMovement(e)
           // console.log("mouse:move 1");
@@ -2034,6 +2037,7 @@ buttonIncreaseScale.addEventListener("click", (event) => {
   const center = canvas.getCenter();
   const centerPoint = new fabric.Point(center.left, center.top);
   canvas.zoomToPoint(centerPoint, currentValueZoom);
+  canvasbg.zoomToPoint(centerPoint, currentValueZoom);
   as.textContent = (currentValueZoom * 100).toFixed(0) + '%';
 
 })
@@ -2049,6 +2053,7 @@ buttonDecreaseScale.addEventListener("click", (event) => {
   const center = canvas.getCenter();
   const centerPoint = new fabric.Point(center.left, center.top);
   canvas.zoomToPoint(centerPoint, currentValueZoom);
+  canvasbg.zoomToPoint(centerPoint, currentValueZoom);
   as.textContent = (currentValueZoom * 100).toFixed(0) + '%';
 })
 
