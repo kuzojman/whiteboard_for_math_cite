@@ -42,7 +42,7 @@ function clearBoard(broadcast=true){
     }
   }
   canvas.renderOnAddRemove = true;
-  canvas.requestRenderAll();
+  canvas.renderAll();
   if ( broadcast ){
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   }
@@ -340,7 +340,7 @@ const getCursorData = (data) => {
     canvas.bringToFront(existing_coursor)
     moveCursorsToFront = false;
   }
-  canvas.requestRenderAll();
+  canvas.renderAll();
 }                                                   // Получение координат курсора
 
 
@@ -390,17 +390,17 @@ let isDown = false;
 const buttonCursorMove = document.querySelector('#moving_our_board'); 
 
 let isRendering = false;
-// const render = canvas.renderAll.bind(canvas);
+const render = canvas.renderAll.bind(canvas);
 
-// canvas.renderAll = () => {
-//     if (!isRendering) {
-//         isRendering = true;
-//         requestAnimationFrame(() => {
-//             render();
-//             isRendering = false;
-//         });
-//     }
-// };
+canvas.renderAll = () => {
+    if (!isRendering) {
+        isRendering = true;
+        requestAnimationFrame(() => {
+            render();
+            isRendering = false;
+        });
+    }
+};
 
 const menu_logo = document.querySelector(".top-panel__logo");
 menu_logo.addEventListener('click', e=> e.currentTarget.classList.toggle('active') );
@@ -866,7 +866,7 @@ socket.on( 'connect', function()
     circle.set({
       radius: circle_taken.radius
     });
-    canvas.requestRenderAll();
+    canvas.renderAll();
   });
   
   socket.on('circle:add', function(circle_taken)
@@ -892,7 +892,7 @@ socket.on( 'connect', function()
     rect.set({
       height: rect_taken.height
     });
-    canvas.requestRenderAll();
+    canvas.renderAll();
   });
   socket.on('rect:add', function(rect_taken)
   {
@@ -913,7 +913,7 @@ socket.on( 'connect', function()
       x2: line_taken.x2,
       y2: line_taken.y2
     });
-    canvas.requestRenderAll();
+    canvas.renderAll();
   });
   socket.on('line:add', function(line_taken)
   {
@@ -1011,7 +1011,7 @@ socket.on( 'connect', function()
             })
             
           });
-          canvas.requestRenderAll();
+          canvas.renderAll();
           chunk_index++;
       },150)
 
@@ -1070,7 +1070,7 @@ socket.on( 'connect', function()
   socket.on('figure_copied', e =>
   {
       canvas.add(new fabric.Object(e));
-      canvas.requestRenderAll();
+      canvas.renderAll();
       //canvas.loadFromJSON(e);
   });
   
@@ -1105,7 +1105,7 @@ socket.on( 'connect', function()
   socket.on('text:added', e => {
     const text = new fabric.IText(e.object.text,e.object);
     canvas.add(text);
-    canvas.requestRenderAll();
+    canvas.renderAll();
   });
 
   /**
@@ -1115,7 +1115,7 @@ socket.on( 'connect', function()
     let t = canvas._objects.find( item => item.id==e.id )
     if ( t ){
       t.set({...e.object});
-      canvas.requestRenderAll();
+      canvas.renderAll();
     }
   });
 
@@ -1427,7 +1427,7 @@ function drawrec(type_of_rectangle) {
     });
 
     socket.emit("rect:edit", rect);
-    canvas.requestRenderAll();
+    canvas.renderAll();
   });
 
   canvas.on("mouse:up", function (o) {
@@ -1498,7 +1498,7 @@ function drawcle(type_of_circle) {
       radius: Math.abs(origX - pointer.x),
     });
     socket.emit("circle:edit", circle);
-    canvas.requestRenderAll();
+    canvas.renderAll();
   });
 
   canvas.on("mouse:up", function (o) {
@@ -1518,7 +1518,7 @@ canvas.setBackgroundColor(
       scaleX: 1,
       scaleY: 1,
     },
-    // canvas.requestRenderAll.bind(canvas)
+    canvas.renderAll.bind(canvas)
 );
 
 
@@ -1527,10 +1527,10 @@ window.addEventListener("resize", resizeCanvas, false);
 function resizeCanvas() {
   canvas.setHeight(window.innerHeight);
   canvas.setWidth(window.innerWidth);
-  canvas.requestRenderAll();
+  canvas.renderAll();
   canvasbg.setHeight(window.innerHeight);
   canvasbg.setWidth(window.innerWidth);
-  canvasbg.requestRenderAll();
+  canvasbg.renderAll();
 }
 
 // resize on init
@@ -1568,7 +1568,7 @@ function handle_editing_rectangle(rect_taken) {
   rect.set({
     height: rect_taken.height,
   });
-  canvas.requestRenderAll();
+  canvas.renderAll();
 }
 
 function editing_passing_rectangle(rect_taken) {
@@ -1600,7 +1600,7 @@ function editing_added_line_to_board(line_taken) {
     stroke: line_taken.stroke,
     fill: line_taken.fill
   });
-  canvas.requestRenderAll();
+  canvas.renderAll();
 }
 
 function width_of_line_passed_taken(width_taken) {
@@ -1611,7 +1611,7 @@ function circle_passed_to_board(circle_taken) {
   circle.set({
     radius: circle_taken.radius,
   });
-  canvas.requestRenderAll();
+  canvas.renderAll();
 }
 
 function adding_circle_on_the_board(circle_taken) {
@@ -1752,7 +1752,7 @@ function drawLine(type_of_line) {
         y2: pointer.y,
       });
     }
-    canvas.requestRenderAll();
+    canvas.renderAll();
     socket.emit("line:edit", {
       x1: line.x1,
       y1: line.y1,
@@ -1783,7 +1783,7 @@ function changeObjectSelection(value) {
     }
     // console.log(obj.selectable);
   });
-  canvas.requestRenderAll();
+  canvas.renderAll();
 }
 
 function removeEvents() {
@@ -1932,7 +1932,7 @@ function recive_part_of_data(e) {
       scaleY: e.object.scaleY,
     });
   }
-  canvas.requestRenderAll();
+  canvas.renderAll();
 }
 
 document.body.addEventListener('keydown', handleDownKeySpace);
@@ -1998,7 +1998,7 @@ socket.on('coursour_disconected', function(user_id){
   let index_of_existing_coursor = canvas._objects.findIndex(item=>item.socket_id==user_id);
   if (index_of_existing_coursor!==-1){
     (canvas._objects).splice(index_of_existing_coursor,1);
-    canvas.requestRenderAll();
+    canvas.renderAll();
   }
 }
 
