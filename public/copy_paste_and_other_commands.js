@@ -24,7 +24,7 @@ function Delete() {
   }
   var doomedObj = canvas.getActiveObject();
   let ids = [];
-  if ( doomedObj===undefined  ){
+  if ( doomedObj===undefined || !doomedObj  ){
     return;
   }
   if (  doomedObj.type === "activeSelection" ) {
@@ -51,7 +51,7 @@ function Delete() {
 }
 
 function Paste() {
-  console.log(_clipboard);
+  // console.log(_clipboard);
   if ( _clipboard ){
     // clone again, so you can do multiple copies.
     _clipboard.clone(function (clonedObj) {

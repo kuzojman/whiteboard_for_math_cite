@@ -108,7 +108,7 @@ window.insertImageOnBoard = async function (url, noemit=false, id=false, params=
               gif.play();
               canvas.discardActiveObject(gif)
               fabric.util.requestAnimFrame(function render() {
-                canvas.renderAll();
+                canvas.requestRenderAll();
                 fabric.util.requestAnimFrame(render);
               });
               
@@ -148,7 +148,7 @@ window.insertImageOnBoard = async function (url, noemit=false, id=false, params=
           }else{
             setObjectToCanvasCenter(myImg)
           }
-          canvas.setActiveObject(myImg).renderAll(); 
+          canvas.setActiveObject(myImg).requestRenderAll(); 
           // console.log({src: url, id_of: myImg.id});
           if (noemit==false){
             socket.emit("image:add", {src: url, id_of: myImg.id});
