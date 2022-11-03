@@ -183,6 +183,7 @@ function createCursor(){
     originY: 'center',
     erasable:false,
     selectable:false,
+    objectCaching: false
   });
   let text_ = new fabric.Text("Username", {
     fontFamily: 'Calibri',
@@ -193,7 +194,8 @@ function createCursor(){
     erasable:false,
     selectable:false,
     left: currentRadiusCursor*2,
-    top: currentRadiusCursor*2  });
+    top: currentRadiusCursor*2,
+    objectCaching: false  });
   let cursor_ = new fabric.Group([curs_,text_],{
     left: -10,
     top: -10,
@@ -751,7 +753,14 @@ function object_fit_apth(obj_){
         return [item[0],Math.round(item[1]),Math.round(item[2]),Math.round(item[3]),Math.round(item[4]),Math.round(item[5]),Math.round(item[6])];
       }
     });
+    object.changedColour = function(color){
+      this.objectCaching = false;
+      this.stroke = color;
+      console.log("path stroke");
+      canvas.renderAll();
+    }
   }
+  
   return object;
 }
 
@@ -925,7 +934,8 @@ socket.on( 'connect', function()
         originX: 'center',
         originY: 'center',
         strokeDashArray: line_taken.strokeDashArray,
-        selectable: false
+        selectable: false,
+        objectCaching: false
       });
       //line = new fabric.Line(line_taken)
       canvas.add(line)
@@ -1268,7 +1278,7 @@ function enableFreeDrawing(){
     isDrawing = true;
     const pointer = canvas.getPointer(e);    
     // canvas.freeDrawingBrush = new fabric['PencilBrush'](canvas);
-    canvas.freeDrawingBrush.color = drawingColorEl.value;
+    canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
     canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
     // canvas.freeDrawingBrush.needsFullRender = ()=>true;
     // canvas.freeDrawingBrush._setBrushStyles(canvas.contextTop)
@@ -1345,36 +1355,22 @@ function enableSelection() {
 
 
 function drawrec(type_of_rectangle) {
-
-
   var rect, isDown, origX, origY;
   removeEvents();
   changeObjectSelection(false);
-
   colour_inside = 'Black';
-  let stroke_line   = 0;
-  drawingColorEl.onchange = function() 
-  {
-    colour_inside = drawingColorEl.value;
-  };
-
-  if (type_of_rectangle == "empty")
-  {
+  let stroke_line = 0;
+  
+  if (type_of_rectangle == "empty")  {
     colour_inside = hexToRgbA('#000dff',5);
     stroke_line   = 0;
-  }
-  else if(type_of_rectangle == "empty_with_stroke_line")
-  {
+  } else if(type_of_rectangle == "empty_with_stroke_line") {
     colour_inside = hexToRgbA('#000dff',5);
     stroke_line = 20;
-  }
-  else if (type_of_rectangle == "filled")
-  {
-    colour_inside = drawingColorEl.value;
+  }  else if (type_of_rectangle == "filled")  {
+    colour_inside = drawingColorEl.style.backgroundColor;
     stroke_line = 0;
   }
-
-
 
   canvas.on("mouse:down", function (o) {
     isDown = true;
@@ -1396,7 +1392,13 @@ function drawrec(type_of_rectangle) {
       stroke: 'Black',//drawing_color_border.value,
       strokeDashArray: [stroke_line, stroke_line],
       transparentCorners: false,
+      objectCaching: false,
     });
+    rect.changedColour = function(color){
+      rect.fill = color;
+      // console.log("rect",rect);
+      canvas.renderAll();
+    }
     canvas.add(rect);
     socket.emit("rect:add", rect);
   });
@@ -1445,9 +1447,8 @@ function drawcle(type_of_circle) {
   
   colour_inside = 'Black';
   let stroke_line   = 0;
-  drawingColorEl.onchange = function() 
-  {
-    colour_inside = drawingColorEl.value;
+  drawingColorEl.onchange = function()   {
+    colour_inside = drawingColorEl.style.backgroundColor;
   };
   if (type_of_circle == "empty")
   {
@@ -1461,11 +1462,9 @@ function drawcle(type_of_circle) {
   }
   else if (type_of_circle == "filled")
   {
-    colour_inside = drawingColorEl.value;
+    colour_inside = drawingColorEl.style.backgroundColor;
     stroke_line = 0;
   }
-
-
 
   var circle, isDown, origX, origY;
   removeEvents();
@@ -1486,7 +1485,13 @@ function drawcle(type_of_circle) {
       selectable: false,
       originX: "center",
       originY: "center",
+      objectCaching: false,
     });
+    circle.changedColour = function(color){
+      circle.fill = color;
+      // console.log("circle log");
+      canvas.renderAll();
+    }
     canvas.add(circle);
     socket.emit("circle:add", circle);
   });
@@ -1585,6 +1590,7 @@ function adding_line_to_partner_board(line_taken) {
     originX: "center",
     originY: "center",
     selectable: false,
+    objectCaching: false,
   });
   //line = new fabric.Line(line_taken)
   canvas.add(line);
@@ -1630,8 +1636,25 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
 
   var  drawingColorEl = document.getElementById("drawing-color"),
   drawingLineWidthEl = document.getElementById("drawing-line-width");
+        
+/* Basic example */
 
-canvas.freeDrawingBrush.color = drawingColorEl.value;
+const popupBasic = new Picker({parent:drawingColorEl,popup: 'top',editorFormat: 'rgba'});
+popupBasic.onChange = function(color) {
+  drawingColorEl.style.backgroundColor = color.rgbaString;
+  canvas.freeDrawingBrush.color = color.rgbaString;
+  socket.emit("color:change", color.rgbaString);
+  let obj_ = canvas.getActiveObject();
+  // console.log(obj_);
+  if ( obj_ && obj_.changedColour ){
+    obj_.changedColour(color.rgbaString)
+  }
+};
+//Open the popup manually:
+popupBasic.openHandler();
+
+
+canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
 canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
 
 let localStorageColour = localStorage.getItem('color');
@@ -1640,7 +1663,7 @@ let localStorageWidth  = localStorage.getItem('width');
 if (localStorageColour)
 {
   canvas.freeDrawingBrush.color = localStorageColour;
-  drawingColorEl.value = localStorageColour;
+  drawingColorEl.style.backgroundColor = localStorageColour;
 }
 
 if (localStorageWidth)
@@ -1651,9 +1674,9 @@ if (localStorageWidth)
 
 drawingColorEl.oninput = function() 
 {
-  canvas.freeDrawingBrush.color = drawingColorEl.value;
-  localStorage.setItem('color',drawingColorEl.value)
-  socket.emit("color:change",drawingColorEl.value);
+  canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
+  localStorage.setItem('color',drawingColorEl.style.backgroundColor)
+  socket.emit("color:change",drawingColorEl.style.backgroundColor);
   
 };
 
@@ -1667,7 +1690,7 @@ drawingLineWidthEl.oninput = function()
 
 function drawLine(type_of_line) {
   // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-  // canvas.freeDrawingBrush.color = drawingColorEl.value;
+  // canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
   drawingLineWidthEl.onchange = function() 
   {
     canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) ;
@@ -1677,16 +1700,14 @@ function drawLine(type_of_line) {
 
   drawingColorEl.onchange = function() 
   {
-    canvas.freeDrawingBrush.color = drawingColorEl.value;
-    socket.emit("color:change",drawingColorEl.value);
+    canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
+    socket.emit("color:change",drawingColorEl.style.backgroundColor);
+    console.log("line!");
   };
   colour_inside = hexToRgbA('#000dff',5);
-  if (type_of_line == "trivial")
-  { 
+  if (type_of_line == "trivial") { 
     stroke_line   = 0;
-  }
-  else if(type_of_line == "dotted")
-  {
+  } else if(type_of_line == "dotted") {
     stroke_line = 20;
   }else if ( type_of_line == "arrow" ){
 
@@ -1710,7 +1731,9 @@ function drawLine(type_of_line) {
         originX: "center",
         originY: "center",
         selectable: false,
+        objectCaching: false,
       });
+      
     }else if ( type_of_line == "arrowtwo" ){
       line = new fabric.ArrowTwo(points, {
         strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
@@ -1721,6 +1744,7 @@ function drawLine(type_of_line) {
         originX: "center",
         originY: "center",
         selectable: false,
+        objectCaching: false,
       });
     }else{
       line = new fabric.Line(points, {
@@ -1732,7 +1756,13 @@ function drawLine(type_of_line) {
         originX: "center",
         originY: "center",
         selectable: false,
+        objectCaching: false,
       });
+    }
+    line.changedColour = function(color){
+      this.stroke = color;
+      console.log("line stroke");
+      canvas.renderAll();
     }
     canvas.add(line);
     socket.emit("line:add", {
@@ -2006,7 +2036,7 @@ socket.on('coursour_disconected', function(user_id){
 
 
 
-const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > input');
+const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > a');
 const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
 const fontColorListWrapper2 = document.querySelector('.setting-item__font-color-list-wrapper');
 const fontColorInput2 = document.querySelector('.setting-item__input-font-color > input');
