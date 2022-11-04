@@ -115,3 +115,9 @@ html, body, .canvasWrapper
 .d-none{
     display: none !important;
 }
+
+#desmos_block{
+    width: 100%;
+    height: auto;
+    min-height: 60vh;
+}

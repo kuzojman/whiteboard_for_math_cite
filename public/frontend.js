@@ -436,7 +436,9 @@ function chunk (arr, len) {
 }
 
 
-
+var elt = document.getElementById('desmos_block');
+var calculator = Desmos.GraphingCalculator(elt);
+calculator.setExpression({ id: 'graph1', latex: 'y=x^2' });
 
 
 const pathUsualGrid = "./images/grids/usual-grid.svg";

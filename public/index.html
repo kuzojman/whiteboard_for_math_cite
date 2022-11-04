@@ -312,6 +312,11 @@
       </div>
     </li>
 
+    <li class="tool-panel__item">
+      <button class="tool-panel__item-button button__show-modal-window-desmos js-modal-trigger"  data-target="modal_window_desmos" data-tool="modal">
+          <img style="padding:5px;" src="images/desmos.png" alt="desmos API" />
+      </button>
+    </li>
 
     <li class="tool-panel__item">
       <button class="tool-panel__item-button button__show-modal-window-formulas" data-tool="formula">
@@ -458,6 +463,21 @@
   </div>
 </div>
 
+
+<div class="modal" id="modal_window_desmos">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">DESMOS</p>
+      <button class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body" id="desmos_block" style="width: 100%; height: 60vh;">      
+    </section>
+    <footer class="modal-card-foot">
+    </footer>
+  </div>
+</div>
+
 <div class="notification is-info is-light is-size-3  is-hidden" id="accept_user_notify">
   Пользователь <strong id="user_name"></strong> запрашивает доступ к доске.
   <div class="buttons mt-2">
@@ -487,6 +507,7 @@
 <!-- <script type="module" src="./gif.min.js"></script> -->
 <!-- <script src="./fabricGif.js"></script> -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://www.desmos.com/api/v1.7/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 <!-- <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
