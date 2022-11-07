@@ -567,6 +567,8 @@ const selectionButton            = document.querySelector('#selection_button');
       selectionButton.onclick    = enableSelection;
 const BladeButton                = document.querySelector('#blade_button');
       BladeButton.onclick        = bladeButtonClick;
+const LassoButton                = document.querySelector('#lasso_button');
+      LassoButton.onclick        = lassoButtonClick;
 
 
 const downloadImage = () =>  {
@@ -1306,6 +1308,16 @@ function enableFreeDrawing(){
       socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
     }
   })
+}
+
+/**
+ * Включаем инструмент лассо
+ */
+function lassoButtonClick(){
+  removeEvents();
+  canvas.freeDrawingBrush = new fabric.LassoBrush(canvas);
+  canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
+  canvas.isDrawingMode = true;
 }
 
 /**
