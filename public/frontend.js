@@ -759,6 +759,9 @@ function object_fit_apth(obj_){
     });
     object.changedColour = function(color){
       this.objectCaching = false;
+      if ( this.fill ){
+        this.fill = color;  
+      }
       this.stroke = color;
       console.log("path stroke");
       canvas.renderAll();
@@ -1658,12 +1661,21 @@ popupBasic.onChange = function(color) {
   drawingColorEl.style.backgroundColor = color.rgbaString;
   canvas.freeDrawingBrush.color = color.rgbaString;
   socket.emit("color:change", color.rgbaString);
+  Cookies.set('colour', color.rgbaString);
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
   if ( obj_ && obj_.changedColour ){
     obj_.changedColour(color.rgbaString)
   }
 };
+
+let colour = Cookies.get('colour');
+if ( colour ){
+  popupBasic.setColor(colour);
+  drawingColorEl.style.backgroundColor = colour;
+  socket.emit("color:change", colour);
+}
+
 //Open the popup manually:
 popupBasic.openHandler();
 

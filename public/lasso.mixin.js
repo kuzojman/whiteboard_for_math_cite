@@ -97,6 +97,7 @@
             ctx.moveTo(this.oldEnd.x, this.oldEnd.y);
           }
           this.oldEnd = this._drawSegment(ctx, points[length - 2], points[length - 1], true);
+          ctx.fillStyle = this.color;
           ctx.stroke();
           ctx.fill();
           ctx.restore();
@@ -200,8 +201,9 @@
       // Draw last line as a straight line while
       // we wait for the next point to be able to calculate
       // the bezier control point
+      ctx.fillStyle = this.color;
       ctx.lineTo(p1.x, p1.y);
-      ctx.stroke();
+      ctx.stroke();      
       ctx.fill();
       ctx.restore();
     },
@@ -232,6 +234,7 @@
      * @return {fabric.Path} Path to add on canvas
      */
     createPath: function(pathData) {
+      console.log(this.color);
       var path = new fabric.Path(pathData, {
         fill: this.color,
         stroke: null,
