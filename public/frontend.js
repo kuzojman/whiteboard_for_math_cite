@@ -1464,9 +1464,6 @@ function drawcle(type_of_circle) {
   
   colour_inside = 'Black';
   let stroke_line   = 0;
-  drawingColorEl.onchange = function()   {
-    colour_inside = drawingColorEl.style.backgroundColor;
-  };
   if (type_of_circle == "empty")
   {
         colour_inside = hexToRgbA('#000dff',5);//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
@@ -1669,12 +1666,6 @@ popupBasic.onChange = function(color) {
   }
 };
 
-let colour = Cookies.get('colour');
-if ( colour ){
-  popupBasic.setColor(colour);
-  drawingColorEl.style.backgroundColor = colour;
-  socket.emit("color:change", colour);
-}
 
 //Open the popup manually:
 popupBasic.openHandler();
@@ -1698,13 +1689,6 @@ if (localStorageWidth)
   drawingLineWidthEl.value = localStorageWidth;
 }
 
-drawingColorEl.oninput = function() 
-{
-  canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
-  localStorage.setItem('color',drawingColorEl.style.backgroundColor)
-  socket.emit("color:change",drawingColorEl.style.backgroundColor);
-  
-};
 
 drawingLineWidthEl.oninput = function() 
 {
@@ -2006,6 +1990,9 @@ const handleButtonCursorMoveClick = (ev) => {
 } 
 buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 
+
+let colour = Cookies.get('colour');
+
 document.addEventListener('DOMContentLoaded',(e)=>{
   isCursorMove= true;
   canvas.toggleDragMode(true);
@@ -2014,6 +2001,11 @@ document.addEventListener('DOMContentLoaded',(e)=>{
   canvas.isDrawingMode = false
   canvas.allowTouchScrolling = true;
   changeObjectSelection(false);
+  if ( colour ){
+    popupBasic.setColor(colour);
+    drawingColorEl.style.backgroundColor = colour;
+    socket.emit("color:change", colour);
+  }
 });
 
 
