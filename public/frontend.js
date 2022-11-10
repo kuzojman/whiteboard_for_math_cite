@@ -996,8 +996,7 @@ socket.on( 'connect', function()
           {
             // сохраняем количество объектов
             allReceivedObjects = objects.length
-            objects.forEach(function(object)
-            {
+            objects.forEach(function(object) {
               let obj_exists = false;
 
               canvas._objects.every(function(obj_,indx_){
@@ -1018,6 +1017,27 @@ socket.on( 'connect', function()
                     }
                   }
                 }else{
+                  // console.log(object.type);
+                  let fn_ = (color)=>{return};
+                  if ( ['rect','circle'].indexOf(object.type)!==-1  ){
+                    fn_ = (color)=>{
+                      object.objectCaching = false;
+                      object.fill = color;
+                      canvas.renderAll();
+                      // object.objectCaching = true;
+                    }
+                  }else if ( object.type=='path' ){
+                    fn_ = (color)=>{
+                      object.objectCaching = false;
+                      if ( object.fill ){
+                        object.fill = color;  
+                      }
+                      object.stroke = color;
+                      canvas.renderAll();
+                      // object.objectCaching = true;
+                    }
+                  }
+                  object.changedColour = fn_;
                   canvas.add(object);
                   if ( takedFirstData==false ){
                     object.set({ selectable: false })
