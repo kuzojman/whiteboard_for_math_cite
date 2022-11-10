@@ -41,6 +41,13 @@ html, body, .canvasWrapper
 .canvas-container{
     z-index: 1;
 }
+.color-picker{
+    width: 30px;
+    height: 30px;
+    display: block;
+    border: 1px solid black;
+    border-radius: 4px;
+}
 #canvasId {
     border: 1px solid red;
     display: block;
@@ -107,4 +114,10 @@ html, body, .canvasWrapper
 
 .d-none{
     display: none !important;
+}
+
+#desmos_block{
+    width: 100%;
+    height: auto;
+    min-height: 60vh;
 }

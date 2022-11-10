@@ -78,8 +78,22 @@
       </button>
     </li>
     <li class="tool-panel__item">
+      <button class="tool-panel__item-button" id="lasso_button" data-tool="lasso">
+        <svg class="tool-panel__item-icon-button">
+          <use xlink:href="./icons/sprite.svg#icon-lasso"></use>
+        </svg>
+      </button>
+    </li>
+    <li class="tool-panel__item">
       <button class="tool-panel__item-button" id="free_erasing_button" data-tool="erase">
         <i class="fas fa-eraser fa-2x has-text-link" aria-hidden="true" ></i>
+      </button>
+    </li>
+    <li class="tool-panel__item">
+      <button class="tool-panel__item-button disable" id="blade_button" data-tool="blade">
+        <svg class="tool-panel__item-icon-button">
+          <use xlink:href="./icons/sprite.svg#icon-blade-coloured"></use>
+        </svg>
       </button>
     </li>
     <li class="tool-panel__item">
@@ -305,6 +319,11 @@
       </div>
     </li>
 
+    <li class="tool-panel__item">
+      <button class="tool-panel__item-button button__show-modal-window-desmos js-modal-trigger"  data-target="modal_window_desmos" data-tool="modal">
+          <img style="padding:5px;" src="images/desmos.png" alt="desmos API" />
+      </button>
+    </li>
 
     <li class="tool-panel__item">
       <button class="tool-panel__item-button button__show-modal-window-formulas" data-tool="formula">
@@ -336,7 +355,7 @@
         <ul class="sub-tool-panel__list">
           <li class="sub-tool-panel__item-list">
             <label class="sub-tool-panel__item-list-color-selection">
-              <input type="color" id="drawing-color">
+              <a href="#" class="color-picker" id="drawing-color"></a>
             </label>
           </li>
         </ul>
@@ -451,6 +470,21 @@
   </div>
 </div>
 
+
+<div class="modal" id="modal_window_desmos">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">DESMOS</p>
+      <button class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body" id="desmos_block" style="width: 100%; height: 60vh;">      
+    </section>
+    <footer class="modal-card-foot">
+    </footer>
+  </div>
+</div>
+
 <div class="notification is-info is-light is-size-3  is-hidden" id="accept_user_notify">
   Пользователь <strong id="user_name"></strong> запрашивает доступ к доске.
   <div class="buttons mt-2">
@@ -475,10 +509,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.X.X/dist/protobuf.js"></script>
+<script src="./vanilla-picker.min.js"></script>
 <script src="./fabric.js"></script>
 <!-- <script type="module" src="./gif.min.js"></script> -->
-<!-- <script src="./fabricGif.js"></script> -->
+<script src="./lasso.mixin.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://www.desmos.com/api/v1.7/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
 <!-- <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
