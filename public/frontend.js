@@ -85,6 +85,15 @@ function selectTool(event){
         }
       }
 
+      // если выбрано лезвие, то меняем курсор
+      if ( selectedTool=='blade' ){
+        // canvas.hoverCursor = 'crosshair';
+        canvas.hoverCursor = 'url("/icons/cursor.cur"), auto';
+        canvas.defaultCursor = 'url("/icons/cursor.cur"), auto';
+      }else{
+        canvas.hoverCursor = 'auto';
+        canvas.defaultCursor = 'move';
+      }
 
       let siblings = getSiblings(currentButton);
       if ( siblings.length>0 ){
@@ -763,7 +772,13 @@ function object_fit_apth(obj_){
         this.fill = color;  
       }
       this.stroke = color;
-      console.log("path stroke");
+      // console.log("path stroke");
+      canvas.renderAll();
+    }
+    object.changedWidth = function(width){
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = width;
+      // console.log("path width");
       canvas.renderAll();
     }
   }
@@ -1038,6 +1053,13 @@ socket.on( 'connect', function()
                     }
                   }
                   object.changedColour = fn_;
+                  object.changedWidth = function(width){
+                    // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+                    this.strokeWidth = width;
+                    // console.log("restore width");
+                    canvas.renderAll();
+                  }
+
                   canvas.add(object);
                   if ( takedFirstData==false ){
                     object.set({ selectable: false })
@@ -1377,6 +1399,45 @@ function enableEraser(){
  * Нажатие на кнопку удаления выделенных фрагментов
  */
 function bladeButtonClick(){
+  console.log(selectedTool);
+  removeEvents();
+  let bladeDown = false;
+  canvas.on('mouse:down', e => {   
+    bladeDown = true;
+  })
+  canvas.on('mouse:up', e => {
+    bladeDown = false;
+  })
+  canvas.on('mouse:move', function (e) {
+    if (bladeDown) {
+      const cursorCoordinate = canvas.getPointer(e);
+      // console.log(canvas._objects);
+      // let points = [pointer.x, pointer.y, pointer.x, pointer.y];
+      let d = [];
+      canvas._objects.forEach(item=>{
+        if (!item){
+          return false
+        }
+        let bound = item.getBoundingRect();
+        // console.log( cursorCoordinate.x , bound.left, bound.left + bound.width ,bound );
+        if ( cursorCoordinate.x > bound.left && cursorCoordinate.x < (bound.left + bound.width) &&
+             cursorCoordinate.y > bound.top && cursorCoordinate.y < (bound.top + bound.height)  ) {
+          d.push(item);
+          canvas.setActiveObject(item);
+        }
+        // return false
+      });
+      // console.log(d);
+      Delete();
+    }
+  })
+  // Delete();
+}
+
+/**
+ * 
+ */
+function bladeClick(){
   Delete();
 }
 
@@ -1560,7 +1621,6 @@ canvas.setBackgroundColor(
     canvas.renderAll.bind(canvas)
 );
 
-
 window.addEventListener("resize", resizeCanvas, false);
 
 function resizeCanvas() {
@@ -1679,6 +1739,7 @@ popupBasic.onChange = function(color) {
   canvas.freeDrawingBrush.color = color.rgbaString;
   socket.emit("color:change", color.rgbaString);
   Cookies.set('colour', color.rgbaString);
+  // console.log(Cookies.get('colour'));
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
   if ( obj_ && obj_.changedColour ){
@@ -1688,7 +1749,7 @@ popupBasic.onChange = function(color) {
 
 
 //Open the popup manually:
-popupBasic.openHandler();
+// popupBasic.openHandler();
 
 
 canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
@@ -1714,7 +1775,12 @@ drawingLineWidthEl.oninput = function()
 {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   socket.emit("width:change", canvas.freeDrawingBrush.width);
-  localStorage.setItem('width',canvas.freeDrawingBrush.width)
+  localStorage.setItem('width',canvas.freeDrawingBrush.width);
+  let obj_ = canvas.getActiveObject();
+  // console.log(obj_);
+  if ( obj_ && obj_.changedColour ){
+    obj_.changedWidth(drawingLineWidthEl.value)
+  }
 };
 
 
@@ -1791,7 +1857,13 @@ function drawLine(type_of_line) {
     }
     line.changedColour = function(color){
       this.stroke = color;
-      console.log("line stroke");
+      // console.log("line stroke");
+      canvas.renderAll();
+    }
+    line.changedWidth = function(width){
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = width;
+      // console.log("line width");
       canvas.renderAll();
     }
     canvas.add(line);
