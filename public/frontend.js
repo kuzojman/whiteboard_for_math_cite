@@ -777,7 +777,7 @@ function object_fit_apth(obj_){
     }
     object.changedWidth = function(width){
       // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-      this.strokeWidth = width;
+      this.strokeWidth = parseInt(width);
       // console.log("path width");
       canvas.renderAll();
     }
@@ -950,7 +950,7 @@ socket.on( 'connect', function()
   {
       line = new fabric.Line(line_taken.points, {
         id: line_taken.id,
-        strokeWidth: line_taken.width,
+        strokeWidth: parseInt(line_taken.width),
         fill: line_taken.fill,//'#07ff11a3',
         stroke: line_taken.stroke,//'#07ff11a3',
         originX: 'center',
@@ -1055,8 +1055,8 @@ socket.on( 'connect', function()
                   object.changedColour = fn_;
                   object.changedWidth = function(width){
                     // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-                    this.strokeWidth = width;
-                    // console.log("restore width");
+                    this.strokeWidth = parseInt(width);
+                    console.log("restore width");
                     canvas.renderAll();
                   }
 
@@ -1423,6 +1423,7 @@ function bladeButtonClick(){
         if ( cursorCoordinate.x > bound.left && cursorCoordinate.x < (bound.left + bound.width) &&
              cursorCoordinate.y > bound.top && cursorCoordinate.y < (bound.top + bound.height)  ) {
           d.push(item);
+          // console.log(item);
           canvas.setActiveObject(item);
         }
         // return false
@@ -1771,14 +1772,13 @@ if (localStorageWidth)
 }
 
 
-drawingLineWidthEl.oninput = function() 
-{
+drawingLineWidthEl.oninput = function() {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   socket.emit("width:change", canvas.freeDrawingBrush.width);
   localStorage.setItem('width',canvas.freeDrawingBrush.width);
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
-  if ( obj_ && obj_.changedColour ){
+  if ( obj_ && obj_.changedWidth ){
     obj_.changedWidth(drawingLineWidthEl.value)
   }
 };
@@ -1787,18 +1787,15 @@ drawingLineWidthEl.oninput = function()
 function drawLine(type_of_line) {
   // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   // canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
-  drawingLineWidthEl.onchange = function() 
-  {
+  drawingLineWidthEl.onchange = function() {
     canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) ;
     socket.emit("width:change", canvas.freeDrawingBrush.width);
   };
   let line, isDown;
 
-  drawingColorEl.onchange = function() 
-  {
+  drawingColorEl.onchange = function() {
     canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
     socket.emit("color:change",drawingColorEl.style.backgroundColor);
-    console.log("line!");
   };
   colour_inside = hexToRgbA('#000dff',5);
   if (type_of_line == "trivial") { 
@@ -1819,7 +1816,7 @@ function drawLine(type_of_line) {
     let points = [pointer.x, pointer.y, pointer.x, pointer.y];
     if ( type_of_line == "arrow" ){
       line = new fabric.Arrow(points, {
-        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -1832,7 +1829,7 @@ function drawLine(type_of_line) {
       
     }else if ( type_of_line == "arrowtwo" ){
       line = new fabric.ArrowTwo(points, {
-        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -1844,7 +1841,7 @@ function drawLine(type_of_line) {
       });
     }else{
       line = new fabric.Line(points, {
-        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -1862,7 +1859,7 @@ function drawLine(type_of_line) {
     }
     line.changedWidth = function(width){
       // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-      this.strokeWidth = width;
+      this.strokeWidth = parseInt(width);
       // console.log("line width");
       canvas.renderAll();
     }
