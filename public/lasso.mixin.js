@@ -234,7 +234,6 @@
      * @return {fabric.Path} Path to add on canvas
      */
     createPath: function(pathData) {
-      console.log(this.color);
       var path = new fabric.Path(pathData, {
         fill: this.color,
         stroke: null,

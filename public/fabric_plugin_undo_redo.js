@@ -243,11 +243,12 @@ fabric.ArrowTwo = fabric.util.createClass(fabric.Line, {
     let yDiff = this.y2 - this.y1;
     let angle = Math.atan2(yDiff, xDiff);
     this.drawArrow(angle, p.x2, p.y2);
-    ctx.save();
+    // this.ctx.save();
     xDiff = -this.x2 + this.x1;
     yDiff = -this.y2 + this.y1;
     angle = Math.atan2(yDiff, xDiff);
     this.drawArrow(angle, p.x1, p.y1);
+    
   },
 
   drawArrow: function(angle, xPos, yPos) {

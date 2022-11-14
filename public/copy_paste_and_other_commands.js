@@ -27,7 +27,7 @@ function Delete() {
   if ( doomedObj===undefined || !doomedObj  ){
     return;
   }
-  if (  doomedObj.type === "activeSelection" ) {
+  if ( doomedObj.type === "activeSelection" ) {
     doomedObj.canvas = canvas;
     doomedObj.forEachObject(function (obj) {
       ids.push(find_object_index(obj));
