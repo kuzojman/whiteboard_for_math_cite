@@ -69,6 +69,16 @@ function setObjectToCanvasCenter(obj){
 }
 
 /**
+ *  Устанавливаем курсор по выбранному инструменты
+ * @param {*} curname название инструмента и файла с курсором
+ */
+function setCursor(curname){
+  canvas.hoverCursor = 'url("/icons/'+curname+'.cur"), auto';
+  canvas.defaultCursor = 'url("/icons/'+curname+'.cur"), auto';
+  canvas.freeDrawingCursor = 'url("/icons/'+curname+'.cur"), auto';
+}
+
+/**
  * Нажатие на кнопку выбора инструмента
  */
 function selectTool(event){
@@ -84,14 +94,13 @@ function selectTool(event){
           selectedTool=currentAction
         }
       }
-
+      console.log(selectedTool);
       // если выбрано лезвие, то меняем курсор
-      if ( selectedTool=='blade' ){
-        // canvas.hoverCursor = 'crosshair';
-        canvas.hoverCursor = 'url("/icons/cursor.cur"), auto';
-        canvas.defaultCursor = 'url("/icons/cursor.cur"), auto';
+      if ( selectedTool=='blade' || selectedTool=='freedraw' ){
+        setCursor(selectedTool);
       }else{
         canvas.hoverCursor = 'auto';
+        canvas.freeDrawingCursor = 'auto';
         canvas.defaultCursor = 'move';
       }
 
