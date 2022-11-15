@@ -94,7 +94,7 @@ function selectTool(event){
           selectedTool=currentAction
         }
       }
-      console.log(selectedTool);
+      // console.log(selectedTool);
       // если выбрано лезвие, то меняем курсор
       if ( selectedTool=='blade' || selectedTool=='freedraw' ){
         setCursor(selectedTool);
@@ -857,15 +857,32 @@ socket.on( 'connect', function()
         canvas.isDrawingMode = true
         canvas.freeDrawingBrush = new fabric.EraserBrush(canvas)
         canvas.freeDrawingBrush.btype = 'eraser'
+        canvas.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
+        canvasbg.isDrawingMode = true
+        canvasbg.freeDrawingBrush = new fabric.EraserBrush(canvasbg)
+        canvasbg.freeDrawingBrush.btype = 'eraser'
       }
     }else{
+      
       if (pointer.type!==undefined && pointer.type=='brush'){
         canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
-        canvasbg.freeDrawingBrush.btype = 'brush'
+        canvasbg.freeDrawingBrush.btype = 'brush';
       }
+
+      canvasbg.freeDrawingBrush.color = pointer.color;
+      canvasbg.freeDrawingBrush.width = pointer.width;
     }
-    canvasbg.freeDrawingBrush.color = pointer.color;
-    canvasbg.freeDrawingBrush.width = pointer.width;
+
+    if (pointer.type!==undefined && pointer.type=='lasso'){
+      canvasbg.freeDrawingBrush = new fabric.LassoBrush(canvasbg);
+      canvasbg.freeDrawingBrush.color = pointer.color;
+      canvasbg.isDrawingMode = true;
+      // console.log(canvasbg.freeDrawingBrush);
+      // canvasbg.freeDrawingBrush.width = pointer.width;
+      // canvasbg.freeDrawingBrush.stroke = null;
+    }
+    
+    
     // canvasbg.freeDrawingBrush = new fabric['PencilBrush'](canvas);
     // canvasbg.freeDrawingBrush.color = pointer.color;
     // canvasbg.freeDrawingBrush.width = pointer.width;
@@ -955,8 +972,37 @@ socket.on( 'connect', function()
     });
     canvas.renderAll();
   });
-  socket.on('line:add', function(line_taken)
-  {
+
+  socket.on('line:add', function(line_taken) {
+    // console.log(line_taken);
+    if ( line_taken.line_type == "arrow" ){
+      line = new fabric.Arrow(line_taken.points, {
+        id: line_taken.id,
+        strokeWidth: parseInt(line_taken.width),//drawing_figure_width.value,
+        fill: line_taken.fill,//'#07ff11a3',
+        stroke: line_taken.stroke,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+        strokeDashArray: line_taken.strokeDashArray,
+        ///stroke: '#07ff11a3',
+        originX: "center",
+        originY: "center",
+        selectable: false,
+        objectCaching: false,
+      });
+      
+    }else if ( line_taken.line_type == "arrowtwo" ){
+      line = new fabric.ArrowTwo(line_taken.points, {
+        id: line_taken.id,
+        strokeWidth: parseInt(line_taken.width),//drawing_figure_width.value,
+        fill: line_taken.fill,//'#07ff11a3',
+        stroke: line_taken.stroke,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+        strokeDashArray: line_taken.strokeDashArray,
+        ///stroke: '#07ff11a3',
+        originX: "center",
+        originY: "center",
+        selectable: false,
+        objectCaching: false,
+      });
+    }else{
       line = new fabric.Line(line_taken.points, {
         id: line_taken.id,
         strokeWidth: parseInt(line_taken.width),
@@ -968,8 +1014,10 @@ socket.on( 'connect', function()
         selectable: false,
         objectCaching: false
       });
+    }
+      // line = new fabric.Line();
       //line = new fabric.Line(line_taken)
-      canvas.add(line)
+    canvas.add(line)
       //'canvas.freeDrawingBrush.width = width_taken'
   });
 
@@ -1252,7 +1300,7 @@ function enableFreeDrawing(){
   canvas.freeDrawingBrush.btype = "brush"
   
 
-  let isDrawing = false
+  var isDrawing = false
   let enableDrawingMode = true;
   // canvas._onMouseMoveInDrawingMode = function(e) {
   //   var pointer = canvas.getPointer(e);
@@ -1369,9 +1417,28 @@ function enableFreeDrawing(){
  */
 function lassoButtonClick(){
   removeEvents();
+  var isDrawing = false;
   canvas.freeDrawingBrush = new fabric.LassoBrush(canvas);
   canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
   canvas.isDrawingMode = true;
+
+  canvas.on('mouse:down', e => {
+    isDrawing = true;
+    const pointer = canvas.getPointer(e);
+    socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});
+  })
+  canvas.on('mouse:up', e => {
+    isDrawing = false;
+    const pointer = canvas.getPointer(e);
+    socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  })
+  canvas.on('mouse:move', (e)=> {
+    if (isDrawing) {
+      const pointer = canvas.getPointer(e);
+      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});//canvas.freeDrawingBrush._points); 
+    }
+  })
 }
 
 /**
@@ -1877,6 +1944,7 @@ function drawLine(type_of_line) {
       id: line.id,
       points: points,
       fill:line.fill,
+      line_type:type_of_line,
       width: line.strokeWidth,
       strokeDashArray: [stroke_line, stroke_line],
       stroke: line.stroke});
