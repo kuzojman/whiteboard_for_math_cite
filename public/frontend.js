@@ -850,6 +850,7 @@ socket.on( 'connect', function()
     if ( canvasbg.freeDrawingBrush===undefined ){
       canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
     }
+    
     // canvasbg.freeDrawingBrush.width = pointer.width;
     // canvasbg.freeDrawingBrush.color = pointer.color;
     if (canvasbg.freeDrawingBrush.btype ===undefined || canvasbg.freeDrawingBrush.btype!='eraser' ){
@@ -862,13 +863,13 @@ socket.on( 'connect', function()
         canvasbg.freeDrawingBrush = new fabric.EraserBrush(canvasbg)
         canvasbg.freeDrawingBrush.btype = 'eraser'
       }
-    }else{
+    }
       
-      if (pointer.type!==undefined && pointer.type=='brush'){
-        canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
-        canvasbg.freeDrawingBrush.btype = 'brush';
-      }
-
+    if (pointer.type!==undefined && pointer.type=='brush'){
+      canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
+      canvasbg.freeDrawingBrush.btype = 'brush';
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
+      canvas.freeDrawingBrush.btype = 'brush'
       canvasbg.freeDrawingBrush.color = pointer.color;
       canvasbg.freeDrawingBrush.width = pointer.width;
     }
@@ -876,12 +877,11 @@ socket.on( 'connect', function()
     if (pointer.type!==undefined && pointer.type=='lasso'){
       canvasbg.freeDrawingBrush = new fabric.LassoBrush(canvasbg);
       canvasbg.freeDrawingBrush.color = pointer.color;
+      canvasbg.freeDrawingBrush.btype = 'lasso'
       canvasbg.isDrawingMode = true;
-      // console.log(canvasbg.freeDrawingBrush);
-      // canvasbg.freeDrawingBrush.width = pointer.width;
-      // canvasbg.freeDrawingBrush.stroke = null;
+      canvasbg.freeDrawingBrush.color = pointer.color;
+      canvasbg.freeDrawingBrush.width = 0;
     }
-    
     
     // canvasbg.freeDrawingBrush = new fabric['PencilBrush'](canvas);
     // canvasbg.freeDrawingBrush.color = pointer.color;
@@ -909,11 +909,41 @@ socket.on( 'connect', function()
     }        
   });
 
-  socket.on('width:change', function(width_taken)
-  {
-    // console.log(width_taken);
+  socket.on('width:change', function(width_taken) {
+    
     if ( canvasbg.freeDrawingBrush!==undefined ){
       canvasbg.freeDrawingBrush.width = width_taken;
+    }
+  });
+
+  /**
+   * width : width
+   * object: target obj
+   */
+  socket.on('width:changed', function(object) {
+    let o = canvas._objects.find( item => item.id==object.id );
+    if ( o ){
+      o.strokeWidth = parseInt(object.width);
+      canvas.renderAll();
+    }
+    if ( canvasbg.freeDrawingBrush!==undefined ){
+      canvasbg.freeDrawingBrush.width =  parseInt(object.width);
+    }
+  });
+
+  /**
+   * color : color
+   * object: target obj
+   */
+  socket.on('color:changed', function(object) {
+    let o = canvas._objects.find( item => item.id==object.id );
+    if ( o ){
+      o.objectCaching = false;
+      if ( o.fill ){
+        o.fill = object.color;  
+      }
+      o.stroke = object.color;
+      canvas.renderAll();
     }
   });
 
@@ -1113,7 +1143,6 @@ socket.on( 'connect', function()
                   object.changedWidth = function(width){
                     // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
                     this.strokeWidth = parseInt(width);
-                    console.log("restore width");
                     canvas.renderAll();
                   }
 
@@ -1820,6 +1849,7 @@ popupBasic.onChange = function(color) {
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
   if ( obj_ && obj_.changedColour ){
+    socket.emit("color:changed", { "object":obj_, "id":obj_.id, "color":color.rgbaString});
     obj_.changedColour(color.rgbaString)
   }
 };
@@ -1855,18 +1885,15 @@ drawingLineWidthEl.oninput = function() {
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
   if ( obj_ && obj_.changedWidth ){
+    console.log(obj_.id);
+    socket.emit("width:changed",{"object": obj_, "id":obj_.id, "width":canvas.freeDrawingBrush.width});
     obj_.changedWidth(drawingLineWidthEl.value)
   }
 };
 
 
 function drawLine(type_of_line) {
-  // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-  // canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
-  drawingLineWidthEl.onchange = function() {
-    canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) ;
-    socket.emit("width:change", canvas.freeDrawingBrush.width);
-  };
+  
   let line, isDown;
 
   drawingColorEl.onchange = function() {
