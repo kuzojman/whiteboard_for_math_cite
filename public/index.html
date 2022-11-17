@@ -346,20 +346,11 @@
 
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button" data-tool="color">
+      <button class="tool-panel__item-button js-modal-mobile-trigger" id="drawing-color" data-tool="color" >
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-color-palette"></use>
         </svg>
       </button>
-      <div class="sub-tool-panel sub-tool-panel__change-color">
-        <ul class="sub-tool-panel__list">
-          <li class="sub-tool-panel__item-list">
-            <label class="sub-tool-panel__item-list-color-selection">
-              <a href="#" class="color-picker" id="drawing-color"></a>
-            </label>
-          </li>
-        </ul>
-      </div>
     </li>
 
 
@@ -484,6 +475,7 @@
     </footer>
   </div>
 </div>
+
 
 <div class="notification is-info is-light is-size-3  is-hidden" id="accept_user_notify">
   Пользователь <strong id="user_name"></strong> запрашивает доступ к доске.

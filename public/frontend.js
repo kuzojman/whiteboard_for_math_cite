@@ -109,7 +109,7 @@ function selectTool(event){
         if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
           if(selectedButton === currentButton) {
             toolPanel.classList.toggle('full-screen');
-          }else{
+          }else{            
             toolPanel.classList.add('full-screen');
           }
         }else{
@@ -432,8 +432,8 @@ menu_grid.addEventListener('click', e=> e.currentTarget.classList.toggle('active
 
 //
 
-const socket = io('http://localhost:3000',{transports:['websocket']});
-// const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
+// const socket = io('http://localhost:3000',{transports:['websocket']});
+const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
 // const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
@@ -1835,24 +1835,39 @@ var drawing_color_fill = document.getElementById("drawing-color-fill"),
   drawing_figure_opacity = document.getElementById("opacity");
 
   var  drawingColorEl = document.getElementById("drawing-color"),
-  drawingLineWidthEl = document.getElementById("drawing-line-width");
+  drawingLineWidthEl = document.getElementById("drawing-line-width"),
+  pickerBlock = document.getElementById("picker_block");
         
 /* Basic example */
 
-const popupBasic = new Picker({parent:drawingColorEl,popup: 'top',editorFormat: 'rgba'});
-popupBasic.onChange = function(color) {
-  drawingColorEl.style.backgroundColor = color.rgbaString;
-  canvas.freeDrawingBrush.color = color.rgbaString;
-  socket.emit("color:change", color.rgbaString);
-  Cookies.set('colour', color.rgbaString);
-  // console.log(Cookies.get('colour'));
-  let obj_ = canvas.getActiveObject();
-  // console.log(obj_);
-  if ( obj_ && obj_.changedColour ){
-    socket.emit("color:changed", { "object":obj_, "id":obj_.id, "color":color.rgbaString});
-    obj_.changedColour(color.rgbaString)
+
+let popupBasic = false;
+// инициализируем колорпикер в обычном режиме
+initPicker(false);
+
+function initPicker(static = false){
+  if ( !static ){
+    popupBasic = new Picker({parent:drawingColorEl, popup: 'top',editorFormat: 'rgba'});
+  }else{
+    popupBasic = new Picker({parent:pickerBlock, popup: false,editorFormat: 'rgba'});
   }
-};
+
+  popupBasic.onChange = function(color) {
+    drawingColorEl.style.backgroundColor = color.rgbaString;
+    canvas.freeDrawingBrush.color = color.rgbaString;
+    socket.emit("color:change", color.rgbaString);
+    Cookies.set('colour', color.rgbaString);
+    // console.log(Cookies.get('colour'));
+    let obj_ = canvas.getActiveObject();
+    // console.log(obj_);
+    if ( obj_ && obj_.changedColour ){
+      socket.emit("color:changed", { "object":obj_, "id":obj_.id, "color":color.rgbaString});
+      obj_.changedColour(color.rgbaString)
+    }
+  };
+  
+}
+
 
 
 //Open the popup manually:
@@ -2186,6 +2201,7 @@ buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 
 let colour = Cookies.get('colour');
 
+
 document.addEventListener('DOMContentLoaded',(e)=>{
   isCursorMove= true;
   canvas.toggleDragMode(true);
@@ -2198,6 +2214,11 @@ document.addEventListener('DOMContentLoaded',(e)=>{
     popupBasic.setColor(colour);
     drawingColorEl.style.backgroundColor = colour;
     socket.emit("color:change", colour);
+  }else{
+    colour="rgba(0,0,0,1)";
+    popupBasic.setColor(colour);
+    drawingColorEl.style.backgroundColor = colour;
+    Cookies.set('colour',colour);
   }
 });
 
@@ -2245,29 +2266,8 @@ socket.on('coursour_disconected', function(user_id){
 
 );
 
-
-
-const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > a');
-const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
 const fontColorListWrapper2 = document.querySelector('.setting-item__font-color-list-wrapper');
 const fontColorInput2 = document.querySelector('.setting-item__input-font-color > input');
-
-
-const handleClickOpenInputChangeColor = () => {
-  subToolPanel.classList.add('sub-tool-panel_visible');
-}
-const handleClickCloseInputChangeColor = (event) => {
-  if (event.target !== inputChangeColor) {
-    subToolPanel.classList.remove('sub-tool-panel_visible');
-  } else if(event.target !== fontColorInput2) {
-    fontColorListWrapper2.classList.remove('active');
-  } else {
-
-  }
-}
-
-window.addEventListener('click', handleClickCloseInputChangeColor);
-inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
 
 fontColorInput2.addEventListener('click', () => { fontColorListWrapper2.classList.add('active') })
 
