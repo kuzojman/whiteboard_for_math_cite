@@ -237,7 +237,7 @@
       var path = new fabric.Path(pathData, {
         fill: this.color,
         stroke: null,
-        strokeWidth: 1,
+        strokeWidth: 0,
         strokeLineCap: this.strokeLineCap,
         strokeMiterLimit: this.strokeMiterLimit,
         strokeLineJoin: this.strokeLineJoin,
