@@ -60,12 +60,14 @@ function goUserBoard(){
  * @param {*} obj 
  */
 function setObjectToCanvasCenter(obj){
-  let w2 = obj.width/2
-  let h2 = obj.height/2
-  obj.set({
-    top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
-    left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2,
-  });
+  if (obj){
+    let w2 = obj.width/2
+    let h2 = obj.height/2
+    obj.set({
+      top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
+      left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2,
+    });
+  }
 }
 
 /**
@@ -1921,9 +1923,9 @@ function drawLine(type_of_line) {
   } else if(type_of_line == "dotted") {
     stroke_line = 20;
   }else if ( type_of_line == "arrow" ){
-
+    stroke_line = 0;
   }else if ( type_of_line == "arrowtwo" ){
-
+    stroke_line = 0;
   }
 
   removeEvents();

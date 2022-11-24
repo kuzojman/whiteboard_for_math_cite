@@ -4,7 +4,8 @@ let _clipboard = null;
 function Copy() {
   canvas.getActiveObject().clone(function (cloned) {
     _clipboard = cloned;
-  });
+    // console.log(_clipboard);
+  },['formula']);
   canvas.on("mouse:move", function (e) {
     getMouse(e);
   });
@@ -33,7 +34,7 @@ function Delete() {
       ids.push(find_object_index(obj));
       canvas.remove(obj);
     });
-    console.log(ids);
+    // console.log(ids);
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     socket.emit("figure_delete", ids);//canvas.toJSON());
   } else {
@@ -51,12 +52,13 @@ function Delete() {
 }
 
 function Paste() {
-  // console.log(_clipboard);
+  console.log(_clipboard,_clipboard.formula);
   if ( _clipboard ){
     // clone again, so you can do multiple copies.
     _clipboard.clone(function (clonedObj) {
       canvas.discardActiveObject();
-
+      clonedObj = object_set_id(clonedObj);
+      // console.log(clonedObj, clonedObj.id);
       setObjectToCanvasCenter(clonedObj)
       clonedObj.set({
         evented: true,
@@ -80,11 +82,11 @@ function Paste() {
       }
       // _clipboard.top += 10;
       // _clipboard.left += 10;
-      setObjectToCanvasCenter(_clipboard)
+      // setObjectToCanvasCenter(_clipboard)
       
       canvas.setActiveObject(clonedObj);
       canvas.requestRenderAll();
-    });
+    },['formula']);
   }
 }
 
@@ -204,6 +206,7 @@ addEventListener('copy', (e) => {
 
 // paste from buffer
 addEventListener('paste', (e) => { 
+  // console.log('paste',_clipboard );
   if ( _clipboard ){
     Paste();
     _clipboard = null;
