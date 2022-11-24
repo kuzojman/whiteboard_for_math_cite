@@ -1,4 +1,4 @@
-importScripts("./modules/serialize.js", "./modules/socket.io.min.js")
+importScripts("../serializing_function.js", "./modules/socket.io.min.js")
 
 /**
  * Обработка и передача данных с основного потока для сохранения
