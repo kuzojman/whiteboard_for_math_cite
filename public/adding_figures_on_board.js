@@ -111,10 +111,7 @@ const uploadButton = document.querySelector('.tool-panel__item-button-uploader')
     reader.readAsArrayBuffer(file_);
   }
   
-//}) 
-
-
-
+//})
 
 
 const svgAddSphereButton = document.querySelector('#add_sphere_picture');
@@ -159,35 +156,44 @@ svgAdd3dCylinderButton.addEventListener("click",(e) =>
   adding_svg_figure("./icons/3d-cylinder-3d-design-3d-shape-cylinder-geometric-geometry-svgrepo-com.svg")
 });
 
-
-
-
+const layers = {
+  BOTTOM: 0,
+  MIDDLE: 1,
+  TOP: 2
+};
 
 function adding_svg_figure(what_to_add)
 {
   removeEvents();
   var group = [];
-  fabric.loadSVGFromURL(what_to_add,function(objects,options)
+  fabric.loadSVGFromURL(what_to_add, function(objects,options)
   {
     var loadedObjects = new fabric.Group(group);
     loadedObjects.set({
-      left: 100,
-      top: 100,
-      width:100,
+      left:  100,
+      top:   100,
+      width: 100,
       height:100
     });
+
     loadedObjects.scaleToWidth(400);
     loadedObjects.scaleToHeight(400);
+
     canvas.add(loadedObjects);
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    socket.emit("picture:add",canvas.toJSON());
-    canvas.renderAll();
+  
+    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    //socket.emit("picture:add",canvas.toJSON());
   },
   function(item, object) {
     object.set('id', item.getAttribute('id'));
     group.push(object);
   });
+
+  canvas.renderAll();
 }
+
+
+
 
 function add_svg()
 {
@@ -195,7 +201,7 @@ function add_svg()
     //i create an extra var for to change some image properties
     var img1 = myImg.set({ left: 0, top: 0 ,width:250,height:250});
     canvas.add(img1); 
-    canvas.renderAll();
+    //canvas.renderAll();
    });
 }
 
@@ -206,8 +212,8 @@ svgAddButton?.addEventListener("click",(e) =>
     //i create an extra var for to change some image properties
     var img1 = myImg.set({ left: 0, top: 0 ,width:250,height:250});
     canvas.add(img1); 
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    socket.emit("picture:add",canvas.toJSON());
-    canvas.renderAll();
+    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    //socket.emit("picture:add",canvas.toJSON());
+    //canvas.renderAll();
    });
 });
