@@ -777,23 +777,9 @@ function object_fit_apth(obj_){
         return [item[0],Math.round(item[1]),Math.round(item[2]),Math.round(item[3]),Math.round(item[4]),Math.round(item[5]),Math.round(item[6])];
       }
     });
-    object.changedColour = function(color){
-      this.objectCaching = false;
-      if ( this.fill ){
-        this.fill = color;  
-      }
-      this.stroke = color;
-      // console.log("path stroke");
-      canvas.renderAll();
-    }
-    object.changedWidth = function(width){
-      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-      this.strokeWidth = parseInt(width);
-      // console.log("path width");
-      canvas.renderAll();
-    }
+    
+    objectAddInteractive(object);
   }
-  
   return object;
 }
 
@@ -1122,31 +1108,7 @@ socket.on( 'connect', function()
                   }
                 }else{
                   // console.log(object.type);
-                  let fn_ = (color)=>{return};
-                  if ( ['rect','circle'].indexOf(object.type)!==-1  ){
-                    fn_ = (color)=>{
-                      object.objectCaching = false;
-                      object.fill = color;
-                      canvas.renderAll();
-                      // object.objectCaching = true;
-                    }
-                  }else if ( object.type=='path' ){
-                    fn_ = (color)=>{
-                      object.objectCaching = false;
-                      if ( object.fill ){
-                        object.fill = color;  
-                      }
-                      object.stroke = color;
-                      canvas.renderAll();
-                      // object.objectCaching = true;
-                    }
-                  }
-                  object.changedColour = fn_;
-                  object.changedWidth = function(width){
-                    // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-                    this.strokeWidth = parseInt(width);
-                    canvas.renderAll();
-                  }
+                  objectAddInteractive(object);
 
                   canvas.add(object);
                   if ( takedFirstData==false ){
@@ -1290,6 +1252,7 @@ socket.on( 'connect', function()
     * на других досках не работает. Надо передать готовый объект и на досках пересвоить айди
     */
   canvas.on("path:created", function(options) {
+    // console.log("path created", options);
     if ( canvas.isDrawingMode ){
       socket.emit("path:created", {"board_id": board_id, "object": options });
       return;
@@ -1299,7 +1262,9 @@ socket.on( 'connect', function()
         options.path.id = canvas.isWaitingPath.id;
       }
       canvas.isWaitingPath = false
+      // objectAddInteractive(options);
     }
+    
   });
   canvasbg.on("path:created",(options)=>{
     if ( canvas.isWaitingPath!==undefined && canvas.isWaitingPath!=false ){
@@ -1320,6 +1285,39 @@ socket.on( 'connect', function()
   });
   
 });
+
+/**
+ * Добавляем интерактивности объекту 
+ * делаем изменение толщины и цвета
+ * @param {*} object 
+ */
+function objectAddInteractive(object){
+  let fn_ = (color)=>{return};
+  if ( ['rect','circle'].indexOf(object.type)!==-1  ){
+    fn_ = (color)=>{
+      object.objectCaching = false;
+      object.fill = color;
+      canvas.renderAll();
+      // object.objectCaching = true;
+    }
+  }else if ( object.type=='path' ){
+    fn_ = (color)=>{
+      object.objectCaching = false;
+      if ( object.fill ){
+        object.fill = color;  
+      }
+      object.stroke = color;
+      canvas.renderAll();
+      // object.objectCaching = true;
+    }
+  }
+  object.changedColour = fn_;
+  object.changedWidth = function(width){
+    // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+    this.strokeWidth = parseInt(width);
+    canvas.renderAll();
+  }
+}
 
 
 function enableFreeDrawing(){

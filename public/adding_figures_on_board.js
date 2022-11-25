@@ -165,6 +165,7 @@ svgAdd3dCylinderButton.addEventListener("click",(e) =>
 
 function adding_svg_figure(what_to_add)
 {
+  removeEvents();
   var group = [];
   fabric.loadSVGFromURL(what_to_add,function(objects,options)
   {
@@ -187,15 +188,6 @@ function adding_svg_figure(what_to_add)
     group.push(object);
   });
 }
-
-
-
-
-
-
-
-
-
 
 function add_svg()
 {
