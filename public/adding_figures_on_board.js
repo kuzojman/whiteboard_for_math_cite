@@ -164,8 +164,53 @@ const layers = {
 
 function adding_svg_figure(what_to_add)
 {
+  return;
   removeEvents();
   var group = [];
+
+  svgFileToString(what_to_add).then( (url)=>{
+
+    fabric.Image.fromURL(url, function(myImg) {
+      
+      getImgContentType(url).then( t =>{
+          myImg.crossOrigin = 'anonymous'
+          myImg['src'] =  url;
+          if ( id!==false ){
+            myImg['id'] = id;
+          }
+
+          if ( takedFirstData==false ){
+            myImg.set({ selectable: false })
+            decreaseRecievedObjects()
+          }      
+          canvas.add(myImg)
+          // перемещаем объект куда надо
+          if ( params!==false ){
+            myImg.set({
+              top: params.top, //+object.object.top,
+              left: params.left, //+object.object.left
+              angle: params.angle,
+              scaleX: params.scaleX,
+              scaleY: params.scaleY,
+              erasable: params.erasable,
+              eraser: params.eraser,
+            });
+          }else{
+            setObjectToCanvasCenter(myImg)
+          }
+          canvas.setActiveObject(myImg).requestRenderAll(); 
+          // console.log({src: url, id_of: myImg.id});
+          if (noemit==false){
+            socket.emit("picture:add", {src: url, id_of: myImg.id});
+          }
+      } )
+      
+    });
+
+    canvas.renderAll();
+  } );
+
+  return ;
   fabric.loadSVGFromURL(what_to_add, function(objects,options)
   {
     var loadedObjects = new fabric.Group(group);
@@ -193,7 +238,27 @@ function adding_svg_figure(what_to_add)
 }
 
 
+/**
+ * Convert SVG xml to png base64 url
+ * @param {any} svgXml
+ */
+function getImageDataURL(svgXml) {
+  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgXml)));
+}
 
+/**
+ * Convert SVG xml to png base64 url
+ * @param {any} svgXml
+ */
+function svgFileToString(iconpath){
+  return fetch(iconpath)
+    .then(response => response.text())
+    .then(text => {
+      console.log(text);
+      return getImageDataURL(text);
+      // do whatever
+    });
+}
 
 function add_svg()
 {

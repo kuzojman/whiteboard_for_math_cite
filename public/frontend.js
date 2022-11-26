@@ -2309,18 +2309,18 @@ socket.on('coursour_disconected', function(user_id){
 
 
 
-const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > a');
-const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
+const inputChangeColor = document.querySelector('#drawing-line-width');
+// const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
 const fontColorListWrapper2 = document.querySelector('.setting-item__font-color-list-wrapper');
 const fontColorInput2 = document.querySelector('.setting-item__input-font-color > input');
 
 
 const handleClickOpenInputChangeColor = () => {
-  subToolPanel.classList.add('sub-tool-panel_visible');
+  // subToolPanel.classList.add('sub-tool-panel_visible');
 }
 const handleClickCloseInputChangeColor = (event) => {
   if (event.target !== inputChangeColor) {
-    subToolPanel.classList.remove('sub-tool-panel_visible');
+    // subToolPanel.classList.remove('sub-tool-panel_visible');
   } else if(event.target !== fontColorInput2) {
     fontColorListWrapper2.classList.remove('active');
   } else {
