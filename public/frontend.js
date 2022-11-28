@@ -1,4 +1,4 @@
-const canvas = new fabric.Canvas(document.getElementById("canvasId1"),{
+const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
   allowTouchScrolling: true,
   preserveObjectStacking: true,
 });
@@ -306,10 +306,24 @@ function setObjectToCanvasCenter(obj){
 }
 
 /**
+ *  Устанавливаем курсор по выбранному инструменты
+ * @param {*} curname название инструмента и файла с курсором
+ */
+function setCursor(curname){
+  canvas.hoverCursor = 'url("/icons/'+curname+'.cur"), auto';
+  canvas.defaultCursor = 'url("/icons/'+curname+'.cur"), auto';
+  canvas.freeDrawingCursor = 'url("/icons/'+curname+'.cur"), auto';
+}
+
+/**
  * Нажатие на кнопку выбора инструмента
  */
 function selectTool(event){
     let currentButton = event.target.closest('.tool-panel__item-button');
+    let notCurrentButton = event.target.closest('.sub-tool-panel__item-button');
+    if ( notCurrentButton ){
+      currentButton = notCurrentButton;
+    }
     if( currentButton) {
 
       let currentAction = currentButton.dataset.tool;
@@ -321,7 +335,15 @@ function selectTool(event){
           selectedTool=currentAction
         }
       }
-
+      // console.log(selectedTool);
+      // если выбрано лезвие, то меняем курсор
+      if ( selectedTool=='blade' || selectedTool=='freedraw' ){
+        setCursor(selectedTool);
+      }else{
+        canvas.hoverCursor = 'auto';
+        canvas.freeDrawingCursor = 'auto';
+        canvas.defaultCursor = 'move';
+      }
 
       let siblings = getSiblings(currentButton);
       if ( siblings.length>0 ){
@@ -543,7 +565,7 @@ const getCursorData = (data) => {
     }
     //cursorUser.left = data.cursorCoordinates.x
        //canvas.sendToBack(cursorUser);
-      canvas.add(cursorUser);
+    canvas.add(cursorUser);
     existing_coursor = cursorUser;
     
   }else{
@@ -1393,7 +1415,7 @@ socket.on( 'connect', function()
       if ( compare_path(options.path,canvas.isWaitingPath) ){
         canvasbg.remove(options.path)
         options.path.id = canvas.isWaitingPath.id;
-          canvas.sendToBack(cursorUser);
+        canvas.sendToBack(cursorUser);
         //canvas.add(options.path)
       }
       canvas.isWaitingPath = false
@@ -1608,7 +1630,39 @@ function enableEraser(){
  * Нажатие на кнопку удаления выделенных фрагментов
  */
 function bladeButtonClick(){
-  Delete();
+  removeEvents();
+  let bladeDown = false;
+  canvas.on('mouse:down', e => {   
+    bladeDown = true;
+  })
+  canvas.on('mouse:up', e => {
+    bladeDown = false;
+  })
+  canvas.on('mouse:move', function (e) {
+    if (bladeDown) {
+      const cursorCoordinate = canvas.getPointer(e);
+      // console.log(canvas._objects);
+      // let points = [pointer.x, pointer.y, pointer.x, pointer.y];
+      let d = [];
+      canvas._objects.forEach(item=>{
+        if (!item){
+          return false
+        }
+        let bound = item.getBoundingRect();
+        // console.log( cursorCoordinate.x , bound.left, bound.left + bound.width ,bound );
+        if ( cursorCoordinate.x > bound.left && cursorCoordinate.x < (bound.left + bound.width) &&
+             cursorCoordinate.y > bound.top && cursorCoordinate.y < (bound.top + bound.height)  ) {
+          d.push(item);
+          // console.log(item);
+          canvas.setActiveObject(item);
+        }
+        // return false
+      });
+      // console.log(d);
+      Delete();
+    }
+  })
+  // Delete();
 }
 
 function enableSelection() {
