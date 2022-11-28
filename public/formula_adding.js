@@ -1,6 +1,3 @@
-
-
-
 const formFormulasWrapper           = document.querySelector('.form-formulas__wrapper');
 const mf                            = document.querySelector('#formula');
 const buttonShowModalWindowFormulas = document.querySelector('.button__show-modal-window-formulas');
@@ -55,6 +52,7 @@ window.addFormula = function(formula, id=false, object=false, emit=true){
  * @param {*} object_id 
  */
 function editFormula( new_formula, object_id ){
+    // console.log(object_id);
     if ( new_formula===undefined || new_formula=='' ){
         return
     }
