@@ -246,6 +246,7 @@ function serialize_canvas_objects(objects)
             }
             result.push(replaced_object);
         }
+
     }
 
     return result;

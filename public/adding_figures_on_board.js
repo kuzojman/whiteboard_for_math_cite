@@ -167,7 +167,6 @@ function adding_svg_figure(what_to_add)
   // return;
   removeEvents();
   var group = [];
-
   svgFileToString(what_to_add).then( (url)=>{
 
     fabric.Image.fromURL(url, function(myImg) {
@@ -193,6 +192,7 @@ function adding_svg_figure(what_to_add)
 
     canvas.renderAll();
   } );
+
 
 }
 
@@ -224,6 +224,7 @@ function add_svg() {
     //i create an extra var for to change some image properties
     var img1 = myImg.set({ left: 0, top: 0 ,width:250,height:250});
     canvas.add(img1); 
+
     // canvas.renderAll();
    });
 }

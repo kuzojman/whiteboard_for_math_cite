@@ -1,4 +1,6 @@
+
 const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
+
   allowTouchScrolling: true,
   preserveObjectStacking: true,
 });
@@ -303,6 +305,7 @@ function setObjectToCanvasCenter(obj){
       left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2,
     });
   }
+
 }
 
 /**
@@ -313,6 +316,7 @@ function setCursor(curname){
   canvas.hoverCursor = 'url("/icons/'+curname+'.cur"), auto';
   canvas.defaultCursor = 'url("/icons/'+curname+'.cur"), auto';
   canvas.freeDrawingCursor = 'url("/icons/'+curname+'.cur"), auto';
+
 }
 
 /**
@@ -335,15 +339,7 @@ function selectTool(event){
           selectedTool=currentAction
         }
       }
-      // console.log(selectedTool);
-      // если выбрано лезвие, то меняем курсор
-      if ( selectedTool=='blade' || selectedTool=='freedraw' ){
-        setCursor(selectedTool);
-      }else{
-        canvas.hoverCursor = 'auto';
-        canvas.freeDrawingCursor = 'auto';
-        canvas.defaultCursor = 'move';
-      }
+
 
       let siblings = getSiblings(currentButton);
       if ( siblings.length>0 ){
@@ -565,7 +561,9 @@ const getCursorData = (data) => {
     }
     //cursorUser.left = data.cursorCoordinates.x
        //canvas.sendToBack(cursorUser);
+
     canvas.add(cursorUser);
+
     existing_coursor = cursorUser;
     
   }else{
@@ -991,8 +989,10 @@ function object_fit_apth(obj_){
         return [item[0],Math.round(item[1]),Math.round(item[2]),Math.round(item[3]),Math.round(item[4]),Math.round(item[5]),Math.round(item[6])];
       }
     });
+
     
     objectAddInteractive(object);
+
   }
   return object;
 }
@@ -1059,12 +1059,14 @@ socket.on( 'connect', function()
         canvas.isDrawingMode = true
         canvas.freeDrawingBrush = new fabric.EraserBrush(canvas)
         canvas.freeDrawingBrush.btype = 'eraser'
-        canvas.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
-        canvasbg.isDrawingMode = true
-        canvasbg.freeDrawingBrush = new fabric.EraserBrush(canvasbg)
-        canvasbg.freeDrawingBrush.btype = 'eraser'
+      }
+    }else{
+      if (pointer.type!==undefined && pointer.type=='brush'){
+        canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
+        canvasbg.freeDrawingBrush.btype = 'brush'
       }
     }
+
     if (pointer.type!==undefined && pointer.type=='brush'){
       canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
       canvasbg.freeDrawingBrush.btype = 'brush';
@@ -1080,6 +1082,7 @@ socket.on( 'connect', function()
       canvasbg.isDrawingMode = true;
       canvasbg.freeDrawingBrush.width = 0;
     }
+
 
     canvasbg.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
   });
@@ -1106,37 +1109,6 @@ socket.on( 'connect', function()
     }
   });
   
-
-  /**
-   * width : width
-   * object: target obj
-   */
-  socket.on('width:changed', function(object) {
-    let o = canvas._objects.find( item => item.id==object.id );
-    if ( o ){
-      o.strokeWidth = parseInt(object.width);
-      canvas.renderAll();
-    }
-    if ( canvasbg.freeDrawingBrush!==undefined ){
-      canvasbg.freeDrawingBrush.width =  parseInt(object.width);
-    }
-  });
-
-  /**
-   * color : color
-   * object: target obj
-   */
-  socket.on('color:changed', function(object) {
-    let o = canvas._objects.find( item => item.id==object.id );
-    if ( o ){
-      o.objectCaching = false;
-      if ( o.fill ){
-        o.fill = object.color;  
-      }
-      o.stroke = object.color;
-      canvas.renderAll();
-    }
-  });
 
   let circle ;
   socket.on('circle:edit', function(circle_taken)
@@ -1193,6 +1165,7 @@ socket.on( 'connect', function()
     });
     canvas.renderAll();
   });
+
   
   socket.on('line:add', function(line_taken) {
     // console.log(line_taken);
@@ -1224,9 +1197,10 @@ socket.on( 'connect', function()
         objectCaching: false,
       });
     }else{
+      
       line = new fabric.Line(line_taken.points, {
         id: line_taken.id,
-        strokeWidth: parseInt(line_taken.width),
+        strokeWidth: line_taken.width,
         fill: line_taken.fill,//'#07ff11a3',
         stroke: line_taken.stroke,//'#07ff11a3',
         originX: 'center',
@@ -1235,10 +1209,8 @@ socket.on( 'connect', function()
         selectable: false,
         objectCaching: false
       });
-    }
-      // line = new fabric.Line();
       //line = new fabric.Line(line_taken)
-    canvas.add(line)
+      canvas.add(line)
       //'canvas.freeDrawingBrush.width = width_taken'
   });
 
@@ -1311,9 +1283,11 @@ socket.on( 'connect', function()
                   }
                 }else{
                   // console.log(object.type);
+
                   objectAddInteractive(object);
 
                   canvas.add(object);
+
                   if ( takedFirstData==false ){
                     object.set({ selectable: false })
                   }
@@ -1482,7 +1456,9 @@ socket.on( 'connect', function()
       if ( compare_path(options.path,canvas.isWaitingPath) ){
         canvasbg.remove(options.path)
         options.path.id = canvas.isWaitingPath.id;
+
         canvas.sendToBack(cursorUser);
+
         //canvas.add(options.path)
       }
       canvas.isWaitingPath = false
@@ -1658,10 +1634,10 @@ function enableFreeDrawing(){
  */
 function lassoButtonClick(){
   removeEvents();
-  var isDrawing = false;
   canvas.freeDrawingBrush = new fabric.LassoBrush(canvas);
   canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
   canvas.isDrawingMode = true;
+
   canvas.on('mouse:down', e => {
     isDrawing = true;
     const pointer = canvas.getPointer(e);
@@ -1679,6 +1655,7 @@ function lassoButtonClick(){
       socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});//canvas.freeDrawingBrush._points); 
     }
   })
+
 }
 
 /**
@@ -1715,6 +1692,7 @@ function enableEraser(){
  * Нажатие на кнопку удаления выделенных фрагментов
  */
 function bladeButtonClick(){
+
   removeEvents();
   let bladeDown = false;
   canvas.on('mouse:down', e => {   
@@ -1748,6 +1726,7 @@ function bladeButtonClick(){
     }
   })
   // Delete();
+
 }
 
 function enableSelection() {
@@ -2050,6 +2029,7 @@ popupBasic.onChange = function(color) {
   canvas.freeDrawingBrush.color = color.rgbaString;
   socket.emit("color:change", color.rgbaString);
   Cookies.set('colour', color.rgbaString);
+
   // console.log(Cookies.get('colour'));
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
@@ -2058,6 +2038,7 @@ popupBasic.onChange = function(color) {
     obj_.changedColour(color.rgbaString)
   }
 };
+
 
 //Open the popup manually:
 popupBasic.openHandler();
@@ -2086,6 +2067,7 @@ drawingLineWidthEl.oninput = function()
 {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   socket.emit("width:change", canvas.freeDrawingBrush.width);
+
   localStorage.setItem('width',canvas.freeDrawingBrush.width);
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
@@ -2094,6 +2076,7 @@ drawingLineWidthEl.oninput = function()
     socket.emit("width:changed",{"object": obj_, "id":obj_.id, "width":canvas.freeDrawingBrush.width});
     obj_.changedWidth(drawingLineWidthEl.value)
   }
+
 };
 
 
@@ -2111,7 +2094,9 @@ function drawLine(type_of_line) {
   {
     canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
     socket.emit("color:change",drawingColorEl.style.backgroundColor);
+
     // console.log("line!");
+
   };
   colour_inside = hexToRgbA('#000dff',5);
   if (type_of_line == "trivial") { 
@@ -2132,7 +2117,7 @@ function drawLine(type_of_line) {
     let points = [pointer.x, pointer.y, pointer.x, pointer.y];
     if ( type_of_line == "arrow" ){
       line = new fabric.Arrow(points, {
-        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
+        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -2145,7 +2130,7 @@ function drawLine(type_of_line) {
       
     }else if ( type_of_line == "arrowtwo" ){
       line = new fabric.ArrowTwo(points, {
-        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
+        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -2157,7 +2142,7 @@ function drawLine(type_of_line) {
       });
     }else{
       line = new fabric.Line(points, {
-        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
+        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -2170,13 +2155,7 @@ function drawLine(type_of_line) {
     }
     line.changedColour = function(color){
       this.stroke = color;
-      // console.log("line stroke");
-      canvas.renderAll();
-    }
-    line.changedWidth = function(width){
-      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
-      this.strokeWidth = parseInt(width);
-      // console.log("line width");
+      console.log("line stroke");
       canvas.renderAll();
     }
     canvas.add(line);
@@ -2462,18 +2441,22 @@ socket.on('coursour_disconected', function(user_id){
 
 
 
+
 const inputChangeColor = document.querySelector('#drawing-line-width');
 // const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
+
 const fontColorListWrapper2 = document.querySelector('.setting-item__font-color-list-wrapper');
 const fontColorInput2 = document.querySelector('.setting-item__input-font-color > input');
 
 
 const handleClickOpenInputChangeColor = () => {
+
   // subToolPanel.classList.add('sub-tool-panel_visible');
 }
 const handleClickCloseInputChangeColor = (event) => {
   if (event.target !== inputChangeColor) {
     // subToolPanel.classList.remove('sub-tool-panel_visible');
+
   } else if(event.target !== fontColorInput2) {
     fontColorListWrapper2.classList.remove('active');
   } else {

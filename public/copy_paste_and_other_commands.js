@@ -51,7 +51,6 @@ function Delete() {
 }
 
 function Paste() {
-  // console.log(_clipboard,_clipboard.formula);
   if ( _clipboard ){
     // clone again, so you can do multiple copies.
     _clipboard.clone(function (clonedObj) {
