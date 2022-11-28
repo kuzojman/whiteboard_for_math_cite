@@ -262,6 +262,14 @@ io.on("connection", async socket => {
         socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
   });
+  
+  socket.on("width:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("width:changed", object_pass);
+  });
+
+  socket.on("color:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("color:changed", object_pass);
+  });
 
   /**
    * Загрузка иображений в облако

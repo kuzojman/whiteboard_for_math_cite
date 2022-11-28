@@ -125,69 +125,69 @@ const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,.
 function serialize_canvas(canvas)
 {
     let result =[];
-
-    canvas.objects.forEach(function(object)
-    {
-        // console.log(object.toJSON());
-        let replaced_object ={};
-        let my_dict = {};
-        if(object.type=="path")    {
-            my_dict=serializer_dictionary;
-        }
-        else if(object.type=="image")    {
-            my_dict=serializer_dictionary_image;
-            // console.log(object.src);
-            if ( object.formula!==undefined && object.formula!="" ){
-                replaced_object['src'] = "";
-            }else{
-                replaced_object['src'] = object.src;
+    if ( canvas.objects ){
+        canvas.objects.forEach(function(object)
+        {
+            // console.log(object.toJSON());
+            let replaced_object ={};
+            let my_dict = {};
+            if(object.type=="path")    {
+                my_dict=serializer_dictionary;
             }
-
-        }
-        else if(object.type=="circle")    {
-            my_dict=serializer_dictionary_for_circle;
-        }
-        else if(object.type=="i-text")    {
-            my_dict=serializer_dictionary_for_text;
-        }
-        else    {
-            my_dict=serializer_dictionary;
-        }
-
-        if(!object.socket_id)    {
-            // if(object.type=="path"){
-            //   console.log();
-            // }
-            for (const key in object) {
-                if(my_dict[key])      {
-                    if(typeof(object[key]) === 'number')        {
-                        if(Math.abs(object[key])<3 )          {
-                            object[key]=Math.trunc(object[key] * 1000) / 1000;
-                        }
-                        else          {
-                            object[key]=Math.round(object[key]);
-                        }
-                    }
-
-                    if (key=='eraser' && object[key]!==undefined && Object.keys(object[key]).length>0 ){
-                        // console.log(object[key].toJSON());
-                        replaced_object[my_dict[key]] = serialize_object(object[key].toJSON())
-                        // console.log(replaced_object[my_dict[key]]);
-                    }else{
-                        replaced_object[my_dict[key]]=object[key];
-                    }
-                    // replaced_object[my_dict[key]]=object[key];
+            else if(object.type=="image")    {
+                my_dict=serializer_dictionary_image;
+                // console.log(object.src);
+                if ( object.formula!==undefined && object.formula!="" ){
+                    replaced_object['src'] = "";
+                }else{
+                    replaced_object['src'] = object.src;
                 }
-            }
-            // console.log(replaced_object);
-            // result.push(object.toJSON());
-            // if ( object.formula!==undefined && object.formula!="" ){
-            //   // console.log(replaced_object);
-            // }
-            result.push(replaced_object);
-        }
-    });
 
+            }
+            else if(object.type=="circle")    {
+                my_dict=serializer_dictionary_for_circle;
+            }
+            else if(object.type=="i-text")    {
+                my_dict=serializer_dictionary_for_text;
+            }
+            else    {
+                my_dict=serializer_dictionary;
+            }
+
+            if(!object.socket_id)    {
+                // if(object.type=="path"){
+                //   console.log();
+                // }
+                for (const key in object) {
+                    if(my_dict[key])      {
+                        if(typeof(object[key]) === 'number')        {
+                            if(Math.abs(object[key])<3 )          {
+                                object[key]=Math.trunc(object[key] * 1000) / 1000;
+                            }
+                            else          {
+                                object[key]=Math.round(object[key]);
+                            }
+                        }
+
+                        if (key=='eraser' && object[key]!==undefined && Object.keys(object[key]).length>0 ){
+                            // console.log(object[key].toJSON());
+                            replaced_object[my_dict[key]] = serialize_object(object[key].toJSON())
+                            // console.log(replaced_object[my_dict[key]]);
+                        }else{
+                            replaced_object[my_dict[key]]=object[key];
+                        }
+                        // replaced_object[my_dict[key]]=object[key];
+                    }
+                }
+                // console.log(replaced_object);
+                // result.push(object.toJSON());
+                // if ( object.formula!==undefined && object.formula!="" ){
+                //   // console.log(replaced_object);
+                // }
+                result.push(replaced_object);
+            }
+        });
+    }
     // console.log('new_result',result);
     return result//JSON.stringify(result);
 }
