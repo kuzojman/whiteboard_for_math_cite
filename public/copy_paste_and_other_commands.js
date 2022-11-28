@@ -51,7 +51,6 @@ function Delete() {
 }
 
 function Paste() {
-  console.log(_clipboard,_clipboard.formula);
   if ( _clipboard ){
     // clone again, so you can do multiple copies.
     _clipboard.clone(function (clonedObj) {
@@ -79,6 +78,7 @@ function Paste() {
         //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
         socket.emit("figure_copied",clonedObj) //canvas.toJSON());
       }
+      objectAddInteractive(clonedObj);
       // _clipboard.top += 10;
       // _clipboard.left += 10;
       // setObjectToCanvasCenter(_clipboard)

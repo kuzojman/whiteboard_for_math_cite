@@ -1,4 +1,6 @@
-const canvas = new fabric.Canvas(document.getElementById("canvasId1"),{
+
+const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
+
   allowTouchScrolling: true,
   preserveObjectStacking: true,
 });
@@ -303,6 +305,18 @@ function setObjectToCanvasCenter(obj){
       left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2,
     });
   }
+
+}
+
+/**
+ *  Устанавливаем курсор по выбранному инструменты
+ * @param {*} curname название инструмента и файла с курсором
+ */
+function setCursor(curname){
+  canvas.hoverCursor = 'url("/icons/'+curname+'.cur"), auto';
+  canvas.defaultCursor = 'url("/icons/'+curname+'.cur"), auto';
+  canvas.freeDrawingCursor = 'url("/icons/'+curname+'.cur"), auto';
+
 }
 
 /**
@@ -310,6 +324,10 @@ function setObjectToCanvasCenter(obj){
  */
 function selectTool(event){
     let currentButton = event.target.closest('.tool-panel__item-button');
+    let notCurrentButton = event.target.closest('.sub-tool-panel__item-button');
+    if ( notCurrentButton ){
+      currentButton = notCurrentButton;
+    }
     if( currentButton) {
 
       let currentAction = currentButton.dataset.tool;
@@ -543,7 +561,9 @@ const getCursorData = (data) => {
     }
     //cursorUser.left = data.cursorCoordinates.x
        //canvas.sendToBack(cursorUser);
-      canvas.add(cursorUser);
+
+    canvas.add(cursorUser);
+
     existing_coursor = cursorUser;
     
   }else{
@@ -969,17 +989,11 @@ function object_fit_apth(obj_){
         return [item[0],Math.round(item[1]),Math.round(item[2]),Math.round(item[3]),Math.round(item[4]),Math.round(item[5]),Math.round(item[6])];
       }
     });
-    object.changedColour = function(color){
-      this.objectCaching = false;
-      if ( this.fill ){
-        this.fill = color;  
-      }
-      this.stroke = color;
-      console.log("path stroke");
-      canvas.renderAll();
-    }
+
+    
+    objectAddInteractive(object);
+
   }
-  
   return object;
 }
 
@@ -1052,19 +1066,26 @@ socket.on( 'connect', function()
         canvasbg.freeDrawingBrush.btype = 'brush'
       }
     }
-    canvasbg.freeDrawingBrush.color = pointer.color;
-    canvasbg.freeDrawingBrush.width = pointer.width;
-    // canvasbg.freeDrawingBrush = new fabric['PencilBrush'](canvas);
-    // canvasbg.freeDrawingBrush.color = pointer.color;
-    // canvasbg.freeDrawingBrush.width = pointer.width;
-    //canvasbg.freeDrawingBrush.needsFullRender = ()=>true;
-    // canvasbg.freeDrawingBrush._setBrushStyles(canvasbg.freeDrawingBrush)
-    // canvasbg.freeDrawingBrush._captureDrawingPath(pointer);
-    // canvasbg.freeDrawingBrush._render();
+
+    if (pointer.type!==undefined && pointer.type=='brush'){
+      canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
+      canvasbg.freeDrawingBrush.btype = 'brush';
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
+      canvas.freeDrawingBrush.btype = 'brush'
+      canvasbg.freeDrawingBrush.color = pointer.color;
+      canvasbg.freeDrawingBrush.width = pointer.width;
+    }
+    if (pointer.type!==undefined && pointer.type=='lasso'){
+      canvasbg.freeDrawingBrush = new fabric.LassoBrush(canvasbg);
+      canvasbg.freeDrawingBrush.color = pointer.color;
+      canvasbg.freeDrawingBrush.btype = 'lasso'
+      canvasbg.isDrawingMode = true;
+      canvasbg.freeDrawingBrush.width = 0;
+    }
+
+
     canvasbg.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
-
   });
-
 
   socket.on('mouse:draw', function(e)  {
     if ( canvasbg.freeDrawingBrush!==undefined && canvasbg.isDrawingMode ){
@@ -1087,6 +1108,7 @@ socket.on( 'connect', function()
       canvasbg.freeDrawingBrush.width = width_taken;
     }
   });
+  
 
   let circle ;
   socket.on('circle:edit', function(circle_taken)
@@ -1143,8 +1165,39 @@ socket.on( 'connect', function()
     });
     canvas.renderAll();
   });
-  socket.on('line:add', function(line_taken)
-  {
+
+  
+  socket.on('line:add', function(line_taken) {
+    // console.log(line_taken);
+    if ( line_taken.line_type == "arrow" ){
+      line = new fabric.Arrow(line_taken.points, {
+        id: line_taken.id,
+        strokeWidth: parseInt(line_taken.width),//drawing_figure_width.value,
+        fill: line_taken.fill,//'#07ff11a3',
+        stroke: line_taken.stroke,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+        strokeDashArray: line_taken.strokeDashArray,
+        ///stroke: '#07ff11a3',
+        originX: "center",
+        originY: "center",
+        selectable: false,
+        objectCaching: false,
+      });
+
+    }else if ( line_taken.line_type == "arrowtwo" ){
+      line = new fabric.ArrowTwo(line_taken.points, {
+        id: line_taken.id,
+        strokeWidth: parseInt(line_taken.width),//drawing_figure_width.value,
+        fill: line_taken.fill,//'#07ff11a3',
+        stroke: line_taken.stroke,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+        strokeDashArray: line_taken.strokeDashArray,
+        ///stroke: '#07ff11a3',
+        originX: "center",
+        originY: "center",
+        selectable: false,
+        objectCaching: false,
+      });
+    }else{
+      
       line = new fabric.Line(line_taken.points, {
         id: line_taken.id,
         strokeWidth: line_taken.width,
@@ -1230,28 +1283,11 @@ socket.on( 'connect', function()
                   }
                 }else{
                   // console.log(object.type);
-                  let fn_ = (color)=>{return};
-                  if ( ['rect','circle'].indexOf(object.type)!==-1  ){
-                    fn_ = (color)=>{
-                      object.objectCaching = false;
-                      object.fill = color;
-                      canvas.renderAll();
-                      // object.objectCaching = true;
-                    }
-                  }else if ( object.type=='path' ){
-                    fn_ = (color)=>{
-                      object.objectCaching = false;
-                      if ( object.fill ){
-                        object.fill = color;  
-                      }
-                      object.stroke = color;
-                      canvas.renderAll();
-                      // object.objectCaching = true;
-                    }
-                  }
-                  object.changedColour = fn_;
-                    canvas.sendToBack(cursorUser);
-                  //canvas.add(object);
+
+                  objectAddInteractive(object);
+
+                  canvas.add(object);
+
                   if ( takedFirstData==false ){
                     object.set({ selectable: false })
                   }
@@ -1401,6 +1437,7 @@ socket.on( 'connect', function()
     * на других досках не работает. Надо передать готовый объект и на досках пересвоить айди
     */
   canvas.on("path:created", function(options) {
+    // console.log("path created", options);
     if ( canvas.isDrawingMode ){
       socket.emit("path:created", {"board_id": board_id, "object": options });
       return;
@@ -1410,14 +1447,18 @@ socket.on( 'connect', function()
         options.path.id = canvas.isWaitingPath.id;
       }
       canvas.isWaitingPath = false
+      // objectAddInteractive(options);
     }
+    
   });
   canvasbg.on("path:created",(options)=>{
     if ( canvas.isWaitingPath!==undefined && canvas.isWaitingPath!=false ){
       if ( compare_path(options.path,canvas.isWaitingPath) ){
         canvasbg.remove(options.path)
         options.path.id = canvas.isWaitingPath.id;
-          canvas.sendToBack(cursorUser);
+
+        canvas.sendToBack(cursorUser);
+
         //canvas.add(options.path)
       }
       canvas.isWaitingPath = false
@@ -1432,6 +1473,39 @@ socket.on( 'connect', function()
   });
   
 });
+
+/**
+ * Добавляем интерактивности объекту 
+ * делаем изменение толщины и цвета
+ * @param {*} object 
+ */
+function objectAddInteractive(object){
+  let fn_ = (color)=>{return};
+  if ( ['rect','circle'].indexOf(object.type)!==-1  ){
+    fn_ = (color)=>{
+      object.objectCaching = false;
+      object.fill = color;
+      canvas.renderAll();
+      // object.objectCaching = true;
+    }
+  }else if ( object.type=='path' ){
+    fn_ = (color)=>{
+      object.objectCaching = false;
+      if ( object.fill ){
+        object.fill = color;  
+      }
+      object.stroke = color;
+      canvas.renderAll();
+      // object.objectCaching = true;
+    }
+  }
+  object.changedColour = fn_;
+  object.changedWidth = function(width){
+    // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+    this.strokeWidth = parseInt(width);
+    canvas.renderAll();
+  }
+}
 
 
 function enableFreeDrawing(){
@@ -1563,6 +1637,25 @@ function lassoButtonClick(){
   canvas.freeDrawingBrush = new fabric.LassoBrush(canvas);
   canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
   canvas.isDrawingMode = true;
+
+  canvas.on('mouse:down', e => {
+    isDrawing = true;
+    const pointer = canvas.getPointer(e);
+    socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});
+  })
+  canvas.on('mouse:up', e => {
+    isDrawing = false;
+    const pointer = canvas.getPointer(e);
+    socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  })
+  canvas.on('mouse:move', (e)=> {
+    if (isDrawing) {
+      const pointer = canvas.getPointer(e);
+      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});//canvas.freeDrawingBrush._points); 
+    }
+  })
+
 }
 
 /**
@@ -1599,7 +1692,41 @@ function enableEraser(){
  * Нажатие на кнопку удаления выделенных фрагментов
  */
 function bladeButtonClick(){
-  Delete();
+
+  removeEvents();
+  let bladeDown = false;
+  canvas.on('mouse:down', e => {   
+    bladeDown = true;
+  })
+  canvas.on('mouse:up', e => {
+    bladeDown = false;
+  })
+  canvas.on('mouse:move', function (e) {
+    if (bladeDown) {
+      const cursorCoordinate = canvas.getPointer(e);
+      // console.log(canvas._objects);
+      // let points = [pointer.x, pointer.y, pointer.x, pointer.y];
+      let d = [];
+      canvas._objects.forEach(item=>{
+        if (!item){
+          return false
+        }
+        let bound = item.getBoundingRect();
+        // console.log( cursorCoordinate.x , bound.left, bound.left + bound.width ,bound );
+        if ( cursorCoordinate.x > bound.left && cursorCoordinate.x < (bound.left + bound.width) &&
+             cursorCoordinate.y > bound.top && cursorCoordinate.y < (bound.top + bound.height)  ) {
+          d.push(item);
+          // console.log(item);
+          canvas.setActiveObject(item);
+        }
+        // return false
+      });
+      // console.log(d);
+      Delete();
+    }
+  })
+  // Delete();
+
 }
 
 function enableSelection() {
@@ -1902,9 +2029,12 @@ popupBasic.onChange = function(color) {
   canvas.freeDrawingBrush.color = color.rgbaString;
   socket.emit("color:change", color.rgbaString);
   Cookies.set('colour', color.rgbaString);
+
+  // console.log(Cookies.get('colour'));
   let obj_ = canvas.getActiveObject();
   // console.log(obj_);
   if ( obj_ && obj_.changedColour ){
+    socket.emit("color:changed", { "object":obj_, "id":obj_.id, "color":color.rgbaString});
     obj_.changedColour(color.rgbaString)
   }
 };
@@ -1937,7 +2067,16 @@ drawingLineWidthEl.oninput = function()
 {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   socket.emit("width:change", canvas.freeDrawingBrush.width);
-  localStorage.setItem('width',canvas.freeDrawingBrush.width)
+
+  localStorage.setItem('width',canvas.freeDrawingBrush.width);
+  let obj_ = canvas.getActiveObject();
+  // console.log(obj_);
+  if ( obj_ && obj_.changedWidth ){
+    // console.log(obj_.id);
+    socket.emit("width:changed",{"object": obj_, "id":obj_.id, "width":canvas.freeDrawingBrush.width});
+    obj_.changedWidth(drawingLineWidthEl.value)
+  }
+
 };
 
 
@@ -1955,7 +2094,9 @@ function drawLine(type_of_line) {
   {
     canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
     socket.emit("color:change",drawingColorEl.style.backgroundColor);
-    console.log("line!");
+
+    // console.log("line!");
+
   };
   colour_inside = hexToRgbA('#000dff',5);
   if (type_of_line == "trivial") { 
@@ -2300,18 +2441,22 @@ socket.on('coursour_disconected', function(user_id){
 
 
 
-const inputChangeColor = document.querySelector('.sub-tool-panel__item-list-color-selection > a');
-const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
+
+const inputChangeColor = document.querySelector('#drawing-line-width');
+// const subToolPanel = inputChangeColor.closest('.sub-tool-panel__change-color');
+
 const fontColorListWrapper2 = document.querySelector('.setting-item__font-color-list-wrapper');
 const fontColorInput2 = document.querySelector('.setting-item__input-font-color > input');
 
 
 const handleClickOpenInputChangeColor = () => {
-  subToolPanel.classList.add('sub-tool-panel_visible');
+
+  // subToolPanel.classList.add('sub-tool-panel_visible');
 }
 const handleClickCloseInputChangeColor = (event) => {
   if (event.target !== inputChangeColor) {
-    subToolPanel.classList.remove('sub-tool-panel_visible');
+    // subToolPanel.classList.remove('sub-tool-panel_visible');
+
   } else if(event.target !== fontColorInput2) {
     fontColorListWrapper2.classList.remove('active');
   } else {
