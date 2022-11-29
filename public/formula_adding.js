@@ -1,3 +1,6 @@
+
+
+
 const formFormulasWrapper           = document.querySelector('.form-formulas__wrapper');
 const mf                            = document.querySelector('#formula');
 const buttonShowModalWindowFormulas = document.querySelector('.button__show-modal-window-formulas');
@@ -64,7 +67,7 @@ function editFormula( new_formula, object_id ){
     
     if ( myImg ){
         myImg['formula'] = new_formula
-        myImg.setSrc(b64, ()=> {/*canvas.renderAll()*/});
+        myImg.setSrc(b64, ()=> canvas.renderAll());
     }
     return myImg
 }
@@ -79,7 +82,7 @@ buttonSaveFormulas.addEventListener('click',(ev)=>{
     editMode(false)
     formFormulasWrapper.classList.remove('form-formulas__wrapper_visible');
     socket.emit("formula:edited", {"board_id": get_board_id(), 'formula':img_.formula, "object": img_});
-    //socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
 });
 
 /**
