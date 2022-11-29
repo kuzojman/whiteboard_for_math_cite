@@ -56,7 +56,7 @@
   <ul class="tool-panel__list">
 
     <li class="tool-panel__item">
-      <button class="tool-panel__item-button tool-panel__item-button-moving" data-tool="selection" id="selection_button">
+      <button class="tool-panel__item-button tool-panel__item-button-selection" data-tool="selection" id="selection_button">
         <svg class="tool-panel__item-icon-button">
           <use xlink:href="./icons/sprite.svg#icon-selection-by-mouse-coloured"></use>
         </svg>
@@ -76,26 +76,36 @@
           <use xlink:href="./icons/sprite.svg#icon-free-drawing-coloured"></use>
         </svg>
       </button>
+      <div class="sub-tool-panel">
+        <ul class="sub-tool-panel__list">
+          <li class="sub-tool-panel__item-list">
+            <button class="sub-tool-panel__item-button" id="lasso_button" data-tool="lasso">
+              <svg class="sub-tool-panel__item-icon-button" >
+                <use xlink:href="./icons/sprite.svg#icon-lasso"></use>
+              </svg>
+            </button>
+          </li>
+        </ul>
+      </div>
     </li>
-    <li class="tool-panel__item">
-      <button class="tool-panel__item-button" id="lasso_button" data-tool="lasso">
-        <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-lasso"></use>
-        </svg>
-      </button>
-    </li>
+    
     <li class="tool-panel__item">
       <button class="tool-panel__item-button" id="free_erasing_button" data-tool="erase">
         <i class="fas fa-eraser fa-2x has-text-link" aria-hidden="true" ></i>
       </button>
+      <div class="sub-tool-panel">
+        <ul class="sub-tool-panel__list">
+          <li class="sub-tool-panel__item-list">
+            <button class="sub-tool-panel__item-button" id="blade_button" data-tool="blade">
+              <svg class="sub-tool-panel__item-icon-button" >
+                <use xlink:href="./icons/sprite.svg#icon-blade-coloured"></use>
+              </svg>
+            </button>
+          </li>
+        </ul>
+      </div>
     </li>
-    <li class="tool-panel__item">
-      <button class="tool-panel__item-button" id="blade_button" data-tool="blade">
-        <svg class="tool-panel__item-icon-button">
-          <use xlink:href="./icons/sprite.svg#icon-blade-coloured"></use>
-        </svg>
-      </button>
-    </li>
+    
     <li class="tool-panel__item">
       <button class="tool-panel__item-button  tool-panel__item-button-uploader"  >
 
@@ -127,15 +137,15 @@
       <div class="sub-tool-panel">
         <ul class="sub-tool-panel__list">
           <li class="sub-tool-panel__item-list">
-            <button class="sub-tool-panel__item-button">
-              <svg class="sub-tool-panel__item-icon-button" id="draw_cube">
+            <button class="sub-tool-panel__item-button" id="draw_cube">
+              <svg class="sub-tool-panel__item-icon-button" >
                 <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-hexagon-svg"></use>
               </svg>
             </button>
           </li>
           <li class="sub-tool-panel__item-list">
-            <button class="sub-tool-panel__item-button">
-              <svg class="sub-tool-panel__item-icon-button" id="draw_hexagon_prism">
+            <button class="sub-tool-panel__item-button" id="draw_hexagon_prism">
+              <svg class="sub-tool-panel__item-icon-button" >
                 <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-prism"></use>
               </svg>
             </button>
@@ -171,7 +181,7 @@
           <li class="sub-tool-panel__item-list">
             <button class="sub-tool-panel__item-button" id="add_3d_square_pyramid">
               <svg class="sub-tool-panel__item-icon-button">
-                <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-pyramid-rectangular-base"></use>
+                <use xlink:href="./icons/sprite.svg#icon-pyramid-rectangular-base"></use>
               </svg>
             </button>
           </li>
