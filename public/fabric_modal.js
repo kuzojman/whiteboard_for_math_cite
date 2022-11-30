@@ -59,6 +59,7 @@ async function  getImgContentType (url) {
     .then(response => {
       return response.headers.get('Content-type')
     })
+      .catch ((e) => {})
 }
 
 /**
@@ -67,32 +68,32 @@ async function  getImgContentType (url) {
  */
 window.insertImageOnBoard = async function (url, noemit=false, id=false, params=false){
   // console.log(url.indexOf('/download/'));
-  if (url.indexOf('/download/')!==0 ){
-    url = "/download/"+window.btoa(url)
-  }
-    fabric.Image.fromURL(url, function(myImg) {
-      
-      getImgContentType(url).then( t =>{
-        if ( t.indexOf('gif')!==-1 ){
+    if (url.indexOf('/download/') !== 0) {
+      url = "/download/" + window.btoa(url)
+    }
+    fabric.Image.fromURL(url, function (myImg) {
+
+      getImgContentType(url).then(t => {
+        if (t.indexOf('gif') !== -1) {
 
           fabricGif(
-            url,
-            200,
-            200
-          ).then( function(gif){
+              url,
+              200,
+              200
+          ).then(function (gif) {
             gif['src'] = url;
-            if ( id!==false ){
+            if (id !== false) {
               gif['id'] = id;
             }
-            if ( gif.error===undefined ) {
+            if (gif.error === undefined) {
               // gif.set({ top: 50, left: 50 });
               canvas.add(gif).setActiveObject(gif);
-              if ( takedFirstData==false ){
-                gif.set({ selectable: false })
+              if (takedFirstData == false) {
+                gif.set({selectable: false})
                 decreaseRecievedObjects()
               }
               // перемещаем объект куда надо
-              if ( params!==false ){
+              if (params !== false) {
                 gif.set({
                   top: params.top, //+object.object.top,
                   left: params.left, //+object.object.left
@@ -102,7 +103,7 @@ window.insertImageOnBoard = async function (url, noemit=false, id=false, params=
                   erasable: params.erasable,
                   eraser: params.eraser,
                 });
-              }else{
+              } else {
                 setObjectToCanvasCenter(gif)
               }
               gif.play();
@@ -111,31 +112,30 @@ window.insertImageOnBoard = async function (url, noemit=false, id=false, params=
                 canvas.requestRenderAll();
                 fabric.util.requestAnimFrame(render);
               });
-              
-              if (noemit==false){
+
+              if (noemit == false) {
                 socket.emit("image:add", {src: url, id_of: gif.id});
-                socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
               }
             }
-          } )
-          
+          })
+
           return;
-        
-        }else{
+
+        } else {
 
           myImg.crossOrigin = 'anonymous'
-          myImg['src'] =  url;
-          if ( id!==false ){
+          myImg['src'] = url;
+          if (id !== false) {
             myImg['id'] = id;
           }
 
-          if ( takedFirstData==false ){
-            myImg.set({ selectable: false })
+          if (takedFirstData == false) {
+            myImg.set({selectable: false})
             decreaseRecievedObjects()
-          }      
+          }
           canvas.add(myImg)
           // перемещаем объект куда надо
-          if ( params!==false ){
+          if (params !== false) {
             myImg.set({
               top: params.top, //+object.object.top,
               left: params.left, //+object.object.left
@@ -145,20 +145,21 @@ window.insertImageOnBoard = async function (url, noemit=false, id=false, params=
               erasable: params.erasable,
               eraser: params.eraser,
             });
-          }else{
+          } else {
             setObjectToCanvasCenter(myImg)
           }
-          canvas.setActiveObject(myImg).requestRenderAll(); 
+          canvas.setActiveObject(myImg).requestRenderAll();
           // console.log({src: url, id_of: myImg.id});
-          if (noemit==false){
+          if (noemit == false) {
             socket.emit("image:add", {src: url, id_of: myImg.id});
           }
         }
-      } )
-      
+      })
+
     });
-    
+
     closeAllModals();
+    socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
     moveCursorsToFront = true;
 }
 
