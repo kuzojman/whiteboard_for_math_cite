@@ -180,19 +180,6 @@ window.onload = async () => {
       await callWorker(worker);
     }, 800)
     window.onunload = () => {worker.terminate()}
-
-    const background = localStorage.getItem('backgoundColorSt');
-    if (background === "None") setBackgroudNone();
-    if (background === "Usual") setBackgroudUsual();
-    if (background === "Triangular") setBackgroudTriangular();
-
-    const zoom = localStorage.getItem('zoom');
-    currentValueZoom = zoom;
-    const center = canvas.getCenter();
-    const centerPoint = new fabric.Point(center.left, center.top);
-    canvas.zoomToPoint(centerPoint, currentValueZoom);
-    canvasbg.zoomToPoint(centerPoint, currentValueZoom);
-    as.textContent = (currentValueZoom * 100).toFixed(0) + '%';
 }
 
 /**
