@@ -262,7 +262,7 @@ io.on("connection", async socket => {
         socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
   });
-  
+
   socket.on("width:changed", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("width:changed", object_pass);
   });
@@ -331,7 +331,7 @@ io.on("connection", async socket => {
     // console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
     if ( res.rows.length>0 ){
-      socket.emit("take_data_from_json_file", res.board_stack);
+      socket.emit("take_data_from_json_file", res.rows[0].board_stack);
     }
   });
 
@@ -569,6 +569,11 @@ io.on("connection", async socket => {
   }
 
   socket.on("canvas_save_to_json", async canvas_pass => {
+    const data_saved = JSON.stringify(canvas_pass);
+    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
+    // console.log(data_saved) // Hello world!
+    // await client.end()  
+    return;
     try {
       socket.broadcast.emit('canvas_save_to_json', canvas_pass);
 

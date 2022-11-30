@@ -1,5 +1,243 @@
+const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
+
+  allowTouchScrolling: true,
+  preserveObjectStacking: true,
+});
+
+
+const socket = io('http://localhost:3000',{transports:['websocket']});
+
+// const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
+
+// const socket = io('https://kuzovkin.info',{transports:['websocket']});
+
+// const socket = io();
+
+
+const board_id = get_board_id() || 1;
+
+let isRendering = false;
+const render = canvas.renderAll.bind(canvas);
+
+canvas.renderAll = () => {
+    if (!isRendering) {
+        isRendering = true;
+        requestAnimationFrame(() => {
+          render();
+          isRendering = false;
+        });
+    }
+};
+
+// Передача обновлённого состояния canvas'а на сервер через webworker
+// В случае добавления или удаления элементов передаётся разница между
+// предыдущим и текущим состоянием canvas._objects
+
+let last_canvas_object = 0;
+let max_items_to_add = 5;
+let clear_sent = false;
+let canvas_sent = false;
+
+let send_part_events = []
+let recive_part_events = []
+
+// Строка в массив байт по 2 байта на символ
+// Первыми двумя записываем board_id
+
+async function str2ab(str) {
+    let buf = new ArrayBuffer(str.length*2);
+    let buf_view = new Uint16Array(buf);
+
+    for (let i = 0, str_len = str.length; i < str_len; i++) {
+        if (i === 0) buf_view[i] = board_id.toString().charCodeAt(0);
+        else buf_view[i] = str.charCodeAt(i);
+    }
+
+    return buf;
+}
+
+const JSONStringifyAsync = (data, replacer = null, space = null) => {
+    return new Promise((resolve, reject) => {
+        try {
+            let output = JSON.stringify(data, replacer, space);
+            resolve(output);
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
+const JSONParseAsync = (data, reviver = null) => {
+    return new Promise((resolve, reject) => {
+        try {
+            let output = JSON.parse(data, reviver);
+            resolve(output);
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
+// Вызов webworker
+
+async function callWorker(worker) {
+    try {
+        let len = canvas._objects.length;
+
+        if (!canvas_sent) {
+            worker.postMessage({act: "init", canvas: await JSONStringifyAsync(canvas.toJSON())});
+            canvas_sent = true;
+        } else {
+            // Если добавлены элементы
+            if (last_canvas_object <= len) {
+                let start = (last_canvas_object === 0) ? 0 : last_canvas_object
+                let items_to_add = len - last_canvas_object
+
+                if (items_to_add >= max_items_to_add) {
+                    items_to_add = max_items_to_add
+                }
+
+                let end = start + items_to_add
+
+                //console.log("Current len: " + canvas._objects.length)
+                //console.log("Last added: " + last_canvas_object)
+                //console.log("Items to add: " + items_to_add)
+                //console.log("End: " + end)
+
+                if (end <= len && items_to_add !== 0) {
+                    let _data = await JSONStringifyAsync(canvas._objects.slice(start, end));
+                    let buf = await str2ab("[" + _data + "]")
+                    last_canvas_object = end;
+                    //console.log(start, end)
+                    worker.postMessage(buf, [buf]);
+                }
+            }
+
+            // Изменение объектов
+            if (send_part_events.length >= 0) {
+                let interval = setInterval(() => {
+                    let e = send_part_events.shift();
+                    if (e && e.target && e.target._objects) {
+                        let data = {objects: []};
+                        if (e && e.transform && e.transform.target && e.transform.target.type == 'group') {
+                            let object_index = find_object_index(e.transform.target);
+                            e.transform.target.object_index = find_object_index(e.transform.target);
+                            data.objects.push({
+                                id: e.transform.target.id,
+                                index: object_index,
+                                object: e.transform.target,
+                                top_all: canvas._objects[object_index].top,
+                                left_all: canvas._objects[object_index].left,
+                                angle: canvas._objects[object_index].angle,
+                                scaleX: canvas._objects[object_index].scaleX,
+                                scaleY: canvas._objects[object_index].scaleY,
+                            })
+                        } else {
+                            e.transform.target._objects.forEach((object) => {
+                                let object_index = find_object_index(object);
+                                object.object_index = object_index;
+                                data.objects.push({
+                                    id: object.id,
+                                    object: object,
+                                    index: object_index,
+                                    top_all: canvas._objects[object_index].top,
+                                    left_all: canvas._objects[object_index].left,
+                                    angle: canvas._objects[object_index].angle,
+                                    scaleX: canvas._objects[object_index].scaleX,
+                                    scaleY: canvas._objects[object_index].scaleY,
+                                });
+                            });
+                        }
+                        setTimeout(() => {
+                            socket.emit("object:modified", data);
+                        }, 100);
+                    } else if (e && e.target) {
+                        let object_index = find_object_index(e.target);
+
+                        e.target.object_index = object_index;
+                        setTimeout(() => {
+                            socket.emit("object:modified", {
+                                //object: e.target,
+                                id: canvas._objects[object_index].id,
+                                object: canvas._objects[object_index],
+                                index: object_index,
+                            });
+                        }, 100);
+                    }
+                }, 100);
+                if (send_part_events.length === 0) clearInterval(interval)
+            }
+
+            if (recive_part_events.length >= 0) {
+                let interval = setInterval(async () => {
+                    let e = recive_part_events.shift();
+                    if (e && e.objects) {
+                        for (const object of e.objects) {
+                            //let d = canvas.item(object.index);
+                            let d = canvas._objects.find(item => item.id == object.id);
+                            if (!d) {
+                                continue;
+                            }
+                            d.set({
+                                top: object.top_all, //+object.object.top,
+                                left: object.left_all, //+object.object.left
+                                angle: object.angle,
+                                scaleX: object.scaleX,
+                                scaleY: object.scaleY,
+                            });
+                        }
+                        let buf = await str2ab("[" + "update_many" + e.objects + "]");
+                        worker.postMessage(buf, [buf]);
+                    } else if (e && e.object) {
+                        //let d = canvas.item(e.index);
+                        let d = canvas._objects.find(item => item.id == e.id);
+                        //d.set(e.object);
+                        if (!d) {
+                            return false
+                        }
+                        d.set({
+                            top: e.object.top, //+object.object.top,
+                            left: e.object.left, //+object.object.left
+                            angle: e.object.angle,
+                            scaleX: e.object.scaleX,
+                            scaleY: e.object.scaleY,
+                        });
+                        worker.postMessage({act: "update_one", id: e.id.toString(), el: d});
+                    }
+                }, 200);
+                if (recive_part_events.length === 0) clearInterval(interval);
+            }
+
+            // Если доска очищена
+            if (len === 0 && !clear_sent) {
+                worker.postMessage({act: "clear"});
+                clear_sent = true;
+            }
+        }
+
+        worker.onmessage = e => {
+            console.log(e)
+            worker.terminate()
+        }
+
+        worker.onerror = e => {
+          console.error(e)
+        }
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+// window.onload = async () => {
+//     const worker = new Worker('./workers/save_board_job.js', /*{ type: "module" }*/);
+//     setInterval(async () => {
+//         await callWorker(worker);
+//     }, 500)
+//     window.onunload = () => {worker.terminate()}
+// }
+
 // для продакшна надо оставить пустым
-let serverHostDebug = "" // http://localhost:5000/" //"https://kuzovkin.info"  //
+let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
@@ -41,9 +279,9 @@ function clearBoard(broadcast=true){
   canvas.renderAll();
   clear_sent = 0;
 
-  //if ( broadcast ){
-  //  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-  //}
+  if ( broadcast ){
+   socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  }
 }
 
 /**
@@ -960,7 +1198,7 @@ socket.on( 'connect', function()
       
       line = new fabric.Line(line_taken.points, {
         id: line_taken.id,
-        strokeWidth: line_taken.width,
+        strokeWidth: parseInt(line_taken.width),
         fill: line_taken.fill,//'#07ff11a3',
         stroke: line_taken.stroke,//'#07ff11a3',
         originX: 'center',
@@ -969,6 +1207,7 @@ socket.on( 'connect', function()
         selectable: false,
         objectCaching: false
       });
+    }
       //line = new fabric.Line(line_taken)
       canvas.add(line)
       //'canvas.freeDrawingBrush.width = width_taken'
@@ -1066,9 +1305,9 @@ socket.on( 'connect', function()
   })
 
   canvas.on('object:modified', e =>    {
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //send_part_of_data(e);
-    send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+    // send_part_events.push(e);
   });
 
 
@@ -1089,16 +1328,16 @@ socket.on( 'connect', function()
 
   canvas.on('object:moving',e =>
   {
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //send_part_of_data(e);
-      send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+      // send_part_events.push(e);
   });
 
 
   socket.on('object:moving', e =>
   {
-    //recive_part_of_data(e);
-      recive_part_events.push(e);
+    recive_part_of_data(e);
+      // recive_part_events.push(e);
   });
 
   socket.on('figure_delete', e =>
@@ -1118,9 +1357,9 @@ socket.on( 'connect', function()
 
   socket.on('figure_copied', e =>
   {
-      canvas.sendToBack(cursorUser);
-      //canvas.add(new fabric.Object(e));
-      //canvas.renderAll();
+      // canvas.sendToBack(cursorUser);
+      canvas.add(new fabric.Object(e));
+      canvas.renderAll();
       //canvas.loadFromJSON(e);
   });
   
@@ -1128,32 +1367,31 @@ socket.on( 'connect', function()
   canvas.on('object:scaling',e =>
   {
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //send_part_of_data(e);
-      send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+      // send_part_events.push(e);
   });
 
 
   socket.on('object:scaling', e =>
   {
-      //recive_part_of_data(e);
-      recive_part_events.push(e);
+      recive_part_of_data(e);
+      // recive_part_events.push(e);
   });
 
   canvas.on('object:rotating',e =>
   {
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
-    //send_part_of_data(e);
-      send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+      // send_part_events.push(e);
   });
 
 
   socket.on('object:rotating', e =>
   {
-      //recive_part_of_data(e);
+      recive_part_of_data(e);
       //canvas.loadFromJSON(e);
-      recive_part_events.push(e);
+      // recive_part_events.push(e);
   });
 
   socket.on('text:added', e => {
@@ -1187,7 +1425,7 @@ socket.on( 'connect', function()
 
   socket.on('object:modified', e =>
   {
-      recive_part_events.push(e);
+    recive_part_of_data(e);
   });
 
   /**
@@ -1216,9 +1454,7 @@ socket.on( 'connect', function()
       if ( compare_path(options.path,canvas.isWaitingPath) ){
         canvasbg.remove(options.path)
         options.path.id = canvas.isWaitingPath.id;
-
-        canvas.sendToBack(cursorUser);
-
+        canvas.add(options.path)
         //canvas.add(options.path)
       }
       canvas.isWaitingPath = false
@@ -1248,7 +1484,7 @@ function objectAddInteractive(object){
       canvas.renderAll();
       // object.objectCaching = true;
     }
-  }else if ( object.type=='path' ){
+  }else if (['path','Arrow', 'ArrowTwo', 'line' ].indexOf(object.type)!==-1 ){
     fn_ = (color)=>{
       object.objectCaching = false;
       if ( object.fill ){
@@ -1261,6 +1497,7 @@ function objectAddInteractive(object){
   }
   object.changedColour = fn_;
   object.changedWidth = function(width){
+    object.objectCaching = false;
     // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
     this.strokeWidth = parseInt(width);
     canvas.renderAll();
@@ -1277,7 +1514,7 @@ function enableFreeDrawing(){
   canvas.freeDrawingBrush.btype = "brush"
   
 
-  let isDrawing = false
+  let isDrawing = false;
   let enableDrawingMode = true;
   // canvas._onMouseMoveInDrawingMode = function(e) {
   //   var pointer = canvas.getPointer(e);
@@ -1393,6 +1630,7 @@ function enableFreeDrawing(){
  * Включаем инструмент лассо
  */
 function lassoButtonClick(){
+  let isDrawing = false;
   removeEvents();
   canvas.freeDrawingBrush = new fabric.LassoBrush(canvas);
   canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
@@ -1438,7 +1676,7 @@ function enableEraser(){
     isDrawing = false;
     const pointer = canvas.getPointer(e);
     socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   })
   canvas.on('mouse:move', (e)=> {
     if (isDrawing) {
@@ -1583,7 +1821,7 @@ function drawrec(type_of_rectangle) {
     rect.setCoords();
     //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
@@ -1666,7 +1904,7 @@ canvas.setBackgroundColor(
       scaleX: 1,
       scaleY: 1,
     },
-    //canvas.renderAll.bind(canvas)
+    canvas.renderAll.bind(canvas)
 );
 
 
@@ -1877,7 +2115,7 @@ function drawLine(type_of_line) {
     let points = [pointer.x, pointer.y, pointer.x, pointer.y];
     if ( type_of_line == "arrow" ){
       line = new fabric.Arrow(points, {
-        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -1890,7 +2128,7 @@ function drawLine(type_of_line) {
       
     }else if ( type_of_line == "arrowtwo" ){
       line = new fabric.ArrowTwo(points, {
-        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -1902,7 +2140,7 @@ function drawLine(type_of_line) {
       });
     }else{
       line = new fabric.Line(points, {
-        strokeWidth: canvas.freeDrawingBrush.width,//drawing_figure_width.value,
+        strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
         //fill: hexToRgbA(drawing_color_fill.value,drawing_figure_opacity.value),
         stroke: canvas.freeDrawingBrush.color,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
         strokeDashArray: [stroke_line, stroke_line],
@@ -1923,7 +2161,7 @@ function drawLine(type_of_line) {
       id: line.id,
       points: points,
       fill:line.fill,
-      width: line.strokeWidth,
+      width: parseInt(line.strokeWidth),
       strokeDashArray: [stroke_line, stroke_line],
       stroke: line.stroke});
   });
@@ -1952,7 +2190,7 @@ function drawLine(type_of_line) {
     line.setCoords();
     //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
@@ -2011,8 +2249,7 @@ function print_Text() {
   });
 
   canvas.add(textbox);
-  //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-  //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   socket.emit("text:add", canvas.toJSON(['id']));
 }
 
@@ -2036,7 +2273,7 @@ function find_object_index(target_object) {
   return target_index;
 }
 
-/*
+
 function send_part_of_data(e) {
   if (e.target._objects) {
     let data = { objects: [] };
@@ -2084,9 +2321,8 @@ function send_part_of_data(e) {
     });
   }
 }
-*/
 
-/*
+
 function recive_part_of_data(e) {
   if (e.objects) {
     for (const object of e.objects) {
@@ -2118,9 +2354,9 @@ function recive_part_of_data(e) {
       scaleY: e.object.scaleY,
     });
   }
-  //canvas.renderAll();
+  canvas.renderAll();
 }
-*/
+
 
 document.body.addEventListener('keydown', handleDownKeySpace);
 document.body.addEventListener('keyup', handleUpKeySpace);
@@ -2152,6 +2388,11 @@ document.addEventListener('DOMContentLoaded',(e)=>{
     popupBasic.setColor(colour);
     drawingColorEl.style.backgroundColor = colour;
     socket.emit("color:change", colour);
+  }else{
+    colour="rgba(0,0,0,1)";
+    popupBasic.setColor(colour);
+    drawingColorEl.style.backgroundColor = colour;
+    Cookies.set('colour',colour);
   }
 });
 
