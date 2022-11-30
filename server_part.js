@@ -10,7 +10,6 @@ const mustacheExpress = require('mustache-express');
 const S3 = require('aws-sdk/clients/s3');
 const AWS = require('aws-sdk');
 
-var Canvas = new Object()
 
 var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
 
@@ -184,34 +183,24 @@ app.get("/", (req, res) => {
  */
 app.get("/download/:urldata", (req, response) => {
   // console.log(req.params.urldata);
-  try {
-    let url_ = Buffer.from(req.params.urldata, 'base64').toString()
-    // console.log(url_);
-    // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
-    //   url_ = url_.replace('https:/','https://')
-    // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
-    //   url_ = url_.replace('http:/','http://')
-    // }
-    //console.log(url_);
-    const request = https.get(url_, (res_) => {
-      res_.setEncoding('binary');
-      response.contentType(res_.headers['content-type']);
-      res_.on('data', (body) => {
-        response.write(body, 'binary')
-        const fs = require('fs');
-        const fpath = '/download/' + req.params.urldata
-        try {
-          fs.writeFileSync(fpath, body, {flag: 'wx'})
-        } catch (e) {}
-        console.log(req.params.urldata)
-      });
-      res_.on('end', () => {
-        response.end()
-      })
+  let url_ = Buffer.from(req.params.urldata, 'base64').toString()
+  // console.log(url_);
+  // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
+  //   url_ = url_.replace('https:/','https://')
+  // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
+  //   url_ = url_.replace('http:/','http://')
+  // }
+  console.log(url_);
+  let request = https.get(url_, (res_)=>{
+    res_.setEncoding('binary');
+    response.contentType( res_.headers['content-type'] );
+    res_.on('data',  (body) =>{
+      response.write(body,'binary')
+    });
+    res_.on('end',()=> {
+      response.end()
     })
-  } catch (e) {
-    console.log(e)
-  }
+  })
 });
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -261,14 +250,6 @@ io.on("connection", async socket => {
         }
         socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
-  });
-  
-  socket.on("width:changed", (object_pass) => {
-    socket.broadcast.to(socket.board_id).emit("width:changed", object_pass);
-  });
-
-  socket.on("color:changed", (object_pass) => {
-    socket.broadcast.to(socket.board_id).emit("color:changed", object_pass);
   });
 
   /**
@@ -327,11 +308,12 @@ io.on("connection", async socket => {
     socket.board_id = board_id;
     socket.join(board_id);
 
-    // console.log('>>', board_id, e);
-    // console.log('>>', 'before select -- board_id = ' + board_id);
+   // console.log('>>', board_id, e);
+  //  console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
     if ( res.rows.length>0 ){
-      socket.emit("take_data_from_json_file", res.board_stack);
+    	//console.log(res.rows[0].board_stack)
+      socket.emit("take_data_from_json_file", res.rows[0].board_stack);
     }
   });
 
@@ -540,6 +522,14 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("text:edited", object_pass);
   });
 
+  socket.on("width:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("width:changed", object_pass);
+  });
+
+  socket.on("color:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("color:changed", object_pass);
+  });
+
   socket.on("formula:added", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("formula:added", object_pass);
   });
@@ -548,68 +538,29 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("formula:edited", object_pass);
   });
 
-  // Объект для хранения канваса в памяти
+  socket.on("canvas_save_to_json", async canvas_pass => {
+    //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
+    const data_saved = JSON.stringify(canvas_pass["canvas"]);
+    // console.log(canvas_pass);
+    //await client.connect()
+    //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
+    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
+    //console.log(res) // Hello world!
+    //await client.end()  
+   // done()
 
-  function find_object_index(target_object) {
-    let target_index;
-    Canvas.objects.forEach(function (object, index) {
-      if (object.id === target_object.id) {
-        target_index = index;
+/*
+    fs.writeFile("saved_data.json", data_saved, (err) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("saved");
       }
     });
-    if (!target_index) {
-      Canvas.objects.forEach(function (object, index) {
-        if (object.id === target_object.id) {
-          target_index = index;
-        }
-      });
-    }
-
-    return target_index;
-  }
-
-  socket.on("canvas_save_to_json", async canvas_pass => {
-    try {
-      socket.broadcast.emit('canvas_save_to_json', canvas_pass);
-
-      if (canvas_pass["act"] === "init") {
-        Canvas = canvas_pass["canvas"];
-      } else if (canvas_pass["act"] === "clear") {
-        await client.query("DELETE FROM boards WHERE id=$1", [canvas_pass["board_id"]]);
-        fs.unlinkSync("saved_data.json");
-      } else if (canvas_pass["act"] === "add") {
-        Canvas = Canvas.concat(canvas_pass["canvas"]);
-      } else if (canvas_pass["act"] === "update_one") {
-        let index = find_object_index(canvas_pass)
-        if (index) Canvas[index] = canvas_pass["canvas"];
-      } else if (canvas_pass["act"] === "update_many") {
-        for (let o in canvas_pass) {
-          let index = find_object_index(canvas_pass["canvas"][o]);
-          if (index) Canvas.objects[index] = canvas_pass["canvas"][o];
-        }
-      }
-
-      const data_saved = JSON.stringify(Canvas);
-      //await client.connect()
-      //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
-      //console.log(res) // Hello world!
-      //await client.end()
-      //done()
-
-      if (data_saved !== "{}") {
-        const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
-
-        await fs.writeFile("saved_data.json", data_saved, (err) => {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
-    } catch (e) {
-      console.log(e);
-    }
+*/
 
   });
+
 
   socket.on('upload_to_aws', (image_pass,callback) =>{
     let name_obj = makeid(32)
