@@ -51,6 +51,7 @@ function Delete() {
 }
 
 function Paste() {
+
   if ( _clipboard ){
     // clone again, so you can do multiple copies.
     _clipboard.clone(function (clonedObj) {
@@ -122,7 +123,6 @@ function Paste() {
 /*
 var state = [];
 var mods = 0;
-
 canvas.on(
   'object:modified', function () 
   {
@@ -131,7 +131,6 @@ canvas.on(
   'object:added', function () {
   updateModifications(true);
 });
-
 function updateModifications(savehistory) 
 {
   if (savehistory === true) 
@@ -140,7 +139,6 @@ function updateModifications(savehistory)
       state.push(myjson);
   }
 }
-
   function undo() 
   {
     if (mods < state.length) 
@@ -155,7 +153,6 @@ function updateModifications(savehistory)
         //canvas.renderAll();
         console.log(state,state.length - 1 - mods - 1)
         mods += 1;
-
     }
   }
 */

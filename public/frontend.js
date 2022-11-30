@@ -1,4 +1,3 @@
-
 const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
 
   allowTouchScrolling: true,
@@ -305,7 +304,6 @@ function setObjectToCanvasCenter(obj){
       left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2,
     });
   }
-
 }
 
 /**
