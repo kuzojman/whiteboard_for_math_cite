@@ -125,8 +125,8 @@ const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,.
 function serialize_canvas(canvas)
 {
     let result =[];
-    if ( canvas.objects ){
-        canvas.objects.forEach(function(object)
+    if ( canvas._objects ){
+        canvas._objects.forEach(function(object)
         {
             // console.log(object.toJSON());
             let replaced_object ={};
