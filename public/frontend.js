@@ -229,16 +229,16 @@ async function callWorker(worker) {
     }
 }
 
-window.onload = async () => {
-    const worker = new Worker('./workers/save_board_job.js', /*{ type: "module" }*/);
-    setInterval(async () => {
-        await callWorker(worker);
-    }, 500)
-    window.onunload = () => {worker.terminate()}
-}
+// window.onload = async () => {
+//     const worker = new Worker('./workers/save_board_job.js', /*{ type: "module" }*/);
+//     setInterval(async () => {
+//         await callWorker(worker);
+//     }, 500)
+//     window.onunload = () => {worker.terminate()}
+// }
 
 // для продакшна надо оставить пустым
-let serverHostDebug = "" // http://localhost:5000/" //"https://kuzovkin.info"  //
+let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
@@ -1209,6 +1209,7 @@ socket.on( 'connect', function()
         selectable: false,
         objectCaching: false
       });
+    }
       //line = new fabric.Line(line_taken)
       canvas.add(line)
       //'canvas.freeDrawingBrush.width = width_taken'
@@ -1306,9 +1307,9 @@ socket.on( 'connect', function()
   })
 
   canvas.on('object:modified', e =>    {
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //send_part_of_data(e);
-    send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+    // send_part_events.push(e);
   });
 
 
@@ -1329,16 +1330,16 @@ socket.on( 'connect', function()
 
   canvas.on('object:moving',e =>
   {
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //send_part_of_data(e);
-      send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+      // send_part_events.push(e);
   });
 
 
   socket.on('object:moving', e =>
   {
-    //recive_part_of_data(e);
-      recive_part_events.push(e);
+    recive_part_of_data(e);
+      // recive_part_events.push(e);
   });
 
   socket.on('figure_delete', e =>
@@ -1358,9 +1359,9 @@ socket.on( 'connect', function()
 
   socket.on('figure_copied', e =>
   {
-      canvas.sendToBack(cursorUser);
-      //canvas.add(new fabric.Object(e));
-      //canvas.renderAll();
+      // canvas.sendToBack(cursorUser);
+      canvas.add(new fabric.Object(e));
+      canvas.renderAll();
       //canvas.loadFromJSON(e);
   });
   
@@ -1368,32 +1369,31 @@ socket.on( 'connect', function()
   canvas.on('object:scaling',e =>
   {
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //send_part_of_data(e);
-      send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+      // send_part_events.push(e);
   });
 
 
   socket.on('object:scaling', e =>
   {
-      //recive_part_of_data(e);
-      recive_part_events.push(e);
+      recive_part_of_data(e);
+      // recive_part_events.push(e);
   });
 
   canvas.on('object:rotating',e =>
   {
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
-    //send_part_of_data(e);
-      send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
+      // send_part_events.push(e);
   });
 
 
   socket.on('object:rotating', e =>
   {
-      //recive_part_of_data(e);
+      recive_part_of_data(e);
       //canvas.loadFromJSON(e);
-      recive_part_events.push(e);
+      // recive_part_events.push(e);
   });
 
   socket.on('text:added', e => {
@@ -1427,7 +1427,7 @@ socket.on( 'connect', function()
 
   socket.on('object:modified', e =>
   {
-      recive_part_events.push(e);
+    recive_part_of_data(e);
   });
 
   /**
@@ -1456,9 +1456,7 @@ socket.on( 'connect', function()
       if ( compare_path(options.path,canvas.isWaitingPath) ){
         canvasbg.remove(options.path)
         options.path.id = canvas.isWaitingPath.id;
-
-        canvas.sendToBack(cursorUser);
-
+        canvas.add(options.path)
         //canvas.add(options.path)
       }
       canvas.isWaitingPath = false
@@ -1678,7 +1676,7 @@ function enableEraser(){
     isDrawing = false;
     const pointer = canvas.getPointer(e);
     socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   })
   canvas.on('mouse:move', (e)=> {
     if (isDrawing) {
@@ -1823,7 +1821,7 @@ function drawrec(type_of_rectangle) {
     rect.setCoords();
     //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
@@ -1906,7 +1904,7 @@ canvas.setBackgroundColor(
       scaleX: 1,
       scaleY: 1,
     },
-    //canvas.renderAll.bind(canvas)
+    canvas.renderAll.bind(canvas)
 );
 
 
@@ -2192,7 +2190,7 @@ function drawLine(type_of_line) {
     line.setCoords();
     //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
     // let board_id = get_board_id();
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
@@ -2251,8 +2249,7 @@ function print_Text() {
   });
 
   canvas.add(textbox);
-  //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-  //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   socket.emit("text:add", canvas.toJSON(['id']));
 }
 
@@ -2276,7 +2273,7 @@ function find_object_index(target_object) {
   return target_index;
 }
 
-/*
+
 function send_part_of_data(e) {
   if (e.target._objects) {
     let data = { objects: [] };
@@ -2324,9 +2321,8 @@ function send_part_of_data(e) {
     });
   }
 }
-*/
 
-/*
+
 function recive_part_of_data(e) {
   if (e.objects) {
     for (const object of e.objects) {
@@ -2358,9 +2354,9 @@ function recive_part_of_data(e) {
       scaleY: e.object.scaleY,
     });
   }
-  //canvas.renderAll();
+  canvas.renderAll();
 }
-*/
+
 
 document.body.addEventListener('keydown', handleDownKeySpace);
 document.body.addEventListener('keyup', handleUpKeySpace);
@@ -2392,6 +2388,11 @@ document.addEventListener('DOMContentLoaded',(e)=>{
     popupBasic.setColor(colour);
     drawingColorEl.style.backgroundColor = colour;
     socket.emit("color:change", colour);
+  }else{
+    colour="rgba(0,0,0,1)";
+    popupBasic.setColor(colour);
+    drawingColorEl.style.backgroundColor = colour;
+    Cookies.set('colour',colour);
   }
 });
 
