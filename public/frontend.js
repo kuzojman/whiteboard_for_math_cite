@@ -337,7 +337,14 @@ function selectTool(event){
           selectedTool=currentAction
         }
       }
-
+      // если выбрано лезвие, то меняем курсор
+      if ( selectedTool=='blade' || selectedTool=='freedraw' ){
+        setCursor(selectedTool);
+      }else{
+        canvas.hoverCursor = 'auto';
+        canvas.freeDrawingCursor = 'auto';
+        canvas.defaultCursor = 'move';
+      }
 
       let siblings = getSiblings(currentButton);
       if ( siblings.length>0 ){
