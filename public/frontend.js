@@ -1329,6 +1329,7 @@ socket.on( 'connect', function()
       object = object_fit_apth(object)
       if(!object.socket_id) {
         socket.emit("object:added", {"board_id": board_id, "object": serialize_object(object)});
+        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       }
     }
   });
@@ -1897,10 +1898,7 @@ function drawcle(type_of_circle) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     circle.setCoords();
-    //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
-    // let board_id = get_board_id();
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   });
 }
 
@@ -2046,7 +2044,7 @@ popupBasic.onChange = function(color) {
 
 
 //Open the popup manually:
-popupBasic.openHandler();
+// popupBasic.openHandler();
 
 
 canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
@@ -2391,6 +2389,7 @@ document.addEventListener('DOMContentLoaded',(e)=>{
   canvas.isDrawingMode = false
   canvas.allowTouchScrolling = true;
   changeObjectSelection(false);
+  // console.log(colour);
   if ( colour ){
     popupBasic.setColor(colour);
     drawingColorEl.style.backgroundColor = colour;
