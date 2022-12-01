@@ -192,7 +192,7 @@ app.get("/download/:urldata", (req, response) => {
     // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
     //   url_ = url_.replace('http:/','http://')
     // }
-    //console.log(url_);
+    // console.log(url_);
     const request = https.get(url_, (res_) => {
       res_.setEncoding('binary');
       response.contentType(res_.headers['content-type']);
