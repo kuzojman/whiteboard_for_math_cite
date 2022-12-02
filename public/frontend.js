@@ -311,10 +311,9 @@ function setObjectToCanvasCenter(obj){
  * @param {*} curname название инструмента и файла с курсором
  */
 function setCursor(curname){
-  canvas.hoverCursor = 'url("/icons/'+curname+'.cur"), auto';
-  canvas.defaultCursor = 'url("/icons/'+curname+'.cur"), auto';
-  canvas.freeDrawingCursor = 'url("/icons/'+curname+'.cur"), auto';
-
+  canvas.hoverCursor = 'url("./icons/'+curname+'.cur"), auto';
+  canvas.defaultCursor = 'url("./icons/'+curname+'.cur"), auto';
+  canvas.freeDrawingCursor = 'url("./icons/'+curname+'.cur"), auto';
 }
 
 /**
@@ -2368,6 +2367,7 @@ document.body.addEventListener('keyup', handleUpKeySpace);
 
 
 const handleButtonCursorMoveClick = (ev) => {
+  removeEvents();
   ev.preventDefault()
   isCursorMove = !isCursorMove;
   canvas.toggleDragMode(true);
@@ -2382,6 +2382,7 @@ buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 let colour = Cookies.get('colour');
 
 document.addEventListener('DOMContentLoaded',(e)=>{
+  removeEvents();
   isCursorMove= true;
   canvas.toggleDragMode(true);
   buttonCursorMove.classList.add('settings-panel__button-cursor-move_active');
