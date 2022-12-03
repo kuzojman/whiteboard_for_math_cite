@@ -336,6 +336,7 @@ function selectTool(event){
           selectedTool=currentAction
         }
       }
+      // console.log(selectedTool);
       // если выбрано лезвие, то меняем курсор
       if ( selectedTool=='blade' || selectedTool=='freedraw' ){
         setCursor(selectedTool);
@@ -1790,6 +1791,12 @@ function drawrec(type_of_rectangle) {
       // console.log("rect",rect);
       canvas.renderAll();
     }
+    rect.changedWidth = function(width){
+      rect.objectCaching = false;
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = parseInt(width);
+      canvas.renderAll();
+    }
     canvas.add(rect);
     socket.emit("rect:add", rect);
   });
@@ -1878,6 +1885,12 @@ function drawcle(type_of_circle) {
     circle.changedColour = function(color){
       circle.fill = color;
       // console.log("circle log");
+      canvas.renderAll();
+    }
+    rect.changedWidth = function(width){
+      rect.objectCaching = false;
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = parseInt(width);
       canvas.renderAll();
     }
     canvas.add(circle);
@@ -2157,7 +2170,13 @@ function drawLine(type_of_line) {
     }
     line.changedColour = function(color){
       this.stroke = color;
-      console.log("line stroke");
+      // console.log("line stroke");
+      canvas.renderAll();
+    }
+    line.changedWidth = function(width){
+      line.objectCaching = false;
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = parseInt(width);
       canvas.renderAll();
     }
     canvas.add(line);
