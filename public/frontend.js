@@ -1887,8 +1887,8 @@ function drawcle(type_of_circle) {
       // console.log("circle log");
       canvas.renderAll();
     }
-    rect.changedWidth = function(width){
-      rect.objectCaching = false;
+    circle.changedWidth = function(width){
+      circle.objectCaching = false;
       // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
       this.strokeWidth = parseInt(width);
       canvas.renderAll();
