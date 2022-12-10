@@ -738,9 +738,9 @@ function checkLoggedIn(){
       return;
     }
     // сохраняем пользователя через сокеты
-    socket.emit("user:user_id",{user:203, board:board_id, socket_id: socket.id});
+    socket.emit("user:user_id",{user:e.user, board:board_id, socket_id: socket.id});
     // отправляем запрос на регистрацию на доске
-    socket.emit("access:request", {user:203, board:board_id});
+    socket.emit("access:request", {user:e.user, board:board_id});
     // показываем оверлей ожидания
     showWaitingOverlay()
   });
