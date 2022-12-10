@@ -183,7 +183,6 @@ app.get("/", (req, res) => {
  */
 app.get("/download/:urldata", (req, response) => {
   // console.log(req.params.urldata);
-  try {
     let url_ = Buffer.from(req.params.urldata, 'base64').toString()
     // console.log(url_);
     // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
@@ -207,8 +206,8 @@ app.get("/download/:urldata", (req, response) => {
       res_.on('end', () => {
         response.end()
       })
-    })
-  } )
+    }
+   )
 });
 
 app.use(express.static(path.join(__dirname, "public")));
