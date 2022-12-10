@@ -29,6 +29,31 @@ canvas.renderAll = () => {
     }
 };
 
+fabric.util.object.extend(fabric.Object.prototype, {
+  transform: function(ctx, fromLeft) {
+    if (this.group && !this.group._transformDone && this.group === this.canvas._activeGroup) {
+      this.group.transform(ctx);
+    }
+    var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
+    // ADDED CODE FOR THE ANSWER
+    if (this.ignoreZoom && !this.group && this.canvas) {
+      var zoom = 1 / this.canvas.getZoom();
+      ctx.scale(zoom, zoom);
+      ctx.translate(center.x*this.canvas.getZoom(), center.y*this.canvas.getZoom());
+    }else{
+      ctx.translate(center.x, center.y);
+    }
+    // END OF ADDED CODE FOR THE ANSWER
+    this.angle && ctx.rotate(degreesToRadians(this.angle));
+    ctx.scale(
+      this.scaleX * (this.flipX ? -1 : 1),
+      this.scaleY * (this.flipY ? -1 : 1)
+    );
+    this.skewX && ctx.transform(1, 0, Math.tan(degreesToRadians(this.skewX)), 1, 0, 0);
+    this.skewY && ctx.transform(1, Math.tan(degreesToRadians(this.skewY)), 0, 1, 0, 0);
+  }
+});
+
 // Передача обновлённого состояния canvas'а на сервер через webworker
 // В случае добавления или удаления элементов передаётся разница между
 // предыдущим и текущим состоянием canvas._objects
@@ -558,7 +583,10 @@ const getCursorData = (data) => {
   if(!existing_coursor)
   {
     cursorUser.socket_id=data.userId;
+    cursorUser.ignoreZoom = true;
     cursorUser.item(0).fill = colors[color_index];
+    cursorUser.item(0).ignoreZoom = true;
+    cursorUser.item(1).ignoreZoom = true;
     cursorUser.item(1).text = data.username || "unknown"
     color_index++;
     if(!colors[color_index]){
@@ -2505,6 +2533,8 @@ fontColorInput2.addEventListener('change', (e) => {
 
 const buttonIncreaseScale = document.querySelector(".scale__button-increase-scale");
 const buttonDecreaseScale = document.querySelector(".scale__button-decrease-scale");
+
+
 
 buttonIncreaseScale.addEventListener("click", (event) => {
   event.preventDefault();
