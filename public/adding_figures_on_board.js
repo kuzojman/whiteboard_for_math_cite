@@ -165,46 +165,67 @@ svgAdd3dCylinderButton.addEventListener("click",(e) =>
 
 function adding_svg_figure(what_to_add)
 {
+  // return;
+  removeEvents();
   var group = [];
-  fabric.loadSVGFromURL(what_to_add,function(objects,options)
-      {
-        var loadedObjects = new fabric.Group(group);
-        loadedObjects.set({
-          left: 100,
-          top: 100,
-          width:100,
-          height:100,
-        });
-        loadedObjects.scaleToWidth(400);
-        loadedObjects.scaleToHeight(400);
-        canvas.add(loadedObjects);
-        canvas.renderAll();
-        socket.emit("picture:add",canvas.toJSON())
-        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-      },
-      function(item, object) {
-        object.set('id', item.getAttribute('id'));
-        group.push(object);
-      });
+  svgFileToString(what_to_add).then( (url)=>{
+
+    fabric.Image.fromURL(url, function(myImg) {
+      myImg.crossOrigin = 'anonymous'
+      myImg['src'] =  url;
+      myImg = object_set_id(myImg);
+      if ( takedFirstData==false ){
+        myImg.set({ selectable: false })
+        decreaseRecievedObjects()
+      }
+      myImg.set({
+        left:  100,
+        top:   100,
+        width: 100,
+        height:100
+      })
+      canvas.add(myImg)
+      // перемещаем объект куда надо
+      setObjectToCanvasCenter(myImg)
+      canvas.setActiveObject(myImg).requestRenderAll(); 
+      socket.emit("picture:add", {src: url, id_of: myImg.id});      
+    });
+
+    canvas.renderAll();
+  } );
 }
 
 
+/**
+ * Convert SVG xml to png base64 url
+ * @param {any} svgXml
+ */
+function getImageDataURL(svgXml) {
+  return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgXml)));
+}
 
+/**
+ * Convert SVG xml to png base64 url
+ * @param {any} svgXml
+ */
+function svgFileToString(iconpath){
+  return fetch(iconpath)
+    .then(response => response.text())
+    .then(text => {
+      // console.log(text);
+      return getImageDataURL(text);
+      // do whatever
+    });
+}
 
-
-
-
-
-
-
-function add_svg()
-{
+function add_svg() {
   fabric.Image.fromURL('./icons/pug_small_2.jpg', function(myImg) {
     //i create an extra var for to change some image properties
     var img1 = myImg.set({ left: 0, top: 0 ,width:250,height:250});
-    canvas.add(img1);
-    canvas.renderAll();
-  });
+    canvas.add(img1); 
+
+    // canvas.renderAll();
+   });
 }
 
 const svgAddButton = document.querySelector('#add_svg_picture');

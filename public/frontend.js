@@ -124,7 +124,7 @@ function clearBoard(broadcast=true){
   canvas.renderAll();
 
   if ( broadcast ){
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+   socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   }
 }
 
@@ -155,23 +155,21 @@ function setObjectToCanvasCenter(obj){
  * @param {*} curname название инструмента и файла с курсором
  */
 function setCursor(curname){
-  canvas.hoverCursor = 'url("/icons/'+curname+'.cur"), auto';
-  canvas.defaultCursor = 'url("/icons/'+curname+'.cur"), auto';
-  canvas.freeDrawingCursor = 'url("/icons/'+curname+'.cur"), auto';
-
+  canvas.hoverCursor = 'url("./icons/'+curname+'.cur"), auto';
+  canvas.defaultCursor = 'url("./icons/'+curname+'.cur"), auto';
+  canvas.freeDrawingCursor = 'url("./icons/'+curname+'.cur"), auto';
 }
 
 /**
  * Нажатие на кнопку выбора инструмента
  */
 function selectTool(event){
-  let currentButton = event.target.closest('.tool-panel__item-button');
-  let notCurrentButton = event.target.closest('.sub-tool-panel__item-button');
-  if ( notCurrentButton ){
-    currentButton = notCurrentButton;
-  }
-  if( currentButton) {
-
+    let currentButton = event.target.closest('.tool-panel__item-button');
+    let notCurrentButton = event.target.closest('.sub-tool-panel__item-button');
+    if ( notCurrentButton ){
+      currentButton = notCurrentButton;
+    }
+    if( currentButton) {
     let currentAction = currentButton.dataset.tool;
 
     if ( currentAction ){
@@ -180,21 +178,24 @@ function selectTool(event){
       }else{
         selectedTool=currentAction
       }
-    }
-    // если выбрано лезвие, то меняем курсор
-    if ( selectedTool=='blade' || selectedTool=='freedraw' ){
-      setCursor(selectedTool);
-    }else{
-      canvas.hoverCursor = 'auto';
-      canvas.freeDrawingCursor = 'auto';
-      canvas.defaultCursor = 'move';
-    }
+      // console.log(selectedTool);
+      // если выбрано лезвие, то меняем курсор
+      if ( selectedTool=='blade' || selectedTool=='freedraw' ){
+        setCursor(selectedTool);
+      }else{
+        canvas.hoverCursor = 'auto';
+        canvas.freeDrawingCursor = 'auto';
+        canvas.defaultCursor = 'move';
+      }
 
-    let siblings = getSiblings(currentButton);
-    if ( siblings.length>0 ){
-      if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
-        if(selectedButton === currentButton) {
-          toolPanel.classList.toggle('full-screen');
+      let siblings = getSiblings(currentButton);
+      if ( siblings.length>0 ){
+        if ( siblings.map(e=>e.classList).indexOf('sub-tool-panel') ){
+          if(selectedButton === currentButton) {
+            toolPanel.classList.toggle('full-screen');
+          }else{
+            toolPanel.classList.add('full-screen');
+          }
         }else{
           toolPanel.classList.add('full-screen');
         }
@@ -410,11 +411,8 @@ const getCursorData = (data) => {
     }
     //cursorUser.left = data.cursorCoordinates.x
     //canvas.sendToBack(cursorUser);
-
     canvas.add(cursorUser);
-
     existing_coursor = cursorUser;
-
   }else{
 
     // console.log(h,w,data.cursorCoordinates);
@@ -838,7 +836,6 @@ function object_fit_apth(obj_){
       }
     });
 
-
     objectAddInteractive(object);
 
   }
@@ -956,6 +953,7 @@ socket.on( 'connect', function()
       canvasbg.freeDrawingBrush.width = width_taken;
     }
   });
+  
 
 
   let circle ;
@@ -1014,7 +1012,6 @@ socket.on( 'connect', function()
     canvas.renderAll();
   });
 
-
   socket.on('line:add', function(line_taken) {
     // console.log(line_taken);
     if ( line_taken.line_type == "arrow" ){
@@ -1057,9 +1054,9 @@ socket.on( 'connect', function()
         objectCaching: false
       });
     }
-    //line = new fabric.Line(line_taken)
-    canvas.add(line)
-    //'canvas.freeDrawingBrush.width = width_taken'
+      //line = new fabric.Line(line_taken)
+      canvas.add(line)
+      //'canvas.freeDrawingBrush.width = width_taken'
   });
 
   /**
@@ -1139,8 +1136,12 @@ socket.on( 'connect', function()
                       await window.insertImageOnBoard(object.src, true, object.id, object);
                   }
                 }else{
-                  if (object.formula!==undefined && object.formula!=''){
-                    window.addFormula(object.formula, object.id, object,false)
+                  // console.log(object.type);
+                  objectAddInteractive(object);
+                  canvas.add(object);
+
+                  if ( takedFirstData==false ){
+                    object.set({ selectable: false })
                   }
                 }
               }else{
@@ -1185,6 +1186,7 @@ socket.on( 'connect', function()
       object = object_fit_apth(object)
       if(!object.socket_id) {
         socket.emit("object:added", {"board_id": board_id, "object": serialize_object(object)});
+        socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       }
     }
   });
@@ -1217,10 +1219,10 @@ socket.on( 'connect', function()
 
   socket.on('figure_copied', e =>
   {
-    // canvas.sendToBack(cursorUser);
-    canvas.add(new fabric.Object(e));
-    canvas.renderAll();
-    //canvas.loadFromJSON(e);
+      // canvas.sendToBack(cursorUser);
+      canvas.add(new fabric.Object(e));
+      canvas.renderAll();
+      //canvas.loadFromJSON(e);
   });
 
 
@@ -1299,7 +1301,6 @@ socket.on( 'connect', function()
       canvas.isWaitingPath = false
       // objectAddInteractive(options);
     }
-
   });
   canvasbg.on("path:created",(options)=>{
     if ( canvas.isWaitingPath!==undefined && canvas.isWaitingPath!=false ){
@@ -1323,9 +1324,9 @@ socket.on( 'connect', function()
 });
 
 /**
- * Добавляем интерактивности объекту
+ * Добавляем интерактивности объекту 
  * делаем изменение толщины и цвета
- * @param {*} object
+ * @param {*} object 
  */
 function objectAddInteractive(object){
   let fn_ = (color)=>{return};
@@ -1340,7 +1341,7 @@ function objectAddInteractive(object){
     fn_ = (color)=>{
       object.objectCaching = false;
       if ( object.fill ){
-        object.fill = color;
+        object.fill = color;  
       }
       object.stroke = color;
       canvas.renderAll();
@@ -1364,7 +1365,6 @@ function enableFreeDrawing(){
   canvasbg.freeDrawingBrush     = new fabric.PencilBrush(canvasbg);
 
   canvas.freeDrawingBrush.btype = "brush"
-
 
   let isDrawing = false;
   let enableDrawingMode = true;
@@ -1502,7 +1502,7 @@ function lassoButtonClick(){
   canvas.on('mouse:move', (e)=> {
     if (isDrawing) {
       const pointer = canvas.getPointer(e);
-      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});//canvas.freeDrawingBrush._points);
+      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'lasso'});//canvas.freeDrawingBrush._points); 
     }
   })
 
@@ -1545,7 +1545,7 @@ function bladeButtonClick(){
 
   removeEvents();
   let bladeDown = false;
-  canvas.on('mouse:down', e => {
+  canvas.on('mouse:down', e => {   
     bladeDown = true;
   })
   canvas.on('mouse:up', e => {
@@ -1564,7 +1564,7 @@ function bladeButtonClick(){
         let bound = item.getBoundingRect();
         // console.log( cursorCoordinate.x , bound.left, bound.left + bound.width ,bound );
         if ( cursorCoordinate.x > bound.left && cursorCoordinate.x < (bound.left + bound.width) &&
-            cursorCoordinate.y > bound.top && cursorCoordinate.y < (bound.top + bound.height)  ) {
+             cursorCoordinate.y > bound.top && cursorCoordinate.y < (bound.top + bound.height)  ) {
           d.push(item);
           // console.log(item);
           canvas.setActiveObject(item);
@@ -1633,6 +1633,12 @@ function drawrec(type_of_rectangle) {
     rect.changedColour = function(color){
       rect.fill = color;
       // console.log("rect",rect);
+      canvas.renderAll();
+    }
+    rect.changedWidth = function(width){
+      rect.objectCaching = false;
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = parseInt(width);
       canvas.renderAll();
     }
     canvas.add(rect);
@@ -1725,6 +1731,12 @@ function drawcle(type_of_circle) {
       // console.log("circle log");
       canvas.renderAll();
     }
+    circle.changedWidth = function(width){
+      circle.objectCaching = false;
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = parseInt(width);
+      canvas.renderAll();
+    }
     canvas.add(circle);
     socket.emit("circle:add", circle);
   });
@@ -1742,17 +1754,19 @@ function drawcle(type_of_circle) {
   canvas.on("mouse:up", function (o) {
     isDown = false;
     circle.setCoords();
-    //socket.emit("canvas_save_to_json", canvas.toJSON(['id']));
-    // let board_id = get_board_id();
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
 }
 
-/**
- * Переместил в window.onload (стр 72),
- * иначе фон у меня не отрисовывался
- */
+canvas.setBackgroundColor(
+    {
+      source: pathUsualGrid,
+      repeat: "repeat",
+      scaleX: 1,
+      scaleY: 1,
+    },
+    canvas.renderAll.bind(canvas)
+);
 
 //canvas.setBackgroundColor(
 //    {
@@ -1895,7 +1909,7 @@ popupBasic.onChange = function(color) {
 
 
 //Open the popup manually:
-popupBasic.openHandler();
+// popupBasic.openHandler();
 
 
 canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
@@ -2009,7 +2023,13 @@ function drawLine(type_of_line) {
     }
     line.changedColour = function(color){
       this.stroke = color;
-      console.log("line stroke");
+      // console.log("line stroke");
+      canvas.renderAll();
+    }
+    line.changedWidth = function(width){
+      line.objectCaching = false;
+      // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
+      this.strokeWidth = parseInt(width);
       canvas.renderAll();
     }
     canvas.add(line);
@@ -2223,6 +2243,7 @@ document.body.addEventListener('keyup', handleUpKeySpace);
 
 
 const handleButtonCursorMoveClick = (ev) => {
+  removeEvents();
   ev.preventDefault()
   isCursorMove = !isCursorMove;
   canvas.toggleDragMode(true);
@@ -2237,6 +2258,7 @@ buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 let colour = Cookies.get('colour');
 
 document.addEventListener('DOMContentLoaded',(e)=>{
+  removeEvents();
   isCursorMove= true;
   canvas.toggleDragMode(true);
   buttonCursorMove.classList.add('settings-panel__button-cursor-move_active');
@@ -2244,6 +2266,7 @@ document.addEventListener('DOMContentLoaded',(e)=>{
   canvas.isDrawingMode = false
   canvas.allowTouchScrolling = true;
   changeObjectSelection(false);
+  // console.log(colour);
   if ( colour ){
     popupBasic.setColor(colour);
     drawingColorEl.style.backgroundColor = colour;

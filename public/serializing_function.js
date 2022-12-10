@@ -122,9 +122,6 @@ const serializer_dictionary_for_circle =  {...serializer_dictionary,...to_circle
 const serializer_dictionary_for_text =  {...serializer_dictionary,...to_text_add};
 const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,...serializer_dictionary_for_circle,...serializer_dictionary_for_text};
 
-
-
-
 function serialize_canvas(canvas)
 {
   let result =[];
@@ -181,13 +178,6 @@ function serialize_canvas(canvas)
           }
           // replaced_object[my_dict[key]]=object[key];
         }
-      }
-      // console.log(replaced_object);
-      // result.push(object.toJSON());
-      // if ( object.formula!==undefined && object.formula!="" ){
-      //   // console.log(replaced_object);
-      // }
-      result.push(replaced_object);
     }
   });
 

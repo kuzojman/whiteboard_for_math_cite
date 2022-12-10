@@ -183,22 +183,30 @@ app.get("/", (req, res) => {
  */
 app.get("/download/:urldata", (req, response) => {
   // console.log(req.params.urldata);
-  let url_ = Buffer.from(req.params.urldata, 'base64').toString()
-  // console.log(url_);
-  // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
-  //   url_ = url_.replace('https:/','https://')
-  // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
-  //   url_ = url_.replace('http:/','http://')
-  // }
-  //console.log(url_);
-  const request = https.get(url_, (res_)=>{
-    res_.setEncoding('binary');
-    response.contentType( res_.headers['content-type'] );
-    res_.on('data',  (body) =>{
-      response.write(body,'binary')
-    });
-    res_.on('end',()=> {
-      response.end()
+  try {
+    let url_ = Buffer.from(req.params.urldata, 'base64').toString()
+    // console.log(url_);
+    // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
+    //   url_ = url_.replace('https:/','https://')
+    // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
+    //   url_ = url_.replace('http:/','http://')
+    // }
+    // console.log(url_);
+    const request = https.get(url_, (res_) => {
+      res_.setEncoding('binary');
+      response.contentType(res_.headers['content-type']);
+      res_.on('data', (body) => {
+        response.write(body, 'binary')
+        const fs = require('fs');
+        const fpath = '/download/' + req.params.urldata
+        try {
+          fs.writeFileSync(fpath, body, {flag: 'wx'})
+        } catch (e) {}
+        console.log(req.params.urldata)
+      });
+      res_.on('end', () => {
+        response.end()
+      })
     })
   } )
 });
@@ -250,6 +258,14 @@ io.on("connection", async socket => {
         }
         socket.broadcast.to(socket.board_id).emit('cursor-data', cursorDataUser);
     }
+  });
+
+  socket.on("width:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("width:changed", object_pass);
+  });
+
+  socket.on("color:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("color:changed", object_pass);
   });
 
   /**
@@ -540,23 +556,7 @@ io.on("connection", async socket => {
   socket.on("canvas_save_to_json", async canvas_pass => {
     //socket.broadcast.emit('canvas_save_to_json', canvas_pass);
     const data_saved = JSON.parse(JSON.stringify(canvas_pass))
-    //console.log(data_saved)
-    //await client.connect()
-    //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
     const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
-    //await client.end()
-   // done()
-
-/*
-    fs.writeFile("saved_data.json", data_saved, (err) => {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log("saved");
-      }
-    });
-*/
-
   });
 
 
