@@ -25,6 +25,8 @@ export const gifToSprite = async (gif, maxWidth, maxHeight, maxDuration) => {
     } catch (err) {
       error = err;
     }
+  } else if (gif instanceof ArrayBuffer) {
+    arrayBuffer = gif
   }
   // else the gif is a URL or a dataUrl, fetch the arrayBuffer
   else {
