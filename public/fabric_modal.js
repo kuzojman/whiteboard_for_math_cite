@@ -1,4 +1,4 @@
-import { fabricGif } from "./fabricGif.js";
+import {fabricGif} from "./fabricGif.js";
 
 const openImagesModalBtn = document.querySelector('#modal_image_plugin');
 openImagesModalBtn.addEventListener("click", openImagesModal );
@@ -55,111 +55,194 @@ function closeImagesModal(){
 }
 
 async function  getImgContentType (url) {
-  return await fetch(url, { method: 'HEAD' })
+  return await fetch(url, { method: 'HEAD'})
     .then(response => {
       return response.headers.get('Content-type')
     })
 }
 
 /**
- * Вставляем картинку на панель
- * @param {*} url 
+ * Добавление gif картинки
+ * @param ab - ArrayBuffer с данными
+ * @param url - свойство "image.src"
  */
-window.insertImageOnBoard = async function (url, noemit=false, id=false, params=false){
-  // console.log(url.indexOf('/download/'));
-  if (url.indexOf('/download/')!==0 ){
-    url = "/download/"+window.btoa(url)
-  }
-    fabric.Image.fromURL(url, function(myImg) {
-      
-      getImgContentType(url).then( t =>{
-        if ( t.indexOf('gif')!==-1 ){
 
-          fabricGif(
-            url,
-            200,
-            200
-          ).then( function(gif){
-            gif['src'] = url;
-            if ( id!==false ){
-              gif['id'] = id;
-            }
-            if ( gif.error===undefined ) {
-              // gif.set({ top: 50, left: 50 });
-              canvas.add(gif).setActiveObject(gif);
-              if ( takedFirstData==false ){
-                gif.set({ selectable: false })
-                decreaseRecievedObjects()
-              }
-              // перемещаем объект куда надо
-              if ( params!==false ){
-                gif.set({
-                  top: params.top, //+object.object.top,
-                  left: params.left, //+object.object.left
-                  angle: params.angle,
-                  scaleX: params.scaleX,
-                  scaleY: params.scaleY,
-                  erasable: params.erasable,
-                  eraser: params.eraser,
-                });
-              }else{
-                setObjectToCanvasCenter(gif)
-              }
-              gif.play();
-              canvas.discardActiveObject(gif)
-              fabric.util.requestAnimFrame(function render() {
-                canvas.requestRenderAll();
-                fabric.util.requestAnimFrame(render);
-              });
-              
-              if (noemit==false){
-                socket.emit("image:add", {src: url, id_of: gif.id});
-                socket.emit("canvas_save_to_json", {"board_id": get_board_id(), "canvas": serialize_canvas(canvas)});
-              }
-            }
-          } )
-          
-          return;
-        
-        }else{
+async function createGif(ab, url, id = false, params = false)
+{
+    if (!(window.loaded[url] && window.loaded[url]["img"])) {
+      // Первичная загрузка
+      // Создание спрайта из гифки вынесено в ./workers/decompress_gif_job.js
+      // и происходит в отдельном потоке
+      let _worker = new Worker("./workers/decompress_gif_job.js")
 
-          myImg.crossOrigin = 'anonymous'
-          myImg['src'] =  url;
-          if ( id!==false ){
-            myImg['id'] = id;
-          }
+      if (ab.byteLength !== 0) {
+        _worker.postMessage(ab, [ab])
+      }
 
-          if ( takedFirstData==false ){
-            myImg.set({ selectable: false })
-            decreaseRecievedObjects()
-          }      
-          canvas.add(myImg)
-          // перемещаем объект куда надо
-          if ( params!==false ){
-            myImg.set({
-              top: params.top, //+object.object.top,
-              left: params.left, //+object.object.left
-              angle: params.angle,
-              scaleX: params.scaleX,
-              scaleY: params.scaleY,
-              erasable: params.erasable,
-              eraser: params.eraser,
-            });
-          }else{
-            setObjectToCanvasCenter(myImg)
-          }
-          canvas.setActiveObject(myImg).requestRenderAll(); 
-          // console.log({src: url, id_of: myImg.id});
-          if (noemit==false){
-            socket.emit("image:add", {src: url, id_of: myImg.id});
-          }
+      _worker.onmessage = async (e) => {
+        let data = e.data.data
+        let gif = await fabricGif(data.dataUrl, data.delay, data.frameWidth, data.framesLength)
+
+        gif['src'] = url
+        if ( id!==false ){
+          gif['id'] = id;
         }
-      } )
-      
-    });
-    
-    closeAllModals();
-    moveCursorsToFront = true;
+
+        gif.play()
+        canvas.add(gif).setActiveObject(gif)
+
+        if ( params!==false ){
+          gif.set({
+            top: params.top,
+            left: params.left,
+            angle: params.angle,
+            scaleX: params.scaleX,
+            scaleY: params.scaleY,
+            erasable: params.erasable,
+            eraser: params.eraser,
+          });
+        }else{
+          setObjectToCanvasCenter(gif)
+        }
+
+        fabric.util.requestAnimFrame(function render() {
+          canvas.requestRenderAll();
+          fabric.util.requestAnimFrame(render);
+        });
+
+        window.loaded[url] = {
+          "img": gif,
+          "dataUrl": data.dataUrl,
+          "delay": data.delay,
+          "frameWidth": data.frameWidth,
+          "framesLength": data.framesLength,
+          "ab": ab,
+          "url": url,
+          "type": "gif",
+        }
+    }
+  } else {
+      // Загрузка из буфера
+      let dataUrl = window.loaded[url]["dataUrl"]
+      let delay = window.loaded[url]["delay"]
+      let frameWidth = window.loaded[url]["frameWidth"]
+      let framesLength = window.loaded[url]["framesLength"]
+
+      let gif = await fabricGif(dataUrl, delay, frameWidth, framesLength)
+
+      gif['src'] = url
+      if ( id!==false ){
+        gif['id'] = id;
+      }
+
+      gif.play()
+      canvas.add(gif).setActiveObject(gif)
+
+      if ( params!==false ){
+        gif.set({
+          top: params.top,
+          left: params.left,
+          angle: params.angle,
+          scaleX: params.scaleX,
+          scaleY: params.scaleY,
+          erasable: params.erasable,
+          eraser: params.eraser,
+        });
+      }else{
+        setObjectToCanvasCenter(gif)
+      }
+
+      fabric.util.requestAnimFrame(function render() {
+        canvas.requestRenderAll();
+        fabric.util.requestAnimFrame(render);
+      });
+    }
+}
+
+// Здесь сохраняются уже скачанные изображения
+window.loaded = {}
+
+/**
+ * Загрузка изображений в буфер
+ */
+
+window.preloadImage = async function (url, noemit=false, id=false, params=false) {
+  if (url.indexOf('/download/') !== 0) {
+    url = "/download/" + window.btoa(url)
+  }
+
+  return getImgContentType(url).then(async t => {
+      return fetch(url)
+          .then(r => r.arrayBuffer())
+          .then(async  buffer => {
+            const blob = new Blob([buffer]);
+            const file = new File([blob], url)
+
+            if (t.indexOf('gif')!==-1) {
+              return await createGif(buffer, url, id, params).then(() =>{
+                return true
+              })
+            } else {
+              let img = new fabric.Image(file)
+              img['src'] = url;
+
+              img.crossOrigin = 'anonymous'
+              if (id !== false) {
+                img['id'] = id;
+              }
+
+              // перемещаем объект куда надо
+              if (params !== false) {
+                img = params;
+              }
+
+              return window.loaded[url] = {
+                img: img,
+                ab: buffer,
+                url: url,
+              }
+            }
+          });
+    })
+}
+
+/**
+ * Добавление картинок из буфера window.loaded
+ */
+
+window.insertImageOnBoard = async function (url, noemit=false, id=false, params=false){
+  if (url.indexOf('/download/') !== 0) {
+    url = "/download/" + window.btoa(url)
+  }
+
+  if (window.loaded[url]) {
+    let img = window.loaded[url]["img"]
+
+    // перемещаем объект куда надо
+    if (params !== false) {
+      img = params;
+    } else {
+      setObjectToCanvasCenter(img)
+    }
+
+    canvas.add(img)
+    canvas.setActiveObject(img).requestRenderAll();
+
+    if (noemit == false) {
+      socket.emit("image:add", {src: url, id_of: img.id});
+    }
+  }
+}
+
+window.insertImgInTab = async (img) => {
+  let loaded = await window.preloadImage(img)
+  if (loaded !== true) {
+     window.insertImageOnBoard(loaded["url"], true)
+  } else {
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+  }
+  closeAllModals();
+  moveCursorsToFront = true;
 }
 
 /**
@@ -170,7 +253,7 @@ window.insertImageOnBoard = async function (url, noemit=false, id=false, params=
 function insertImageInModal(img,content){
     let div = document.createElement('div');
     div.setAttribute('class', 'modal_image');
-    div.innerHTML = `<img src="`+img+`" onClick="insertImageOnBoard('`+img+`')" />`
+    div.innerHTML = `<img src="`+img+`" onClick="insertImgInTab('`+img+`')" />`
     content.appendChild(div);
 }
 
