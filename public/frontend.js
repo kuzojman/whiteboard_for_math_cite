@@ -13,7 +13,6 @@ const socket = io('http://localhost:3000',{transports:['websocket']});
 
 // const socket = io();
 
-
 const board_id = get_board_id() || 1;
 
 let isRendering = false;
