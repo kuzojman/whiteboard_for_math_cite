@@ -834,6 +834,8 @@ const BladeButton                = document.querySelector('#blade_button');
       BladeButton.onclick        = bladeButtonClick;
 const LassoButton                = document.querySelector('#lasso_button');
       LassoButton.onclick        = lassoButtonClick;
+const SliderButton               = document.querySelector('#slider_button');
+      SliderButton.onclick       = sliderButtonClick;
 
 
 const downloadImage = () =>  {
@@ -1660,6 +1662,22 @@ function enableFreeDrawing(){
       socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
     }
   })
+}
+
+/**
+ * Добавляем 
+ */
+function sliderButtonClick(){
+  removeEvents();
+  let slider = new fabric.Slider(canvas);
+  slider.onReady = ()=>{
+    canvas.add(slider);
+    setObjectToCanvasCenter(slider);
+    // slider.alignMenu();
+    canvas.setActiveObject(slider).requestRenderAll(); 
+  }
+  slider.setSocket(socket);  
+  
 }
 
 /**

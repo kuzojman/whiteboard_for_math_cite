@@ -121,3 +121,14 @@ html, body, .canvasWrapper
     height: auto;
     min-height: 60vh;
 }
+
+.slider_menu{
+    position: absolute;
+    display: none;
+    background-color: white;
+    border-radius: 3px;
+    padding: 5px;
+}
+.slider_menu.active{
+    display: block!important;
+}
