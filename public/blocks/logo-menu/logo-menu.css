@@ -2,8 +2,8 @@
     padding-top: 10px;
     display: none;
     position: absolute;
-    top: 45px;
-    left: 0;
+    top: -12px;
+    left: 160px;
     width: 200px;
     z-index: 2;
     transition: all 0.5s linear;
