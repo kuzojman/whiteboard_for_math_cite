@@ -1,13 +1,12 @@
 const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
-
   allowTouchScrolling: true,
   preserveObjectStacking: true,
 });
 
 
-const socket = io('http://localhost:3000',{transports:['websocket']});
+// const socket = io('http://localhost:3000',{transports:['websocket']});
 
-// const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
+  const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
 // const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
@@ -82,7 +81,7 @@ window.onload = async () => {
  }
 
 // для продакшна надо оставить пустым
-let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
+let serverHostDebug = "https://kuzovkin.info"  // "http://localhost:5000/"
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
