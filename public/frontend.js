@@ -12,7 +12,6 @@ const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
 
 // const socket = io();
 
-
 const board_id = get_board_id() || 1;
 
 let isRendering = false;
