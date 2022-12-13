@@ -1087,8 +1087,7 @@ socket.on( 'connect', function()
     if ( canvasbg.freeDrawingBrush===undefined ){
       canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
     }
-    // canvasbg.freeDrawingBrush.width = pointer.width;
-    // canvasbg.freeDrawingBrush.color = pointer.color;
+    
     if (canvasbg.freeDrawingBrush.btype ===undefined || canvasbg.freeDrawingBrush.btype!='eraser' ){
       if (pointer.type!==undefined && pointer.type=='eraser'){
         canvas.isDrawingMode = true
@@ -1100,6 +1099,18 @@ socket.on( 'connect', function()
         canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
         canvasbg.freeDrawingBrush.btype = 'brush'
       }
+    }
+
+    if (pointer.type!==undefined && pointer.type=='eraser'){
+      canvas.isDrawingMode = true
+      canvas.freeDrawingBrush = new fabric.EraserBrush(canvas)
+      canvas.freeDrawingBrush.btype = 'eraser'
+      canvas.freeDrawingBrush.width = pointer.width;
+      canvasbg.isDrawingMode = true
+      canvasbg.freeDrawingBrush = new fabric.EraserBrush(canvasbg)
+      canvasbg.freeDrawingBrush.btype = 'eraser'
+      canvasbg.freeDrawingBrush.width = pointer.width;
+      // canvas.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
     }
 
     if (pointer.type!==undefined && pointer.type=='brush'){
@@ -1293,46 +1304,7 @@ socket.on( 'connect', function()
             chunk[id]=deserialize(object);
             // console.log(chunk[id]);
           });
-          fabric.util.enlivenObjects(chunk,function(objects)
-          {
-            // сохраняем количество объектов
-            allReceivedObjects = objects.length
-            objects.forEach(function(object) {
-              let obj_exists = false;
-
-              canvas._objects.every(function(obj_,indx_){
-                  if ( obj_.id==object.id ){
-                    obj_exists = true;
-                    return false
-                  }
-                  return true;
-              });
-              // если такого объекта еще нет на канвасе, то добавляем
-              if ( obj_exists===false ){
-                if ( object.type=='image'  ){
-                  if ( object.src!==undefined && object.src!='' ){
-                    window.insertImageOnBoard(object.src, true, object.id, object);
-                  }else{
-                    if (object.formula!==undefined && object.formula!=''){
-                      window.addFormula(object.formula, object.id, object,false)
-                    }
-                  }
-                }else{
-                  // console.log(object.type);
-
-                  objectAddInteractive(object);
-
-                  canvas.add(object);
-
-                  if ( takedFirstData==false ){
-                    object.set({ selectable: false })
-                  }
-                  decreaseRecievedObjects()
-                }
-              }                
-            })
-            
-          });
+          enliveObjects(chunk);
           canvas.renderAll();
           chunk_index++;
       },150)
@@ -1340,6 +1312,22 @@ socket.on( 'connect', function()
       //canvas.loadFromJSON(data);
     }
   })
+
+  // { "object":obj_, "id":obj_.id, "color":color.rgbaString}
+  socket.on('color:changed', function(data)    {
+    let t = canvas._objects.find( item => item.id==data.id )
+    if ( t ){
+      t.changedColour(data.color)
+    }
+  });
+
+  socket.on('width:changed', function(data)    {
+    let t = canvas._objects.find( item => item.id==data.id )
+    if ( t ){
+      t.changedWidth(data.width)
+    }
+  });
+
 
   canvas.on('object:modified', e =>    {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
@@ -1393,12 +1381,8 @@ socket.on( 'connect', function()
       //canvas.loadFromJSON(e);
   });
 
-  socket.on('figure_copied', e =>
-  {
-      // canvas.sendToBack(cursorUser);
-      canvas.add(new fabric.Object(e));
-      canvas.renderAll();
-      //canvas.loadFromJSON(e);
+  socket.on('figure_copied', e =>  {
+      enliveObjects([e])
   });
   
 
@@ -1738,6 +1722,49 @@ function enableEraser(){
       socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points); 
     }
   })
+}
+
+function enliveObjects(chunk){
+  fabric.util.enlivenObjects(chunk,function(objects)
+  {
+    // сохраняем количество объектов
+    allReceivedObjects = objects.length
+    objects.forEach(function(object) {
+      let obj_exists = false;
+
+      canvas._objects.every(function(obj_,indx_){
+          if ( obj_.id==object.id ){
+            obj_exists = true;
+            return false
+          }
+          return true;
+      });
+      // если такого объекта еще нет на канвасе, то добавляем
+      if ( obj_exists===false ){
+        if ( object.type=='image'  ){
+          if ( object.src!==undefined && object.src!='' ){
+            window.insertImageOnBoard(object.src, true, object.id, object);
+          }else{
+            if (object.formula!==undefined && object.formula!=''){
+              window.addFormula(object.formula, object.id, object,false)
+            }
+          }
+        }else{
+          // console.log(object.type);
+
+          objectAddInteractive(object);
+
+          canvas.add(object);
+
+          if ( takedFirstData==false ){
+            object.set({ selectable: false })
+          }
+          decreaseRecievedObjects()
+        }
+      }                
+    })
+    
+  });
 }
 
 /**
