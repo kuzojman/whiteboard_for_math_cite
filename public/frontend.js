@@ -1170,7 +1170,7 @@ socket.on( 'connect', function()
   })
 
   canvas.on('object:modified', e =>    {
-    send_part_events.push(e);
+    send_part_of_data(e);
   });
 
 
@@ -1278,7 +1278,7 @@ socket.on( 'connect', function()
 
   socket.on('object:modified', e =>
   {
-    recive_part_events.push(e)
+    recive_part_of_data(e);
   });
 
   /**
@@ -2184,7 +2184,6 @@ function send_part_of_data(e) {
     }
     socket.emit("object:modified", data);
   } else if (e && e.target) {
-    console.log(e)
     let object_index = find_object_index(e.target);
     e.target.object_index = object_index;
 
@@ -2199,8 +2198,9 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
-  if (e.target._objects) {
-    for (const object of e.target._objects) {
+  let objects = (e && e.target) ? e.target._objects : e.objects
+  if (objects) {
+    for (const object of objects) {
       //let d = canvas.item(object.index);
       let d = canvas._objects.find(item=>item.id==object.id);
       if(!d){
