@@ -9,7 +9,7 @@ const socket = io('http://localhost:3000',{transports:['websocket']});
 
 // const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
-// const socket = io('https://kuzovkin.info',{transports:['websocket']});
+//const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
 // const socket = io();
 
@@ -909,7 +909,7 @@ function checkLoggedInCookie(){
   let user_id = Cookies.get('user_id');
 
   // если пользователь не залогинен - перенаправляем на страницу логина
-  if ( user_id===undefined || !user_id || user_id==false ){
+  if ( user_id===undefined || !user_id || user_id==false||user_id==='-1' ){
     window.location.href=serverHostDebug+"/auth?parametr_enter=email";
     return;
   }
