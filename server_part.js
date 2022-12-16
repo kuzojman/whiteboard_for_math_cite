@@ -9,6 +9,9 @@ const fs = require("fs");
 const mustacheExpress = require('mustache-express');
 const S3 = require('aws-sdk/clients/s3');
 const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
+// const pdf = require('pdf-poppler');
+const glob = require("glob")
 
 var Canvas = new Object()
 
@@ -685,4 +688,91 @@ function makeid(length) {
 charactersLength));
  }
  return result;
+}
+
+/**
+ * Конвертируем файл в массив картинок и загружаем в облако
+ * @param {*} file_ 
+ */
+async function convertPDFToImages(file_, uid_, socket_id_){
+  // console.log(file_);
+  let opts = {
+    format: 'jpeg',
+    out_dir: path.dirname(file_),
+    out_prefix: "page",
+    page: null
+  }
+
+  // const result = await pdf.convert(file_, opts)
+  //   .then(res => {
+  //     return true
+  //   })
+  //   .catch(error => {
+  //       console.error(error);
+  //       fs.unlinkSync(file_);
+  //       return false
+  //   })
+  // console.log("result of convert", result);
+  if (result){
+    fs.unlinkSync(file_);
+    return saveImagesFromPathToCloud(uid_, socket_id_);
+  }
+  return [];
+}
+
+/**
+ * Конвертируем презентацию в массив картинок и загружаем в облако
+ * @param {*} file_ 
+ */
+function convertPPTToImages(file_){
+
+}
+
+/**
+ * сохраняем картики из папки в облако и удаляем их из папки
+ * @param {String} uid_ айди папки
+ * @returns 
+ */
+async function saveImagesFromPathToCloud( uid_, socket_id_ ){
+  let images = [];
+  var promises = [];
+  let dir = "./uploaded/"+uid_+"/";
+  // console.log("saveImagesFromPathToCloud",dir,fs.existsSync(dir));
+  
+  if (fs.existsSync(dir)){
+    // options is optional
+    
+    let files = glob.sync(dir+"*.jpg");
+    
+    // console.log(files);
+    if (files) {
+      var i = 0;
+      files.forEach((file)=> {
+        // console.log(file);
+        promises.push(
+          AWSCloud.upload({
+            file: file, // файл
+            path: 'images/'+socket_id_+'/'+uid_,
+            fileName: path.basename(file),
+            type: "image/jpeg"
+          }).then( (data)=> {
+            fs.unlinkSync(file);
+            return data.Location;
+          } )
+        );
+  
+        i++;
+      });
+      return Promise.allSettled(promises).then((a) => {
+        console.log("promisec");
+        fs.rmSync(dir, { recursive: true, force: true });
+        return a;
+      });
+    }
+    
+    
+    // fs.rmSync(dir, { recursive: true, force: true });
+  }
+  
+  return images;
 }
