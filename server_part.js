@@ -10,7 +10,7 @@ const mustacheExpress = require('mustache-express');
 const S3 = require('aws-sdk/clients/s3');
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
-const pdf = require('pdf-poppler');
+// const pdf = require('pdf-poppler');
 const glob = require("glob")
 
 var Canvas = new Object()
@@ -740,15 +740,15 @@ async function convertPDFToImages(file_, uid_, socket_id_){
     page: null
   }
 
-  const result = await pdf.convert(file_, opts)
-    .then(res => {
-      return true
-    })
-    .catch(error => {
-        console.error(error);
-        fs.unlinkSync(file_);
-        return false
-    })
+  // const result = await pdf.convert(file_, opts)
+  //   .then(res => {
+  //     return true
+  //   })
+  //   .catch(error => {
+  //       console.error(error);
+  //       fs.unlinkSync(file_);
+  //       return false
+  //   })
   // console.log("result of convert", result);
   if (result){
     fs.unlinkSync(file_);
