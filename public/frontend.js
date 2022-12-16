@@ -835,7 +835,7 @@ const BladeButton                = document.querySelector('#blade_button');
 const LassoButton                = document.querySelector('#lasso_button');
       LassoButton.onclick        = lassoButtonClick;
 const SliderButton               = document.querySelector('#slider_button');
-      SliderButton.onclick       = sliderButtonClick;
+      // SliderButton.onclick       = sliderButtonClick;
 
 
 const downloadImage = () =>  {
