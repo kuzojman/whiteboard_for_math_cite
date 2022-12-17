@@ -495,7 +495,7 @@ window.canvas = canvas;
 let isCursorMove = false;
 
 function get_board_id() {
-  return 13//document.getElementById("board_id").attributes["board"].value;
+  return document.getElementById("board_id").attributes["board"].value;
 }
 
 let isDown = false;
