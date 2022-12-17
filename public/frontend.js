@@ -1182,6 +1182,7 @@ socket.on( 'connect', function()
   })
 
   canvas.on('object:modified', e =>    {
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     send_part_of_data(e)
   });
 
@@ -1204,13 +1205,14 @@ socket.on( 'connect', function()
 
   canvas.on('object:moving',e =>
   {
-    send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
   });
 
 
   socket.on('object:moving', e =>
   {
-    recive_part_events.push(e);
+    recive_part_of_data(e);
   });
 
   socket.on('figure_delete', e =>
@@ -1239,24 +1241,27 @@ socket.on( 'connect', function()
 
   canvas.on('object:scaling',e =>
   {
-    send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
   });
 
 
   socket.on('object:scaling', e =>
   {
-    recive_part_events.push(e);
+    recive_part_of_data(e);
   });
 
   canvas.on('object:rotating',e =>
   {
-    send_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
   });
 
 
   socket.on('object:rotating', e =>
   {
-     recive_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
   });
 
   socket.on('text:added', e => {
@@ -1292,7 +1297,7 @@ socket.on( 'connect', function()
   {
     recive_part_of_data(e);
   });
-
+  
   /**
    * Эмитим событие когда закончили рисовать произвольный путь
    * прогблема в том, что на остальных досках во время рисования объект еще не создан, а когда
