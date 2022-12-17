@@ -2167,43 +2167,44 @@ function find_object_index(target_object) {
 
 
 function send_part_of_data(e) {
-  if (e && e.target && e.target._objects) {
+  if (e.target._objects) {
     let data = { objects: [] };
+    let json_canvas = canvas.toJSON(['id']);
     if(e.transform.target.type=='group')
     {
-      let object_index = find_object_index(e.transform.target);
-      e.transform.target.object_index = find_object_index(e.transform.target);
-      data.objects.push({
-        id: e.transform.target.id,
-        index: object_index,
-        object: e.transform.target,
-        top_all: canvas._objects[object_index].top,
-        left_all: canvas._objects[object_index].left,
-        angle: canvas._objects[object_index].angle,
-        scaleX: canvas._objects[object_index].scaleX,
-        scaleY: canvas._objects[object_index].scaleY,
-      })
-    }else{
+        let object_index = find_object_index(e.transform.target);
+        e.transform.target.object_index = find_object_index(e.transform.target);
+        data.objects.push({
+          id: e.transform.target.id,
+          index: object_index,
+          object:e.transform.target,
+          top_all: json_canvas.objects[object_index].top,
+          left_all: json_canvas.objects[object_index].left,
+          angle: json_canvas.objects[object_index].angle,
+          scaleX: json_canvas.objects[object_index].scaleX,
+          scaleY: json_canvas.objects[object_index].scaleY,
+        })
+    }else{   
       e.transform.target._objects.forEach((object) => {
         let object_index = find_object_index(object);
         object.object_index = object_index;
         data.objects.push({
-          id: object.id,
+          id:object.id,
           object: object,
           index: object_index,
-          top_all: canvas._objects[object_index].top,
-          left_all: canvas._objects[object_index].left,
-          angle: canvas._objects[object_index].angle,
-          scaleX: canvas._objects[object_index].scaleX,
-          scaleY: canvas._objects[object_index].scaleY,
+          top_all: json_canvas.objects[object_index].top,
+          left_all: json_canvas.objects[object_index].left,
+          angle: json_canvas.objects[object_index].angle,
+          scaleX: json_canvas.objects[object_index].scaleX,
+          scaleY: json_canvas.objects[object_index].scaleY,
         });
       });
     }
     socket.emit("object:modified", data);
-  } else if (e && e.target) {
+  } else {
     let object_index = find_object_index(e.target);
-    e.target.object_index = object_index;
 
+    e.target.object_index = object_index;
     socket.emit("object:modified", {
       //object: e.target,
       id: canvas._objects[object_index].id,
@@ -2215,20 +2216,16 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
-  let objects = (e && e.target) ? e.target._objects : e.objects
-  if (objects) {
-    for (const object of objects) {
+  if (e.objects) {
+    for (const object of e.objects) {
       //let d = canvas.item(object.index);
       let d = canvas._objects.find(item=>item.id==object.id);
       if(!d){
         continue;
       }
-
-      var m = d.calcTransformMatrix();
-
       d.set({
-        top:   m[5],
-        left:  m[4],
+        top: object.top_all, //+object.object.top,
+        left: object.left_all, //+object.object.left
         angle: object.angle,
         scaleX: object.scaleX,
         scaleY: object.scaleY,
@@ -2249,7 +2246,6 @@ function recive_part_of_data(e) {
       scaleY: e.object.scaleY,
     });
   }
-  socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   canvas.renderAll();
 }
 
