@@ -29,6 +29,41 @@ canvas.renderAll = () => {
     }
 };
 
+fabric.util.object.extend(fabric.Object.prototype, {
+  transform: function(ctx, fromLeft) {
+    
+    // if (this.group && !this.group._transformDone && this.group === this.canvas._activeGroup) {
+    //   this.group.transform(ctx);
+    // }
+    var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
+    // ADDED CODE FOR THE ANSWER
+    // console.log(this.ignoreZoom && !this.group && this.canvas);
+    if (this.ignoreZoom && !this.group && this.canvas) {
+      var zoom = 1 / this.canvas.getZoom();
+      ctx.scale(zoom, zoom);
+      ctx.translate(center.x*this.canvas.getZoom(), center.y*this.canvas.getZoom());
+      return;
+    }
+    // }else{
+    //   ctx.translate(center.x, center.y);
+    // }
+    // END OF ADDED CODE FOR THE ANSWER
+    // this.angle && ctx.rotate(degreesToRadians(this.angle));
+    // ctx.scale(
+    //   this.scaleX * (this.flipX ? -1 : 1),
+    //   this.scaleY * (this.flipY ? -1 : 1)
+    // );
+    // this.skewX && ctx.transform(1, 0, Math.tan(degreesToRadians(this.skewX)), 1, 0, 0);
+    // this.skewY && ctx.transform(1, Math.tan(degreesToRadians(this.skewY)), 0, 1, 0, 0);
+
+    var needFullTransform = (this.group && !this.group._transformDone) ||
+        (this.group && this.canvas && ctx === this.canvas.contextTop);
+    var m = this.calcTransformMatrix(!needFullTransform);
+    ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+
+  }
+});
+
 // Передача обновлённого состояния canvas'а на сервер через webworker
 // В случае добавления или удаления элементов передаётся разница между
 // предыдущим и текущим состоянием canvas._objects
@@ -1117,45 +1152,62 @@ socket.on( 'connect', function()
   });
   
 
-  let circle ;
+  // let circle ;
   socket.on('circle:edit', function(circle_taken)
   {
-    circle.set({
-      radius: circle_taken.radius
-    });
-    canvas.renderAll();
+    let circle = canvas._objects.find( item => item.id==circle_taken.id )
+    if ( circle ){
+      circle.set({
+        radius: circle_taken.radius
+      });
+      canvas.renderAll();
+    }
   });
   
   socket.on('circle:add', function(circle_taken)
   {
-      circle = new fabric.Circle(circle_taken)
-      canvas.add(circle)
-  });
-
-  let rect ;
-
-  socket.on('rect:edit', function(rect_taken)
-  {
-
-    rect.set({
-      top: rect_taken.top
-    });
-    rect.set({
-      left: rect_taken.left
-    });
-    rect.set({
-      width: rect_taken.width
-    });
-    rect.set({
-      height: rect_taken.height
+    let pos_ = { "left": circle_taken.left, "top": circle_taken.top}
+    // без этого фокуса не работает рисование за границей видимости на партнерской доске
+    circle_taken.left = 1;
+    circle_taken.top = 1;
+    enliveObjects([circle_taken]);
+    let circle = canvas._objects.find( item => item.id==circle_taken.id )
+    circle.set({
+      left: pos_.left,
+      top: pos_.top
     });
     canvas.renderAll();
   });
+
+  socket.on('rect:edit', function(rect_taken)   {
+    let rect = canvas._objects.find( item => item.id==rect_taken.id )
+    if ( rect ){
+      rect.set({
+        top: rect_taken.top,
+        left: rect_taken.left,
+        width: rect_taken.width,
+        height: rect_taken.height
+      });
+      canvas.renderAll();
+    }
+  });
+
   socket.on('rect:add', function(rect_taken)
   {
+    let pos_ = { "left": rect_taken.left, "top": rect_taken.top}
+    // без этого фокуса не работает рисование за границей видимости на партнерской доске
+    rect_taken.left = 1;
+    rect_taken.top = 1;
+    enliveObjects([rect_taken]);
+    let rect = canvas._objects.find( item => item.id==rect_taken.id )
+    rect.set({
+      left: pos_.left,
+      top: pos_.top
+    });
+    canvas.renderAll();
 
-      rect = new fabric.Rect(rect_taken)
-      canvas.add(rect)
+      // rect = new fabric.Rect(rect_taken)
+      // canvas.add(rect)
         
       //'canvas.freeDrawingBrush.width = width_taken'
   });
@@ -1350,18 +1402,14 @@ socket.on( 'connect', function()
       // recive_part_events.push(e);
   });
 
-  socket.on('figure_delete', e =>
-  {
-      e.forEach(function(id)
-      {
-        canvas._objects.forEach(function(object,index)
-        {
-          if(index==id)
-          {
-            canvas.remove(object);
-          }
-        })
+  socket.on('figure_delete', e => {    
+    e.forEach(function(id){
+      canvas._objects.forEach(function(object,index) {
+        if(object.id==id) {
+          canvas.remove(object);
+        }
       })
+    })
       //canvas.loadFromJSON(e);
   });
 
@@ -2286,15 +2334,6 @@ function find_object_index(target_object) {
       target_index = index;
     }
   });
-  if(!target_index)
-  {
-    objects.forEach(function (object, index) {
-      if (object.id == target_object.id) {
-        target_index = index;
-      }
-    });
-  }
-
   return target_index;
 }
 
@@ -2349,6 +2388,7 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
+  console.log(e);
   if (e.objects) {
     for (const object of e.objects) {
       //let d = canvas.item(object.index);

@@ -10,7 +10,7 @@ const mustacheExpress = require('mustache-express');
 const S3 = require('aws-sdk/clients/s3');
 const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
-// const pdf = require('pdf-poppler');
+const { fromPath } = require("pdf2pic");
 const glob = require("glob")
 
 var Canvas = new Object()
@@ -693,15 +693,20 @@ charactersLength));
 /**
  * Конвертируем файл в массив картинок и загружаем в облако
  * @param {*} file_ 
+ * @socket_id - айди доски для формирования пути в облаке
+ * @uid_ - айди папки с файлами
  */
 async function convertPDFToImages(file_, uid_, socket_id_){
   // console.log(file_);
   let opts = {
     format: 'jpeg',
-    out_dir: path.dirname(file_),
-    out_prefix: "page",
-    page: null
+    saveFilename: "page",
+    savePath: path.dirname(file_),
+    density: 300,
+    quality: 78,
   }
+
+  let result = await  fromPath(file_, opts).bulk(-1, false);
 
   // const result = await pdf.convert(file_, opts)
   //   .then(res => {
@@ -715,6 +720,7 @@ async function convertPDFToImages(file_, uid_, socket_id_){
   // console.log("result of convert", result);
   if (result){
     fs.unlinkSync(file_);
+    // console.log("saveImagesFromPathToCloud");
     return saveImagesFromPathToCloud(uid_, socket_id_);
   }
   return [];
@@ -742,7 +748,7 @@ async function saveImagesFromPathToCloud( uid_, socket_id_ ){
   if (fs.existsSync(dir)){
     // options is optional
     
-    let files = glob.sync(dir+"*.jpg");
+    let files = glob.sync(dir+"*.jpeg");
     
     // console.log(files);
     if (files) {
@@ -757,6 +763,7 @@ async function saveImagesFromPathToCloud( uid_, socket_id_ ){
             type: "image/jpeg"
           }).then( (data)=> {
             fs.unlinkSync(file);
+            // console.log(data.Location);
             return data.Location;
           } )
         );
