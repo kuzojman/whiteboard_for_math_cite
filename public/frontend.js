@@ -28,53 +28,7 @@ canvas.renderAll = () => {
   }
 };
 
-/**
- * Обработка событий теперь запускается по таймеру
- * каждые 500мс. Сохранение состояния
- * canvas больше не происходит непосредственно в
- * обработчиках событий вроде object:modified,
- * что позволяет избавиться от накладных расходов
- */
-
-let send_part_events = []
-let recive_part_events = []
-
-// Обработка событий
-
-async function handleEvents() {
-  try {
-      if (send_part_events.length >= 0) {
-        let interval = setInterval(() => {
-          let e = send_part_events.shift();
-          send_part_of_data(e)
-        }, 100);
-        if (send_part_events.length === 0) {
-          clearInterval(interval);
-          socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-        }
-      }
-
-      if (recive_part_events.length >= 0) {
-        let interval = setInterval(async () => {
-          let e = recive_part_events.shift();
-          recive_part_of_data(e)
-        }, 200);
-        if (recive_part_events.length === 0) {
-          clearInterval(interval);
-          socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-        }
-      }
-  } catch (e) {
-    console.log(e)
-  }
-}
-
-// Запуск обработки событий
-
 window.onload = async () => {
-    setInterval(async () => {
-         await handleEvents()
-    }, 500)
     canvas.setBackgroundColor({
       source: pathUsualGrid,
       repeat: 'repeat',
