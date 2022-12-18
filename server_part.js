@@ -808,14 +808,16 @@ async function convertPDFToImages(file_, uid_, socket_id_){
     quality: 78,
   }
 
-  // задаем правильный размер pdf
-  if ( pdf_params ){
-    opts['height'] = pdf_params.finalHeight;
-    opts['width'] = pdf_params.finalWidth;
-  }
-
-  let result = await fromPath(file_, opts).bulk(-1, false);
-
+  // const result = await pdf.convert(file_, opts)
+  //   .then(res => {
+  //     return true
+  //   })
+  //   .catch(error => {
+  //       console.error(error);
+  //       fs.unlinkSync(file_);
+  //       return false
+  //   })
+  // console.log("result of convert", result);
   if (result){
     fs.unlinkSync(file_);
     // console.log("saveImagesFromPathToCloud");

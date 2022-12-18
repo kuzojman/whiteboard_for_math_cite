@@ -129,6 +129,8 @@ html, body, .canvasWrapper
     border-radius: 3px;
     z-index: 2;
     box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+    z-index: 2;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
 }
 .slider_menu.active{
     display: block!important;

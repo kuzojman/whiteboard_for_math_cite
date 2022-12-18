@@ -4,7 +4,7 @@
   SliderInput.setAttribute('accept','.pdf, .ppt, .pptx')
   SliderInput.type = 'file';
 
-  let slider_bar     = document.getElementById('slider_menu');
+  let slider_bar         = document.getElementById('slider_menu');
   let prev_btn       = slider_bar.querySelector('#slider_menu_prev_button');
   let next_btn       = slider_bar.querySelector('#slider_menu_next_button');
   let cur_slide_text = slider_bar.querySelector('#current_slide');
@@ -26,7 +26,12 @@
       obj_.prev();
     }
   }
+  let prev_btn       = slider_bar.querySelector('#slider_menu_prev_button');
+  let next_btn       = slider_bar.querySelector('#slider_menu_next_button');
+  let cur_slide_text = slider_bar.querySelector('#current_slide');
+  let all_slide_text = slider_bar.querySelector('#all_slides');
 
+  
   /**
    * Slider class
    * для начала работа после создания объекта необходимо задать сокет @setSocket
