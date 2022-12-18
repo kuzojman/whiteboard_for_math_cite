@@ -1183,6 +1183,14 @@
         <g>
         </g>
     </symbol>
+    <symbol id="icon-left-chevron" viewBox="0 0 120 120">
+        <polygon fill="#010101" points="34.358,43.299 94.391,103.34 77.732,119.99 17.7,59.957 "/>
+        <polygon fill="#010101" points="17.606,60.067 77.623,0.011 94.281,16.653 34.256,76.71 "/>
+    </symbol>
+    <symbol id="icon-right-chevron" viewBox="0 0 120 120">
+        <polygon fill="#010101" points="102.296,59.957 42.264,119.99 25.605,103.34 85.639,43.299 "/>
+        <polygon fill="#010101" points="85.74,76.71 25.715,16.653 42.373,0.011 102.391,60.067 "/>
+    </symbol>
     <symbol id="icon-color-palette" viewBox="0 0 406 406">
         <g>
             <path style="fill:#EB7830;" d="M347.44,374.497c-6.614,0-12.828-2.571-17.497-7.24L209.375,246.699l10.574-4.755

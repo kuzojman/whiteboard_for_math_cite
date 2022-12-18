@@ -4,8 +4,13 @@
   SliderInput.setAttribute('accept','.pdf, .ppt, .pptx')
   SliderInput.type = 'file';
 
-  let slider_bar = document.getElementById('slider_menu');
+  let slider_bar     = document.getElementById('slider_menu');
+  let prev_btn       = slider_bar.querySelector('#slider_menu_prev_button');
+  let next_btn       = slider_bar.querySelector('#slider_menu_next_button');
+  let cur_slide_text = slider_bar.querySelector('#current_slide');
+  let all_slide_text = slider_bar.querySelector('#all_slides');
 
+  
   /**
    * Slider class
    * для начала работа после создания объекта необходимо задать сокет @setSocket
@@ -63,8 +68,8 @@
        */
       next: function(){
         console.log("next");
-        this.current_pos+=1;
-        this.refresh();
+        _this.current_pos+=1;
+        _this.refresh();
       },
 
       /**
@@ -72,8 +77,8 @@
        */
       prev: function(){
         console.log("prev");
-        this.current_pos-=1;
-        this.refresh();
+        _this.current_pos-=1;
+        _this.refresh();
       },
 
       /**
@@ -86,6 +91,9 @@
         if ( this.slider_images[this.current_pos] ){
           this.setSrc(this.slider_images[this.current_pos]);
         }
+        // обновляем текстовую информацию
+        cur_slide_text.textContent=this.current_pos+1;
+        all_slide_text.textContent=this.slides_count;
       },
 
       /**
@@ -102,10 +110,22 @@
         
       },
 
+      /**
+       * Назначаем кнопкам меню новых хозяев. Необходимо потому, что меню одно, а слайдеров может быть много
+       * поэтому при выделении слайдера каждый раз надо переназначать события кнопка меню
+       */
+      bindMenuButton:function(){
+        prev_btn.removeEventListener('click',this.prev);
+        next_btn.removeEventListener('click',this.next);
+        prev_btn.addEventListener('click',this.prev );
+        next_btn.addEventListener('click',this.next );
+      },
+
       onSelect: function(options){
-        console.log("select");
+        // показываем меню
         slider_bar.classList.add('active');
-        
+        this.bindMenuButton();
+
         if ( this.upload_ready==false ){
           return false;
         }
