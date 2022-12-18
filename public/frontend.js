@@ -1,15 +1,14 @@
 const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
-
   allowTouchScrolling: true,
   preserveObjectStacking: true,
 });
 
 
-const socket = io('http://localhost:3000',{transports:['websocket']});
+//const socket = io('http://localhost:3000',{transports:['websocket']});
 
-// const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
+const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
-//const socket = io('https://kuzovkin.info',{transports:['websocket']});
+// const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
 // const socket = io();
 
@@ -20,224 +19,26 @@ let isRendering = false;
 const render = canvas.renderAll.bind(canvas);
 
 canvas.renderAll = () => {
-    if (!isRendering) {
-        isRendering = true;
-        requestAnimationFrame(() => {
-          render();
-          isRendering = false;
-        });
-    }
-};
-
-// Передача обновлённого состояния canvas'а на сервер через webworker
-// В случае добавления или удаления элементов передаётся разница между
-// предыдущим и текущим состоянием canvas._objects
-
-let last_canvas_object = 0;
-let max_items_to_add = 5;
-let clear_sent = false;
-let canvas_sent = false;
-
-let send_part_events = []
-let recive_part_events = []
-
-// Строка в массив байт по 2 байта на символ
-// Первыми двумя записываем board_id
-
-async function str2ab(str) {
-    let buf = new ArrayBuffer(str.length*2);
-    let buf_view = new Uint16Array(buf);
-
-    for (let i = 0, str_len = str.length; i < str_len; i++) {
-        if (i === 0) buf_view[i] = board_id.toString().charCodeAt(0);
-        else buf_view[i] = str.charCodeAt(i);
-    }
-
-    return buf;
-}
-
-const JSONStringifyAsync = (data, replacer = null, space = null) => {
-    return new Promise((resolve, reject) => {
-        try {
-            let output = JSON.stringify(data, replacer, space);
-            resolve(output);
-        } catch (error) {
-            reject(error);
-        }
+  if (!isRendering) {
+    isRendering = true;
+    requestAnimationFrame(() => {
+      render();
+      isRendering = false;
     });
+  }
 };
 
-const JSONParseAsync = (data, reviver = null) => {
-    return new Promise((resolve, reject) => {
-        try {
-            let output = JSON.parse(data, reviver);
-            resolve(output);
-        } catch (error) {
-            reject(error);
-        }
-    });
-};
-
-// Вызов webworker
-
-async function callWorker(worker) {
-    try {
-        let len = canvas._objects.length;
-
-        if (!canvas_sent) {
-            worker.postMessage({act: "init", canvas: await JSONStringifyAsync(canvas.toJSON())});
-            canvas_sent = true;
-        } else {
-            // Если добавлены элементы
-            if (last_canvas_object <= len) {
-                let start = (last_canvas_object === 0) ? 0 : last_canvas_object
-                let items_to_add = len - last_canvas_object
-
-                if (items_to_add >= max_items_to_add) {
-                    items_to_add = max_items_to_add
-                }
-
-                let end = start + items_to_add
-
-                //console.log("Current len: " + canvas._objects.length)
-                //console.log("Last added: " + last_canvas_object)
-                //console.log("Items to add: " + items_to_add)
-                //console.log("End: " + end)
-
-                if (end <= len && items_to_add !== 0) {
-                    let _data = await JSONStringifyAsync(canvas._objects.slice(start, end));
-                    let buf = await str2ab("[" + _data + "]")
-                    last_canvas_object = end;
-                    //console.log(start, end)
-                    worker.postMessage(buf, [buf]);
-                }
-            }
-
-            // Изменение объектов
-            if (send_part_events.length >= 0) {
-                let interval = setInterval(() => {
-                    let e = send_part_events.shift();
-                    if (e && e.target && e.target._objects) {
-                        let data = {objects: []};
-                        if (e && e.transform && e.transform.target && e.transform.target.type == 'group') {
-                            let object_index = find_object_index(e.transform.target);
-                            e.transform.target.object_index = find_object_index(e.transform.target);
-                            data.objects.push({
-                                id: e.transform.target.id,
-                                index: object_index,
-                                object: e.transform.target,
-                                top_all: canvas._objects[object_index].top,
-                                left_all: canvas._objects[object_index].left,
-                                angle: canvas._objects[object_index].angle,
-                                scaleX: canvas._objects[object_index].scaleX,
-                                scaleY: canvas._objects[object_index].scaleY,
-                            })
-                        } else {
-                            e.transform.target._objects.forEach((object) => {
-                                let object_index = find_object_index(object);
-                                object.object_index = object_index;
-                                data.objects.push({
-                                    id: object.id,
-                                    object: object,
-                                    index: object_index,
-                                    top_all: canvas._objects[object_index].top,
-                                    left_all: canvas._objects[object_index].left,
-                                    angle: canvas._objects[object_index].angle,
-                                    scaleX: canvas._objects[object_index].scaleX,
-                                    scaleY: canvas._objects[object_index].scaleY,
-                                });
-                            });
-                        }
-                        setTimeout(() => {
-                            socket.emit("object:modified", data);
-                        }, 100);
-                    } else if (e && e.target) {
-                        let object_index = find_object_index(e.target);
-
-                        e.target.object_index = object_index;
-                        setTimeout(() => {
-                            socket.emit("object:modified", {
-                                //object: e.target,
-                                id: canvas._objects[object_index].id,
-                                object: canvas._objects[object_index],
-                                index: object_index,
-                            });
-                        }, 100);
-                    }
-                }, 100);
-                if (send_part_events.length === 0) clearInterval(interval)
-            }
-
-            if (recive_part_events.length >= 0) {
-                let interval = setInterval(async () => {
-                    let e = recive_part_events.shift();
-                    if (e && e.objects) {
-                        for (const object of e.objects) {
-                            //let d = canvas.item(object.index);
-                            let d = canvas._objects.find(item => item.id == object.id);
-                            if (!d) {
-                                continue;
-                            }
-                            d.set({
-                                top: object.top_all, //+object.object.top,
-                                left: object.left_all, //+object.object.left
-                                angle: object.angle,
-                                scaleX: object.scaleX,
-                                scaleY: object.scaleY,
-                            });
-                        }
-                        let buf = await str2ab("[" + "update_many" + e.objects + "]");
-                        worker.postMessage(buf, [buf]);
-                    } else if (e && e.object) {
-                        //let d = canvas.item(e.index);
-                        let d = canvas._objects.find(item => item.id == e.id);
-                        //d.set(e.object);
-                        if (!d) {
-                            return false
-                        }
-                        d.set({
-                            top: e.object.top, //+object.object.top,
-                            left: e.object.left, //+object.object.left
-                            angle: e.object.angle,
-                            scaleX: e.object.scaleX,
-                            scaleY: e.object.scaleY,
-                        });
-                        worker.postMessage({act: "update_one", id: e.id.toString(), el: d});
-                    }
-                }, 200);
-                if (recive_part_events.length === 0) clearInterval(interval);
-            }
-
-            // Если доска очищена
-            if (len === 0 && !clear_sent) {
-                worker.postMessage({act: "clear"});
-                clear_sent = true;
-            }
-        }
-
-        worker.onmessage = e => {
-            console.log(e)
-            worker.terminate()
-        }
-
-        worker.onerror = e => {
-          console.error(e)
-        }
-    } catch (e) {
-        console.log(e)
-    }
-}
-
-// window.onload = async () => {
-//     const worker = new Worker('./workers/save_board_job.js', /*{ type: "module" }*/);
-//     setInterval(async () => {
-//         await callWorker(worker);
-//     }, 500)
-//     window.onunload = () => {worker.terminate()}
-// }
+window.onload = async () => {
+    canvas.setBackgroundColor({
+      source: pathUsualGrid,
+      repeat: 'repeat',
+      scaleX: 1,
+      scaleY: 1
+    }, canvas.renderAll.bind(canvas));
+ }
 
 // для продакшна надо оставить пустым
-let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
+let serverHostDebug = "" //"https://kuzovkin.info"
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
@@ -277,7 +78,6 @@ function clearBoard(broadcast=true){
 
   canvas.renderOnAddRemove = true;
   canvas.renderAll();
-  clear_sent = 0;
 
   if ( broadcast ){
    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
@@ -293,16 +93,18 @@ function goUserBoard(){
 
 /**
  * Центрируем объект по центру экрана
- * @param {*} obj 
+ * @param {*} obj
  */
 function setObjectToCanvasCenter(obj){
   if (obj){
-    let w2 = obj.width/2
-    let h2 = obj.height/2
-    obj.set({
-      top: canvas.vptCoords.tl.y+(canvas.vptCoords.br.y - canvas.vptCoords.tl.y)/2-h2,
-      left: canvas.vptCoords.tl.x+(canvas.vptCoords.br.x - canvas.vptCoords.tl.x)/2-w2,
-    });
+    try {
+      let w2 = obj.width / 2
+      let h2 = obj.height / 2
+      obj.set({
+        top: canvas.vptCoords.tl.y + (canvas.vptCoords.br.y - canvas.vptCoords.tl.y) / 2 - h2,
+        left: canvas.vptCoords.tl.x + (canvas.vptCoords.br.x - canvas.vptCoords.tl.x) / 2 - w2,
+      });
+    } catch (e) {}
   }
 }
 
@@ -326,15 +128,13 @@ function selectTool(event){
       currentButton = notCurrentButton;
     }
     if( currentButton) {
+    let currentAction = currentButton.dataset.tool;
 
-      let currentAction = currentButton.dataset.tool;
-
-      if ( currentAction ){
-        if (currentAction==selectedTool){
-          selectedTool=""
-        }else{
-          selectedTool=currentAction
-        }
+    if ( currentAction ){
+      if (currentAction==selectedTool){
+        selectedTool=""
+      }else{
+        selectedTool=currentAction
       }
       // console.log(selectedTool);
       // если выбрано лезвие, то меняем курсор
@@ -355,7 +155,7 @@ function selectTool(event){
             toolPanel.classList.add('full-screen');
           }
         }else{
-          toolPanel.classList.remove('full-screen')
+          toolPanel.classList.add('full-screen');
         }
       }else{
         toolPanel.classList.remove('full-screen')
@@ -363,22 +163,25 @@ function selectTool(event){
     }else{
       toolPanel.classList.remove('full-screen')
     }
+  }else{
+    toolPanel.classList.remove('full-screen')
+  }
 
-    if(selectedButton === currentButton && selectedButton) {
-        if ( !selectedButton.classList.contains('js-modal-trigger') && !selectedButton.classList.contains("disable") ){
-          selectedButton.classList.toggle('settings-panel__button_active');
-        }
-    } else {
-        if(currentButton) {
-          if ( !currentButton.classList.contains('js-modal-trigger') && !currentButton.classList.contains("disable")  ){
-            currentButton.classList.toggle('settings-panel__button_active');
-          }
-        }
-        if(selectedButton ) {
-            selectedButton.classList.remove('settings-panel__button_active');
-        }
-        selectedButton = currentButton;
+  if(selectedButton === currentButton && selectedButton) {
+    if ( !selectedButton.classList.contains('js-modal-trigger') && !selectedButton.classList.contains("disable") ){
+      selectedButton.classList.toggle('settings-panel__button_active');
     }
+  } else {
+    if(currentButton) {
+      if ( !currentButton.classList.contains('js-modal-trigger') && !currentButton.classList.contains("disable")  ){
+        currentButton.classList.toggle('settings-panel__button_active');
+      }
+    }
+    if(selectedButton ) {
+      selectedButton.classList.remove('settings-panel__button_active');
+    }
+    selectedButton = currentButton;
+  }
 
 }
 
@@ -388,8 +191,8 @@ canvas.on('touch:gesture',function(e){
   // console.log(e.self.touches, e.self.scale, currentValueZoom);
   if ( e.self.touches!==undefined && e.self.touches.length==2 && selectedTool=='moving' ){
     // this.selection = false;
-    var lPinchScale = e.self.scale;  
-    // var scaleDiff = (lPinchScale -1)/10 + 1;  // Slow down zoom speed    
+    var lPinchScale = e.self.scale;
+    // var scaleDiff = (lPinchScale -1)/10 + 1;  // Slow down zoom speed
     const delta = e.self.scale-currentValueZoom;
     // alert(JSON.stringify(e.self));
     // console.log('delta',delta);
@@ -404,13 +207,13 @@ canvas.on('touch:gesture',function(e){
       // canvas.toggleDragMode(true)
       panningGesture = true
     }
-    
+
     // selectionTimer = setTimeout( ()=>canvas.toggleDragMode(true) , 500);
     clearTimeout(selectionTimer)
     selectionTimer = setTimeout( ()=>panningGesture = false , 50);
     this.selection = false;
   }
-  
+
 });
 
 const MAX_ZOOM_IN  = 4;
@@ -486,22 +289,22 @@ const handleChangeActiveButton = (newActiveButton) => {
   }
   toolPanel.classList.remove('full-screen');
   if(button){
-      selectedButton = button;
-      if ( !selectedButton.classList.contains("disable") ){
-        selectedButton.classList.add('settings-panel__button_active');
-      }
-      toolPanel.classList.add('full-screen');
+    selectedButton = button;
+    if ( !selectedButton.classList.contains("disable") ){
+      selectedButton.classList.add('settings-panel__button_active');
+    }
+    toolPanel.classList.add('full-screen');
   }
 }     // Смена выбранной кнопки на другую актинвую
 
 
 const handleDownKeySpace = (event) => {
   if (event.code === 'Space' && !event.repeat && !isDown) {
-      event.preventDefault();
-      canvas.isDrawingMode = false;
-      isCursorMove = true;
-      canvas.toggleDragMode();
-      handleChangeActiveButton(buttonCursorMove)
+    event.preventDefault();
+    canvas.isDrawingMode = false;
+    isCursorMove = true;
+    canvas.toggleDragMode();
+    handleChangeActiveButton(buttonCursorMove)
 
   }
 }           // Нажатие на пробел
@@ -514,7 +317,7 @@ const handleUpKeySpace = (event) => {
     handleChangeActiveButton()
 
     if(!isCursorMove) {
-        document.body.addEventListener('keydown', handleDownKeySpace)
+      document.body.addEventListener('keydown', handleDownKeySpace)
     }
   }
 }             // Отпускание пробела
@@ -525,25 +328,25 @@ let cursorCoordinateOtherUsers;
 const handleMouseMovement = (event) => {
   const cursorCoordinate = canvas.getPointer(event.e);
   let data = {
-      userId: socket.id,
-      coords: cursorCoordinate,
+    userId: socket.id,
+    coords: cursorCoordinate,
   }
   socket.emit('cursor-data', data);
-}   
+}
 
 /**
  * Ловим курсор когда он вышел за пределы канваса
- * @param {*} ev 
+ * @param {*} ev
  */
 const handleMouseOut = (ev)=>{
   if (ev.e.type=='mouseout'){
     const cursorCoordinate = canvas.getPointer(ev.e);
     let w = canvas.getWidth()
-    let h = canvas.getHeight()    
+    let h = canvas.getHeight()
     let data = {
-        userId: socket.id,
-        coords: cursorCoordinate,
-        cursor:'leave'
+      userId: socket.id,
+      coords: cursorCoordinate,
+      cursor:'leave'
     }
     socket.emit('cursor-data', data);
   }
@@ -565,40 +368,41 @@ const getCursorData = (data) => {
       color_index=0;
     }
     //cursorUser.left = data.cursorCoordinates.x
-       //canvas.sendToBack(cursorUser);
-
+    //canvas.sendToBack(cursorUser);
     canvas.add(cursorUser);
-
     existing_coursor = cursorUser;
-    
   }else{
-    
-    // console.log(h,w,data.cursorCoordinates);
-    if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-20 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-20 ){
-      data.cursor='leave'
-      if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )
-        data.cursorCoordinates.x = canvas.vptCoords.tl.x
-      if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-20  )
-        data.cursorCoordinates.x = canvas.vptCoords.tr.x-20
-      if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )
-        data.cursorCoordinates.y = canvas.vptCoords.tl.y
-      if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-20  )
-        data.cursorCoordinates.y = canvas.vptCoords.br.y-20
-    }
-      
-    existing_coursor.set({
-      top:  data.cursorCoordinates.y,
-      left: data.cursorCoordinates.x,
-    }); 
-    if ( data.cursor!==undefined && data.cursor=='leave' ){
+      // console.log(h,w,data.cursorCoordinates);
+      if (!(data && data.cursorCoordinates && canvas.vptCoords && canvas.vptCoords.tl && data.cursorCoordinates.x && canvas.vptCoords.tl.x && canvas.vptCoords.tr.x)) {
+        data.cursor = 'leave'
+        data.cursorCoordinates = {}
+        data.cursorCoordinates.x = cursorUser.x
+        data.cursorCoordinates.y = cursorUser.y
+      } else if (data.cursorCoordinates.x < canvas.vptCoords.tl.x || data.cursorCoordinates.x > canvas.vptCoords.tr.x - 20 || data.cursorCoordinates.y < canvas.vptCoords.tl.y || data.cursorCoordinates.y > canvas.vptCoords.br.y - 20) {
+        data.cursor = 'leave'
+        if (data.cursorCoordinates.x < canvas.vptCoords.tl.x)
+          data.cursorCoordinates.x = canvas.vptCoords.tl.x
+        if (data.cursorCoordinates.x > canvas.vptCoords.tr.x - 20)
+          data.cursorCoordinates.x = canvas.vptCoords.tr.x - 20
+        if (data.cursorCoordinates.y < canvas.vptCoords.tl.y)
+          data.cursorCoordinates.y = canvas.vptCoords.tl.y
+        if (data.cursorCoordinates.y > canvas.vptCoords.br.y - 20)
+          data.cursorCoordinates.y = canvas.vptCoords.br.y - 20
+      }
+
       existing_coursor.set({
-        opacity: 0.2
-      })
-    }else{
-      existing_coursor.set({
-        opacity: 1
-      })
-    }
+        top: data.cursorCoordinates.y,
+        left: data.cursorCoordinates.x,
+      });
+      if (data.cursor !== undefined && data.cursor == 'leave') {
+        existing_coursor.set({
+          opacity: 0.2
+        })
+      } else {
+        existing_coursor.set({
+          opacity: 1
+        })
+      }
   }
   // помещаем курсор поверх всех элементов
   if ( moveCursorsToFront && existing_coursor){
@@ -612,30 +416,30 @@ const getCursorData = (data) => {
 
 function handleScale (delta)
 {
-    if (delta<0)
+  if (delta<0)
+  {
+    if(currentValueZoom<=MAX_ZOOM_OUT)
     {
-        if(currentValueZoom<=MAX_ZOOM_OUT)
-        {
-            return;
-        }
-        else
-        {
-            currentValueZoom = (parseFloat(currentValueZoom)-SCALE_STEP).toFixed(2);
-
-        }
+      return;
     }
     else
     {
-        if(currentValueZoom>=MAX_ZOOM_IN)
-        {
-            return;
-        }
-        else
-        {
-            currentValueZoom = (parseFloat(currentValueZoom)+SCALE_STEP).toFixed(2);
+      currentValueZoom = (parseFloat(currentValueZoom)-SCALE_STEP).toFixed(2);
 
-        }
     }
+  }
+  else
+  {
+    if(currentValueZoom>=MAX_ZOOM_IN)
+    {
+      return;
+    }
+    else
+    {
+      currentValueZoom = (parseFloat(currentValueZoom)+SCALE_STEP).toFixed(2);
+
+    }
+  }
 }
 
 //const canvas = new fabric.Canvas(document.getElementById("canvasId"),{ renderOnAddRemove: false });
@@ -650,7 +454,7 @@ function get_board_id() {
 
 let isDown = false;
 
-const buttonCursorMove = document.querySelector('#moving_our_board'); 
+const buttonCursorMove = document.querySelector('#moving_our_board');
 
 const menu_logo = document.querySelector(".top-panel__logo");
 menu_logo.addEventListener('click', e=> e.currentTarget.classList.toggle('active') );
@@ -687,7 +491,7 @@ const pathTriangularGrid = "./images/grids/triangular-grid.svg";
  */
 fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
   // console.log('toggle');
-  
+
   // Remember the previous X and Y coordinates for delta calculations
   if ( this.lastClientX === undefined) {
     this.lastClientX = 0
@@ -703,113 +507,113 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
   const STATE_IDLE = "idle";
   const STATE_PANNING = "panning";
   let state = STATE_IDLE;
-  
+
   // We're entering dragmode
   if (  state_ ) {
-      this.off('mouse:move');
-      // Discard any active object
-      this.discardActiveObject();
-      // Set the cursor to 'move'
-      this.defaultCursor = "move";
-      // Loop over all objects and disable events / selectable. We remember its value in a temp variable stored on each object
-      this.forEachObject(function (object) {
-          object.prevEvented = object.evented;
-          object.prevSelectable = object.selectable;
-          object.evented = false;
-          object.selectable = false;
-      });
-      // Remove selection ability on the canvas
-      this.selection = false;
-      // // When MouseUp fires, we set the state to idle
-      this.on("mouse:up", function (e) {
-          state = STATE_IDLE;
-          // console.log("mouse:up 1");
-      });
-      // // When MouseDown fires, we set the state to panning
-      this.on("mouse:down", (e) => {
-          state = STATE_PANNING;
-          if ( e.e.changedTouches!==undefined && e.e.changedTouches.length==1 ){ 
-            let lt_ = e.e.changedTouches[0];
-            this.lastClientX = lt_.clientX;
-            this.lastClientY = lt_.clientY;
-          }else{
-            this.lastClientX = e.e.clientX;
-            this.lastClientY = e.e.clientY;
-          }
-          // console.log("mouse:down 1");
-      });
-      // When the mouse moves, and we're panning (mouse down), we continue
-      this.on("mouse:move", (e) => {
-          if (state === STATE_PANNING && e && e.e) {
-              let x_,y_;
-              if ( e.e.changedTouches!==undefined && e.e.changedTouches.length>0 ){ 
-                // if (e.e.changedTouches.length){
-                  let lt_ = e.e.changedTouches[0];
-                  x_ = lt_.clientX;
-                  y_ = lt_.clientY;
-                // }else{
-                //   x_ = (e.e.changedTouches[0].clientX+e.e.changedTouches[1].clientX)/2;
-                //   y_ = (e.e.changedTouches[0].clientY+e.e.changedTouches[1].clientY)/2;
-                // }
-              }else{
-                x_ = e.e.clientX;
-                y_ = e.e.clientY;
-              }
-              if (this.lastClientX) {
-                  deltaX = x_ - this.lastClientX; // смещение по оси X
-                                                      // (если вниз передвигаемся, то
-                                                      // это значение уменьшается иначе увеличивается)
-              }
-              if (this.lastClientY) {
-                  deltaY = y_ - this.lastClientY; // смещение по оси Y
-                                                      // (если влево передвигаемся, то
-                                                      // это значение увеличивается иначе уменьшается)
-              }
-              // Update the last X and Y values
-              this.lastClientX=x_;
-              this.lastClientY=y_;
-              let delta = new fabric.Point(deltaX, deltaY);
-              this.relativePan(delta);
-              canvasbg.relativePan(delta);
-          }
-          handleMouseMovement(e)
-          // console.log("mouse:move 1");
-      });
-      // this.on("mouse:move", (event) => handleMouseMovement(event))
+    this.off('mouse:move');
+    // Discard any active object
+    this.discardActiveObject();
+    // Set the cursor to 'move'
+    this.defaultCursor = "move";
+    // Loop over all objects and disable events / selectable. We remember its value in a temp variable stored on each object
+    this.forEachObject(function (object) {
+      object.prevEvented = object.evented;
+      object.prevSelectable = object.selectable;
+      object.evented = false;
+      object.selectable = false;
+    });
+    // Remove selection ability on the canvas
+    this.selection = false;
+    // // When MouseUp fires, we set the state to idle
+    this.on("mouse:up", function (e) {
+      state = STATE_IDLE;
+      // console.log("mouse:up 1");
+    });
+    // // When MouseDown fires, we set the state to panning
+    this.on("mouse:down", (e) => {
+      state = STATE_PANNING;
+      if ( e.e.changedTouches!==undefined && e.e.changedTouches.length==1 ){
+        let lt_ = e.e.changedTouches[0];
+        this.lastClientX = lt_.clientX;
+        this.lastClientY = lt_.clientY;
+      }else{
+        this.lastClientX = e.e.clientX;
+        this.lastClientY = e.e.clientY;
+      }
+      // console.log("mouse:down 1");
+    });
+    // When the mouse moves, and we're panning (mouse down), we continue
+    this.on("mouse:move", (e) => {
+      if (state === STATE_PANNING && e && e.e) {
+        let x_,y_;
+        if ( e.e.changedTouches!==undefined && e.e.changedTouches.length>0 ){
+          // if (e.e.changedTouches.length){
+          let lt_ = e.e.changedTouches[0];
+          x_ = lt_.clientX;
+          y_ = lt_.clientY;
+          // }else{
+          //   x_ = (e.e.changedTouches[0].clientX+e.e.changedTouches[1].clientX)/2;
+          //   y_ = (e.e.changedTouches[0].clientY+e.e.changedTouches[1].clientY)/2;
+          // }
+        }else{
+          x_ = e.e.clientX;
+          y_ = e.e.clientY;
+        }
+        if (this.lastClientX) {
+          deltaX = x_ - this.lastClientX; // смещение по оси X
+          // (если вниз передвигаемся, то
+          // это значение уменьшается иначе увеличивается)
+        }
+        if (this.lastClientY) {
+          deltaY = y_ - this.lastClientY; // смещение по оси Y
+          // (если влево передвигаемся, то
+          // это значение увеличивается иначе уменьшается)
+        }
+        // Update the last X and Y values
+        this.lastClientX=x_;
+        this.lastClientY=y_;
+        let delta = new fabric.Point(deltaX, deltaY);
+        this.relativePan(delta);
+        canvasbg.relativePan(delta);
+      }
+      handleMouseMovement(e)
+      // console.log("mouse:move 1");
+    });
+    // this.on("mouse:move", (event) => handleMouseMovement(event))
   } else {
-      // When we exit dragmode, we restore the previous values on all objects
-      this.forEachObject(function (object) {
-          object.evented = object.prevEvented !== undefined ? object.prevEvented : object.evented;
-          object.selectable = object.prevSelectable !== undefined ? object.prevSelectable : object.selectable;
-      });
-      // Reset the cursor
-      this.defaultCursor = "default";
-      // Remove the event listeners
-      // console.log("off all");
-      this.off("mouse:up");
-      this.off("mouse:down");
-      this.off("mouse:move");
-      this.on("mouse:move", (event) => handleMouseMovement(event))
-      // Restore selection ability on the canvas
-      this.selection = true;
+    // When we exit dragmode, we restore the previous values on all objects
+    this.forEachObject(function (object) {
+      object.evented = object.prevEvented !== undefined ? object.prevEvented : object.evented;
+      object.selectable = object.prevSelectable !== undefined ? object.prevSelectable : object.selectable;
+    });
+    // Reset the cursor
+    this.defaultCursor = "default";
+    // Remove the event listeners
+    // console.log("off all");
+    this.off("mouse:up");
+    this.off("mouse:down");
+    this.off("mouse:move");
+    this.on("mouse:move", (event) => handleMouseMovement(event))
+    // Restore selection ability on the canvas
+    this.selection = true;
   }
 };
 
 
 const freeDrawingButton          = document.querySelector('#free_drawing_button');
-      freeDrawingButton.onclick  = enableFreeDrawing;
+freeDrawingButton.onclick  = enableFreeDrawing;
 const freeEraseingButton         = document.querySelector('#free_erasing_button');
-      freeEraseingButton.onclick = enableEraser;
+freeEraseingButton.onclick = enableEraser;
 const selectionButton            = document.querySelector('#selection_button');
-      selectionButton.onclick    = enableSelection;
+selectionButton.onclick    = enableSelection;
 const BladeButton                = document.querySelector('#blade_button');
-      BladeButton.onclick        = bladeButtonClick;
+BladeButton.onclick        = bladeButtonClick;
 const LassoButton                = document.querySelector('#lasso_button');
-      LassoButton.onclick        = lassoButtonClick;
+LassoButton.onclick        = lassoButtonClick;
 
 
 const downloadImage = () =>  {
-   const ext = "png";
+  const ext = "png";
   //  canvas._objects.forEach( (obj, index)=>{
   //   if ( obj.src!==undefined ){
   //     // obj._element.currentSrc = "/download/"+encodeURIComponent(obj.src)
@@ -824,15 +628,15 @@ const downloadImage = () =>  {
   //     console.log(obj._element.currentSrc);
   //   }
   //  })
-   const base64 = canvas.toDataURL({
-     format: ext,
-     enableRetinaScaling: true
-   });
-   const link = document.createElement("a");
-   link.href = base64;
-   link.download = `eraser_example.${ext}`;
-   link.click();
- };
+  const base64 = canvas.toDataURL({
+    format: ext,
+    enableRetinaScaling: true
+  });
+  const link = document.createElement("a");
+  link.href = base64;
+  link.download = `eraser_example.${ext}`;
+  link.click();
+};
 
 
 const circleDrawingButton = document.querySelector('#circle_drawing_empty_button');
@@ -901,7 +705,6 @@ function checkLoggedIn(){
     socket.emit("access:request", {user:e.user, board:board_id});
     // показываем оверлей ожидания
     showWaitingOverlay()
-    
   });
 }
 
@@ -909,7 +712,7 @@ function checkLoggedInCookie(){
   let user_id = Cookies.get('user_id');
 
   // если пользователь не залогинен - перенаправляем на страницу логина
-  if ( user_id===undefined || !user_id || user_id==false||user_id==='-1' ){
+  if ( user_id===undefined || !user_id || user_id==false ){
     window.location.href=serverHostDebug+"/auth?parametr_enter=email";
     return;
   }
@@ -923,7 +726,7 @@ function checkLoggedInCookie(){
 
 /**
  * Разрешаю пользователю войти в доску
- * @param {*} e 
+ * @param {*} e
  */
 function acceptAccess(e){
   let creator_id = Cookies.get('user_id');
@@ -933,13 +736,13 @@ function acceptAccess(e){
 
 /**
  * Запрещаем доступ
- * @param {*} e 
+ * @param {*} e
  */
 function declineAccess(e){
   let creator_id = Cookies.get('user_id');
   socket.emit("creator:decline",{ board_id:e.currentTarget.dataset.board, user_id:e.currentTarget.dataset.user, creator_id:creator_id });
   notifyPopup.classList.add('is-hidden');
-  // 
+  //
 }
 
 /**
@@ -971,7 +774,7 @@ function object_fit_apth(obj_){
         return [item[1],item[2]];
       } else{
         return [item[1],item[2]];
-      }            
+      }
     })
     const error = 30;
     let bezierCurves = fitCurve(massiv_of_points, error);
@@ -983,7 +786,7 @@ function object_fit_apth(obj_){
     ];
 
     for (let i = 0; i < bezierCurves.length; i++) {
-        bezierProcessedPath.push(['C',...bezierCurves[i][1],...bezierCurves[i][2],...bezierCurves[i][3]]);
+      bezierProcessedPath.push(['C',...bezierCurves[i][1],...bezierCurves[i][2],...bezierCurves[i][3]]);
     }
 
     object.path = bezierProcessedPath.map(function(item){
@@ -995,7 +798,6 @@ function object_fit_apth(obj_){
       }
     });
 
-    
     objectAddInteractive(object);
 
   }
@@ -1011,14 +813,14 @@ socket.on( 'connect', function()
 {
   canvasbg.isDrawingMode = false;
 
-  // checkLoggedIn();
+  checkLoggedIn();
   checkLoggedInCookie()
   // получаем ответ на наш запрос - можно на доску заходить или нет?
   socket.on('access:response', function(data){
-    if ( data.role!='' && data.role!='waiting' ){
+    //if ( data.role!='' && data.role!='waiting' ){
       hideWaitingOverlay()
       socket.emit("board:board_id",board_id);
-    }      
+    //}
   });
 
   // очищаем доску по сигналу
@@ -1103,7 +905,7 @@ socket.on( 'connect', function()
   socket.on('color:change', function(colour_taken) {
     if ( canvasbg.freeDrawingBrush!==undefined ){
       canvasbg.freeDrawingBrush.color = colour_taken;
-    }        
+    }
   });
 
   socket.on('width:change', function(width_taken)
@@ -1115,6 +917,7 @@ socket.on( 'connect', function()
   });
   
 
+
   let circle ;
   socket.on('circle:edit', function(circle_taken)
   {
@@ -1123,11 +926,11 @@ socket.on( 'connect', function()
     });
     canvas.renderAll();
   });
-  
+
   socket.on('circle:add', function(circle_taken)
   {
-      circle = new fabric.Circle(circle_taken)
-      canvas.add(circle)
+    circle = new fabric.Circle(circle_taken)
+    canvas.add(circle)
   });
 
   let rect ;
@@ -1152,10 +955,10 @@ socket.on( 'connect', function()
   socket.on('rect:add', function(rect_taken)
   {
 
-      rect = new fabric.Rect(rect_taken)
-      canvas.add(rect)
-        
-      //'canvas.freeDrawingBrush.width = width_taken'
+    rect = new fabric.Rect(rect_taken)
+    canvas.add(rect)
+
+    //'canvas.freeDrawingBrush.width = width_taken'
   });
 
   let line ;
@@ -1171,7 +974,6 @@ socket.on( 'connect', function()
     canvas.renderAll();
   });
 
-  
   socket.on('line:add', function(line_taken) {
     // console.log(line_taken);
     if ( line_taken.line_type == "arrow" ){
@@ -1202,7 +1004,6 @@ socket.on( 'connect', function()
         objectCaching: false,
       });
     }else{
-      
       line = new fabric.Line(line_taken.points, {
         id: line_taken.id,
         strokeWidth: parseInt(line_taken.width),
@@ -1221,9 +1022,9 @@ socket.on( 'connect', function()
   });
 
   /**
-    * добавляем произвольный штрих
-    * @data {"board_id": board_id, "object": options }
-    */
+   * добавляем произвольный штрих
+   * @data {"board_id": board_id, "object": options }
+   */
   socket.on("path:created", (data)=>{
     let compare_ = {...data.object.path};
     canvas.isWaitingPath = compare_;
@@ -1231,15 +1032,20 @@ socket.on( 'connect', function()
 
   socket.on('picture:add', function(img_taken)  {
     try{
-        canvas.loadFromJSON(img_taken);
+      canvas.loadFromJSON(img_taken);
     }catch (e){
       error.log(e)
-    }    
+    }
   });
 
-  socket.on('image:add', function(img_taken)    {
-      window.insertImageOnBoard(img_taken.src, true, img_taken.id_of);
+  socket.on('image:add', async function(img_taken) {
+    let loaded = await window.preloadImage(img_taken.src, true, img_taken.id_of)
+    if (loaded !== true) {
+      window.insertImageOnBoard(loaded["url"], true, img_taken.id_of)
+    }
   });
+
+  //////
 
   socket.on('take_data_from_json_file',function(data)
   {
@@ -1252,69 +1058,86 @@ socket.on( 'connect', function()
       let chunks = chunk(data?.canvas,30);
       let chunk_index = 0;
       canvas.renderOnAddRemove=false;
-      let init_interval = setInterval(function(){
-          let chunk = chunks[chunk_index];
-          if(!chunk){
-            clearInterval(init_interval)
-            canvas.renderOnAddRemove=true;
-            return false;
-          }
-          chunk.forEach((object,id)=>{
-            chunk[id]=deserialize(object);
-            // console.log(chunk[id]);
-          });
-          fabric.util.enlivenObjects(chunk,function(objects)
-          {
-            // сохраняем количество объектов
-            allReceivedObjects = objects.length
-            objects.forEach(function(object) {
-              let obj_exists = false;
+      let init_interval = setInterval( async function(){
+        let chunk = chunks[chunk_index];
+        if(!chunk){
+          clearInterval(init_interval);
+          canvas.renderOnAddRemove=true;
+          let _i = setInterval(() => {
+            if (canvas._objects.length >= data?.canvas.length) {
+              setTimeout(() => {
+                socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+                clearInterval(_i);
+                return false;
+              }, 100);
+            }
+          }, 100)
+        }
+        chunk && chunk.forEach((object,id)=>{
+          chunk[id]=deserialize(object);
+          // console.log(chunk[id]);
+        });
+        fabric.util.enlivenObjects(chunk,async function(objects)
+        {
+          // сохраняем количество объектов
+          allReceivedObjects = objects.length
+          for (let object of objects) {
+            let obj_exists = false;
 
-              canvas._objects.every(function(obj_,indx_){
-                  if ( obj_.id==object.id ){
-                    obj_exists = true;
-                    return false
-                  }
-                  return true;
-              });
-              // если такого объекта еще нет на канвасе, то добавляем
-              if ( obj_exists===false ){
-                if ( object.type=='image'  ){
-                  if ( object.src!==undefined && object.src!='' ){
-                    window.insertImageOnBoard(object.src, true, object.id, object);
-                  }else{
-                    if (object.formula!==undefined && object.formula!=''){
-                      window.addFormula(object.formula, object.id, object,false)
-                    }
+            canvas._objects.every(function(obj_,indx_){
+              if ( obj_.id==object.id ){
+                obj_exists = true;
+                return false
+              }
+              return true;
+            });
+            // если такого объекта еще нет на канвасе, то добавляем
+            if ( obj_exists===false ){
+              if ( object.type=='image'){
+                if ( object.src!==undefined && object.src!='' ){
+                  let loaded = await window.preloadImage(object.src, true, object.id, object)
+                  window.loaded[object.src] = loaded
+                  if (loaded !== true && !window.loaded[object.src]["delay"]) {
+                      await window.insertImageOnBoard(object.src, true, object.id, object);
                   }
                 }else{
                   // console.log(object.type);
-
                   objectAddInteractive(object);
-
                   canvas.add(object);
 
                   if ( takedFirstData==false ){
                     object.set({ selectable: false })
                   }
-                  decreaseRecievedObjects()
                 }
-              }                
-            })
-            
-          });
-          canvas.renderAll();
-          chunk_index++;
+              }else{
+                // console.log(object.type);
+
+                objectAddInteractive(object);
+
+                canvas.add(object);
+
+                if ( takedFirstData==false ){
+                  object.set({ selectable: false })
+                }
+                decreaseRecievedObjects()
+              }
+            }
+          }
+
+        })
+        canvas.renderAll();
+        chunk_index++;
       },150)
 
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       //canvas.loadFromJSON(data);
     }
+
   })
 
   canvas.on('object:modified', e =>    {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    send_part_of_data(e);
-    // send_part_events.push(e);
+    send_part_of_data(e)
   });
 
 
@@ -1338,29 +1161,27 @@ socket.on( 'connect', function()
   {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     send_part_of_data(e);
-      // send_part_events.push(e);
   });
 
 
   socket.on('object:moving', e =>
   {
     recive_part_of_data(e);
-      // recive_part_events.push(e);
   });
 
   socket.on('figure_delete', e =>
   {
-      e.forEach(function(id)
+    e.forEach(function(id)
+    {
+      canvas._objects.forEach(function(object,index)
       {
-        canvas._objects.forEach(function(object,index)
+        if(index==id)
         {
-          if(index==id)
-          {
-            canvas.remove(object);
-          }
-        })
+          canvas.remove(object);
+        }
       })
-      //canvas.loadFromJSON(e);
+    })
+    //canvas.loadFromJSON(e);
   });
 
   socket.on('figure_copied', e =>
@@ -1370,36 +1191,31 @@ socket.on( 'connect', function()
       canvas.renderAll();
       //canvas.loadFromJSON(e);
   });
-  
+
 
   canvas.on('object:scaling',e =>
   {
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     send_part_of_data(e);
-      // send_part_events.push(e);
   });
 
 
   socket.on('object:scaling', e =>
   {
-      recive_part_of_data(e);
-      // recive_part_events.push(e);
+    recive_part_of_data(e);
   });
 
   canvas.on('object:rotating',e =>
   {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     send_part_of_data(e);
-      // send_part_events.push(e);
   });
 
 
   socket.on('object:rotating', e =>
   {
-      recive_part_of_data(e);
-      //canvas.loadFromJSON(e);
-      // recive_part_events.push(e);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    send_part_of_data(e);
   });
 
   socket.on('text:added', e => {
@@ -1409,8 +1225,8 @@ socket.on( 'connect', function()
   });
 
   /**
-    * ловим изменения текста
-    */
+   * ловим изменения текста
+   */
   socket.on('text:edited', e => {
     let t = canvas._objects.find( item => item.id==e.id )
     if ( t ){
@@ -1425,8 +1241,8 @@ socket.on( 'connect', function()
   });
 
   /**
-    * ловим изменения текста
-    */
+   * ловим изменения текста
+   */
   socket.on('formula:edited', e => {
     editFormula( e.formula, e.object.id )
   });
@@ -1435,13 +1251,13 @@ socket.on( 'connect', function()
   {
     recive_part_of_data(e);
   });
-
+  
   /**
-    * Эмитим событие когда закончили рисовать произвольный путь
-    * прогблема в том, что на остальных досках во время рисования объект еще не создан, а когда
-    * рисование завершено, то объект создается под своим айди на каждой доске. Поэтому редактирование и перемещение
-    * на других досках не работает. Надо передать готовый объект и на досках пересвоить айди
-    */
+   * Эмитим событие когда закончили рисовать произвольный путь
+   * прогблема в том, что на остальных досках во время рисования объект еще не создан, а когда
+   * рисование завершено, то объект создается под своим айди на каждой доске. Поэтому редактирование и перемещение
+   * на других досках не работает. Надо передать готовый объект и на досках пересвоить айди
+   */
   canvas.on("path:created", function(options) {
     // console.log("path created", options);
     if ( canvas.isDrawingMode ){
@@ -1455,7 +1271,6 @@ socket.on( 'connect', function()
       canvas.isWaitingPath = false
       // objectAddInteractive(options);
     }
-    
   });
   canvasbg.on("path:created",(options)=>{
     if ( canvas.isWaitingPath!==undefined && canvas.isWaitingPath!=false ){
@@ -1475,7 +1290,7 @@ socket.on( 'connect', function()
       object = object_fit_apth(object)
     }
   });
-  
+
 });
 
 /**
@@ -1518,9 +1333,8 @@ function enableFreeDrawing(){
   removeEvents();
   canvas.freeDrawingBrush       = new fabric.PencilBrush(canvas);
   canvasbg.freeDrawingBrush     = new fabric.PencilBrush(canvasbg);
-  
+
   canvas.freeDrawingBrush.btype = "brush"
-  
 
   let isDrawing = false;
   let enableDrawingMode = true;
@@ -1536,75 +1350,75 @@ function enableFreeDrawing(){
   //   canvas._handleEvent(e, 'move');
   //   console.log(e);
   // }
-  
+
   // canvas._onMouseMoveInDrawingMode = function (e) {
   //   var pointer = canvas.getPointer(e);
   //   // pointer.x = 100;
   //   console.log({x:pointer.x, y:pointer.y}, isDrawing, canvas.remoteDrawing );
   //   if ( isDrawing ){
-      
+
   //     canvas.freeDrawingBrush.onMouseMove(pointer,{e:{}});
   //     canvas.remoteDrawingBrush.onMouseMove({x:pointer.x-50, y:pointer.y},{e:{}});
   //   }
   // }
 
 
-    /**
-     * @private
-     * @param {Event} e Event object fired on mousedown
-     */
-    // canvas._onMouseDownInDrawingMode = function(e) {
-    //   this._isCurrentlyDrawing = true;
-    //   if (this.getActiveObject()) {
-    //     this.discardActiveObject(e).requestRenderAll();
-    //   }
-      
-    //   // this.freeDrawingBrush.onMouseDown(pointer, { e: e, pointer: pointer });
-    //   canvas.remoteDrawingBrush = new fabric['PencilBrush'](canvas);
-    //   canvas.remoteDrawingBrush.color = 'green';
-    //   canvas.remoteDrawingBrush.width = 5;
-    //   canvas.remoteDrawingBrush.needsFullRender = ()=>true;
-    //   canvas.remoteDrawingBrush._setBrushStyles(canvas.contextTop)
-    //   canvas.remoteDrawingBrush._captureDrawingPath({x:pointer.x-50, y:pointer.y});
-    //   canvas.remoteDrawingBrush._render();
-      
-    //   // this.remoteDrawingBrush.onMouseDown({x:pointer.x-50, y:pointer.y}, { e: e, pointer: {x:pointer.x-50, y:pointer.y} });
-    //   // this._handleEvent(e, 'down');
-    // },
+  /**
+   * @private
+   * @param {Event} e Event object fired on mousedown
+   */
+  // canvas._onMouseDownInDrawingMode = function(e) {
+  //   this._isCurrentlyDrawing = true;
+  //   if (this.getActiveObject()) {
+  //     this.discardActiveObject(e).requestRenderAll();
+  //   }
 
-    /**
-     * @private
-     * @param {Event} e Event object fired on mousemove
-     */
-    // canvas._onMouseMoveInDrawingMode = function(e) {
-    //   if (this._isCurrentlyDrawing) {
-    //     var pointer = this.getPointer(e);
-    //     // console.log();
-    //     this.freeDrawingBrush.onMouseMove(pointer, { e: e, pointer: pointer });
-    //     // canvas.freeDrawingBrush.onMouseMove(pointer,{e:{}});
-    //     this.remoteDrawingBrush.onMouseMove({x:pointer.x-50, y:pointer.y},{e:e, pointer: {x:pointer.x-50, y:pointer.y}});
-    //   }
-    //   this.setCursor(this.freeDrawingCursor);
-    //   this._handleEvent(e, 'move');
-    // },
+  //   // this.freeDrawingBrush.onMouseDown(pointer, { e: e, pointer: pointer });
+  //   canvas.remoteDrawingBrush = new fabric['PencilBrush'](canvas);
+  //   canvas.remoteDrawingBrush.color = 'green';
+  //   canvas.remoteDrawingBrush.width = 5;
+  //   canvas.remoteDrawingBrush.needsFullRender = ()=>true;
+  //   canvas.remoteDrawingBrush._setBrushStyles(canvas.contextTop)
+  //   canvas.remoteDrawingBrush._captureDrawingPath({x:pointer.x-50, y:pointer.y});
+  //   canvas.remoteDrawingBrush._render();
 
-    /**
-     * @private
-     * @param {Event} e Event object fired on mouseup
-     */
-    // canvas._onMouseUpInDrawingMode = function(e) {
-    //   var pointer = this.getPointer(e);
-    //   this._isCurrentlyDrawing = this.freeDrawingBrush.onMouseUp({ e: e, pointer: pointer });
-    //   this.remoteDrawingBrush.onMouseUp({ e: e, pointer: {x:pointer.x-50, y:pointer.y} });
-    //   this._handleEvent(e, 'up');
-    // },
+  //   // this.remoteDrawingBrush.onMouseDown({x:pointer.x-50, y:pointer.y}, { e: e, pointer: {x:pointer.x-50, y:pointer.y} });
+  //   // this._handleEvent(e, 'down');
+  // },
+
+  /**
+   * @private
+   * @param {Event} e Event object fired on mousemove
+   */
+  // canvas._onMouseMoveInDrawingMode = function(e) {
+  //   if (this._isCurrentlyDrawing) {
+  //     var pointer = this.getPointer(e);
+  //     // console.log();
+  //     this.freeDrawingBrush.onMouseMove(pointer, { e: e, pointer: pointer });
+  //     // canvas.freeDrawingBrush.onMouseMove(pointer,{e:{}});
+  //     this.remoteDrawingBrush.onMouseMove({x:pointer.x-50, y:pointer.y},{e:e, pointer: {x:pointer.x-50, y:pointer.y}});
+  //   }
+  //   this.setCursor(this.freeDrawingCursor);
+  //   this._handleEvent(e, 'move');
+  // },
+
+  /**
+   * @private
+   * @param {Event} e Event object fired on mouseup
+   */
+  // canvas._onMouseUpInDrawingMode = function(e) {
+  //   var pointer = this.getPointer(e);
+  //   this._isCurrentlyDrawing = this.freeDrawingBrush.onMouseUp({ e: e, pointer: pointer });
+  //   this.remoteDrawingBrush.onMouseUp({ e: e, pointer: {x:pointer.x-50, y:pointer.y} });
+  //   this._handleEvent(e, 'up');
+  // },
 
   canvas.isDrawingMode          = true;
   canvas.on('mouse:down', e => {
     // console.log('mouse:down',e);
-    
+
     isDrawing = true;
-    const pointer = canvas.getPointer(e);    
+    const pointer = canvas.getPointer(e);
     // canvas.freeDrawingBrush = new fabric['PencilBrush'](canvas);
     canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
     canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
@@ -1613,7 +1427,7 @@ function enableFreeDrawing(){
     // canvas.freeDrawingBrush._captureDrawingPath(pointer);
     // canvas.freeDrawingBrush._render();
     canvas.freeDrawingBrush.onMouseDown(pointer,{e:{}});
-    
+
     // canvas.remoteDrawingBrush.onMouseDown({x:pointer.x-50, y:pointer.y},{e:{}});
     socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
   })
@@ -1621,7 +1435,7 @@ function enableFreeDrawing(){
     isDrawing = false;
     const pointer = canvas.getPointer(e);
     socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
-    //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   })
   canvas.on('mouse:move', function (e) {
     if (isDrawing) {
@@ -1629,7 +1443,7 @@ function enableFreeDrawing(){
       // canvas.freeDrawingBrush.width=7;
       canvas.freeDrawingBrush.onMouseMove(pointer,{e:{}});
       // canvas.remoteDrawingBrush.onMouseMove({x:pointer.x-50, y:pointer.y},{e:{}});
-      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points);
     }
   })
 }
@@ -1689,7 +1503,7 @@ function enableEraser(){
   canvas.on('mouse:move', (e)=> {
     if (isDrawing) {
       const pointer = canvas.getPointer(e);
-      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points);
     }
   })
 }
@@ -1752,7 +1566,7 @@ function drawrec(type_of_rectangle) {
   changeObjectSelection(false);
   colour_inside = 'Black';
   let stroke_line = 0;
-  
+
   if (type_of_rectangle == "empty")  {
     colour_inside = hexToRgbA('#000dff',5);
     stroke_line   = 0;
@@ -1779,7 +1593,7 @@ function drawrec(type_of_rectangle) {
       height: pointer.y - origY,
       angle: 0,
       selectable: false,
-      
+
       fill: colour_inside,//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
       stroke: 'Black',//drawing_color_border.value,
       strokeDashArray: [stroke_line, stroke_line],
@@ -1842,13 +1656,13 @@ function drawrec(type_of_rectangle) {
 
 
 function drawcle(type_of_circle) {
-  
+
   colour_inside = 'Black';
   let stroke_line   = 0;
   if (type_of_circle == "empty")
   {
-        colour_inside = hexToRgbA('#000dff',5);//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
-        stroke_line   = 0;
+    colour_inside = hexToRgbA('#000dff',5);//hexToRgbA(drawing_color_fill.value, drawing_figure_opacity.value),
+    stroke_line   = 0;
   }
   else if(type_of_circle == "empty_with_stroke_line")
   {
@@ -1924,6 +1738,15 @@ canvas.setBackgroundColor(
     canvas.renderAll.bind(canvas)
 );
 
+//canvas.setBackgroundColor(
+//    {
+//      source: pathUsualGrid,
+//      repeat: "repeat",
+//      scaleX: 1,
+//      scaleY: 1,
+//    },
+//    canvas.renderAll.bind(canvas)
+//);
 
 window.addEventListener("resize", resizeCanvas, false);
 
@@ -2029,13 +1852,13 @@ function adding_circle_on_the_board(circle_taken) {
 let stroke_line = 0;
 
 var drawing_color_fill = document.getElementById("drawing-color-fill"),
-  drawing_color_border = document.getElementById("drawing-color-border"),
-  drawing_figure_width = document.getElementById("drawing-figure-width"),
-  drawing_figure_opacity = document.getElementById("opacity");
+    drawing_color_border = document.getElementById("drawing-color-border"),
+    drawing_figure_width = document.getElementById("drawing-figure-width"),
+    drawing_figure_opacity = document.getElementById("opacity");
 
-  var  drawingColorEl = document.getElementById("drawing-color"),
-  drawingLineWidthEl = document.getElementById("drawing-line-width");
-        
+var  drawingColorEl = document.getElementById("drawing-color"),
+    drawingLineWidthEl = document.getElementById("drawing-line-width");
+
 /* Basic example */
 
 const popupBasic = new Picker({parent:drawingColorEl,popup: 'top',editorFormat: 'rgba'});
@@ -2078,7 +1901,7 @@ if (localStorageWidth)
 }
 
 
-drawingLineWidthEl.oninput = function() 
+drawingLineWidthEl.oninput = function()
 {
   canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   socket.emit("width:change", canvas.freeDrawingBrush.width);
@@ -2098,14 +1921,14 @@ drawingLineWidthEl.oninput = function()
 function drawLine(type_of_line) {
   // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
   // canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
-  drawingLineWidthEl.onchange = function() 
+  drawingLineWidthEl.onchange = function()
   {
     canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10) ;
     socket.emit("width:change", canvas.freeDrawingBrush.width);
   };
   let line, isDown;
 
-  drawingColorEl.onchange = function() 
+  drawingColorEl.onchange = function()
   {
     canvas.freeDrawingBrush.color = drawingColorEl.style.backgroundColor;
     socket.emit("color:change",drawingColorEl.style.backgroundColor);
@@ -2114,7 +1937,7 @@ function drawLine(type_of_line) {
 
   };
   colour_inside = hexToRgbA('#000dff',5);
-  if (type_of_line == "trivial") { 
+  if (type_of_line == "trivial") {
     stroke_line   = 0;
   } else if(type_of_line == "dotted") {
     stroke_line = 20;
@@ -2142,7 +1965,7 @@ function drawLine(type_of_line) {
         selectable: false,
         objectCaching: false,
       });
-      
+
     }else if ( type_of_line == "arrowtwo" ){
       line = new fabric.ArrowTwo(points, {
         strokeWidth: parseInt(canvas.freeDrawingBrush.width),//drawing_figure_width.value,
@@ -2250,11 +2073,11 @@ function hexToRgbA(hex, figures_opacity) {
     }
     c = "0x" + c.join("");
     return (
-      "rgba(" +
-      [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") +
-      "," +
-      figures_opacity / 100 +
-      ")"
+        "rgba(" +
+        [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") +
+        "," +
+        figures_opacity / 100 +
+        ")"
     );
   }
   throw new Error("Bad Hex");
@@ -2277,7 +2100,7 @@ function print_Text() {
 }
 
 function find_object_index(target_object) {
-  let target_index; 
+  let target_index;
   let objects = canvas.getObjects();
   objects.forEach(function (object, index) {
     if (object.id == target_object.id) {
@@ -2394,7 +2217,7 @@ const handleButtonCursorMoveClick = (ev) => {
   canvas.isDrawingMode = false
   canvas.allowTouchScrolling = true;
   changeObjectSelection(false);
-} 
+}
 buttonCursorMove.addEventListener('click', handleButtonCursorMoveClick);
 
 
@@ -2429,19 +2252,19 @@ let selectedButton = freeDrawingButton;
 
 let getSiblings = function (e) {
   // for collecting siblings
-  let siblings = []; 
+  let siblings = [];
   // if no parent, return no sibling
   if(!e.parentNode) {
-      return siblings;
+    return siblings;
   }
   // first child of the parent node
   let sibling  = e.parentNode.firstChild;
   // collecting siblings
   while (sibling) {
-      if (sibling.nodeType === 1 && sibling !== e) {
-          siblings.push(sibling);
-      }
-      sibling = sibling.nextSibling;
+    if (sibling.nodeType === 1 && sibling !== e) {
+      siblings.push(sibling);
+    }
+    sibling = sibling.nextSibling;
   }
   return siblings;
 };
@@ -2457,12 +2280,12 @@ socket.on('cursor-data', getCursorData);              // отображаем к
 
 
 socket.on('coursour_disconected', function(user_id){
-  let index_of_existing_coursor = canvas._objects.findIndex(item=>item.socket_id==user_id);
-  if (index_of_existing_coursor!==-1){
-    (canvas._objects).splice(index_of_existing_coursor,1);
-    canvas.renderAll();
-  }
-}
+      let index_of_existing_coursor = canvas._objects.findIndex(item=>item.socket_id==user_id);
+      if (index_of_existing_coursor!==-1){
+        (canvas._objects).splice(index_of_existing_coursor,1);
+        canvas.renderAll();
+      }
+    }
 
 );
 
@@ -2496,10 +2319,10 @@ inputChangeColor.addEventListener('click', handleClickOpenInputChangeColor);
 
 fontColorInput2.addEventListener('click', () => { fontColorListWrapper2.classList.add('active') })
 
-fontColorInput2.addEventListener('change', (e) => { 
+fontColorInput2.addEventListener('change', (e) => {
   let obj_ = canvas.getActiveObject();
   if ( obj_ ){
-    canvas.getActiveObject().set("fill", e.target.value) 
+    canvas.getActiveObject().set("fill", e.target.value)
   }
 })
 
@@ -2541,50 +2364,50 @@ buttonDecreaseScale.addEventListener("click", (event) => {
 /**
  * Сравнение объектов
  * https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
- * @param {*} x 
- * @param {*} y 
- * @returns 
+ * @param {*} x
+ * @param {*} y
+ * @returns
  */
 function object_equals( x, y ) {
   if ( x === y ) return true;
-    // if both x and y are null or undefined and exactly the same
+  // if both x and y are null or undefined and exactly the same
 
   if ( ! ( x instanceof Object ) || ! ( y instanceof Object ) ) return false;
-    // if they are not strictly equal, they both need to be Objects
+  // if they are not strictly equal, they both need to be Objects
 
   if ( x.constructor !== y.constructor ) return false;
-    // they must have the exact same prototype chain, the closest we can do is
-    // test there constructor.
+  // they must have the exact same prototype chain, the closest we can do is
+  // test there constructor.
 
   for ( var p in x ) {
     if ( ! x.hasOwnProperty( p ) ) continue;
-      // other properties were tested using x.constructor === y.constructor
+    // other properties were tested using x.constructor === y.constructor
 
     if ( ! y.hasOwnProperty( p ) ) return false;
-      // allows to compare x[ p ] and y[ p ] when set to undefined
+    // allows to compare x[ p ] and y[ p ] when set to undefined
 
     if ( x[ p ] === y[ p ] ) continue;
-      // if they have the same strict value or identity then they are equal
+    // if they have the same strict value or identity then they are equal
 
     if ( typeof( x[ p ] ) !== "object" ) return false;
-      // Numbers, Strings, Functions, Booleans must be strictly equal
+    // Numbers, Strings, Functions, Booleans must be strictly equal
 
     if ( ! object_equals( x[ p ],  y[ p ] ) ) return false;
-      // Objects and Arrays must be tested recursively
+    // Objects and Arrays must be tested recursively
   }
 
   for ( p in y )
     if ( y.hasOwnProperty( p ) && ! x.hasOwnProperty( p ) )
       return false;
-        // allows x[ p ] to be set to undefined
+  // allows x[ p ] to be set to undefined
 
   return true;
 }
 
 /**
  * Назодим тот-же путь
- * @param {*} f 
- * @param {*} s 
+ * @param {*} f
+ * @param {*} s
  */
 function compare_path(f,s){
   if ( f.type!='path' || s.type!=f.type )

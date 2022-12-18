@@ -235,8 +235,11 @@ addEventListener('paste', (e) => {
 /**
  * После сохранения 
  */
-socket.on('cloud:image:saved', (data)=>{
+socket.on('cloud:image:saved', async (data)=>{
   if ( data && data.Location!==undefined ){
-    insertImageOnBoard(data.Location);
+    let loaded = await window.preloadImage(data.Location)
+    if (loaded !== true) {
+       window.insertImageOnBoard(loaded["url"])
+    }
   }
 })
