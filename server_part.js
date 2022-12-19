@@ -117,8 +117,8 @@ class AmazonCloud {
       accessKeyId: process.env.ACCESS_KEY, // берем ключ из переменной окружения
       secretAccessKey: process.env.SECRET_ACCESS_KEY, // берем секрет из переменной окружения
       httpOptions: {
-        timeout: 10000,
-        connectTimeout: 10000
+        timeout: 100000,
+        connectTimeout: 100000
       },
     });
   }
@@ -569,52 +569,11 @@ io.on("connection", async socket => {
   }
 
   socket.on("canvas_save_to_json", async canvas_pass => {
-    const data_saved = JSON.stringify(canvas_pass);
-    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
-    // console.log(data_saved) // Hello world!
-    // await client.end()  
-    return;
-    try {
-      socket.broadcast.emit('canvas_save_to_json', canvas_pass);
-
-      if (canvas_pass["act"] === "init") {
-        Canvas = canvas_pass["canvas"];
-      } else if (canvas_pass["act"] === "clear") {
-        await client.query("DELETE FROM boards WHERE id=$1", [canvas_pass["board_id"]]);
-        fs.unlinkSync("saved_data.json");
-      } else if (canvas_pass["act"] === "add") {
-        Canvas = Canvas.concat(canvas_pass["canvas"]);
-      } else if (canvas_pass["act"] === "update_one") {
-        let index = find_object_index(canvas_pass)
-        if (index) Canvas[index] = canvas_pass["canvas"];
-      } else if (canvas_pass["act"] === "update_many") {
-        for (let o in canvas_pass) {
-          let index = find_object_index(canvas_pass["canvas"][o]);
-          if (index) Canvas.objects[index] = canvas_pass["canvas"][o];
-        }
-      }
-
-      const data_saved = JSON.stringify(Canvas);
-      //await client.connect()
-      //const res = await client.query("UPDATE boards set board_stack = '"+ JSON.stringify(canvas_pass)+"' WHERE id=1" );
-      //console.log(res) // Hello world!
-      //await client.end()
-      //done()
-
-      if (data_saved !== "{}") {
-        const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
-
-        await fs.writeFile("saved_data.json", data_saved, (err) => {
-          if (err) {
-            console.log(err);
-          }
-        });
-      }
-    } catch (e) {
-      console.log(e);
-    }
-
+    const data_saved = JSON.parse(JSON.stringify(canvas_pass))
+    //socket.broadcast.emit('canvas_save_to_json', data_saved);
+    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
   });
+
 
   socket.on('upload_to_aws', (image_pass,callback) =>{
     let name_obj = makeid(32)
@@ -685,4 +644,100 @@ function makeid(length) {
 charactersLength));
  }
  return result;
+}
+
+/**
+ * Конвертируем файл в массив картинок и загружаем в облако
+ * @param {*} file_ 
+ * @socket_id - айди доски для формирования пути в облаке
+ * @uid_ - айди папки с файлами
+ */
+async function convertPDFToImages(file_, uid_, socket_id_){
+  // console.log(file_);
+  let opts = {
+    format: 'jpeg',
+    saveFilename: "page",
+    savePath: path.dirname(file_),
+    density: 300,
+    quality: 78,
+  }
+
+  let result = await  fromPath(file_, opts).bulk(-1, false);
+
+  // const result = await pdf.convert(file_, opts)
+  //   .then(res => {
+  //     return true
+  //   })
+  //   .catch(error => {
+  //       console.error(error);
+  //       fs.unlinkSync(file_);
+  //       return false
+  //   })
+  // console.log("result of convert", result);
+  if (result){
+    fs.unlinkSync(file_);
+    // console.log("saveImagesFromPathToCloud");
+    return saveImagesFromPathToCloud(uid_, socket_id_);
+  }
+  return [];
+}
+
+/**
+ * Конвертируем презентацию в массив картинок и загружаем в облако
+ * @param {*} file_ 
+ */
+function convertPPTToImages(file_){
+
+}
+
+/**
+ * сохраняем картики из папки в облако и удаляем их из папки
+ * @param {String} uid_ айди папки
+ * @returns 
+ */
+async function saveImagesFromPathToCloud( uid_, socket_id_ ){
+  let images = [];
+  var promises = [];
+  let dir = "./uploaded/"+uid_+"/";
+  // console.log("saveImagesFromPathToCloud",dir,fs.existsSync(dir));
+  
+  if (fs.existsSync(dir)){
+    // options is optional
+    
+    let files = glob.sync(dir+"*.jpeg");
+    
+    // console.log(files);
+    if (files) {
+      var i = 0;
+      for (const file of files) {
+        // console.log(file, path.basename(file));
+        // promises.push(
+        let fileContent = fs.readFileSync(file);
+        let one = await  AWSCloud.upload({
+            file: fileContent, // файл
+            path: 'images/'+socket_id_+'/'+uid_,
+            fileName: path.basename(file),
+            type: "image/jpeg"
+          }).then( (data)=> {
+            fs.unlinkSync(file);
+            // console.log(data.Location);
+            return data.Location;
+          } )
+        images.push(one);
+        // );
+  
+        i++;
+      };
+      // return Promise.allSettled(promises).then((a) => {
+      //   console.log("promisec");
+      //   fs.rmSync(dir, { recursive: true, force: true });
+      //   return a;
+      // });
+    }
+    
+    
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  
+  return images;
 }
