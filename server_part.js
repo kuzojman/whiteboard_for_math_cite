@@ -119,8 +119,8 @@ class AmazonCloud {
       accessKeyId: process.env.ACCESS_KEY, // берем ключ из переменной окружения
       secretAccessKey: process.env.SECRET_ACCESS_KEY, // берем секрет из переменной окружения
       httpOptions: {
-        timeout: 10000,
-        connectTimeout: 10000
+        timeout: 100000,
+        connectTimeout: 100000
       },
     });
   }
@@ -733,11 +733,12 @@ async function saveImagesFromPathToCloud( uid_, socket_id_ ){
     // console.log(files);
     if (files) {
       var i = 0;
-      files.forEach((file)=> {
-        // console.log(file);
-        promises.push(
-          AWSCloud.upload({
-            file: file, // файл
+      for (const file of files) {
+        // console.log(file, path.basename(file));
+        // promises.push(
+        let fileContent = fs.readFileSync(file);
+        let one = await  AWSCloud.upload({
+            file: fileContent, // файл
             path: 'images/'+socket_id_+'/'+uid_,
             fileName: path.basename(file),
             type: "image/jpeg"
@@ -746,19 +747,20 @@ async function saveImagesFromPathToCloud( uid_, socket_id_ ){
             // console.log(data.Location);
             return data.Location;
           } )
-        );
+        images.push(one);
+        // );
   
         i++;
-      });
-      return Promise.allSettled(promises).then((a) => {
-        console.log("promisec");
-        fs.rmSync(dir, { recursive: true, force: true });
-        return a;
-      });
+      };
+      // return Promise.allSettled(promises).then((a) => {
+      //   console.log("promisec");
+      //   fs.rmSync(dir, { recursive: true, force: true });
+      //   return a;
+      // });
     }
     
     
-    // fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(dir, { recursive: true, force: true });
   }
   
   return images;

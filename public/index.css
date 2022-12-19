@@ -139,6 +139,9 @@ html, body, .canvasWrapper
     padding: 0;
     display: inline-flex;
 }
+.slider_menu button.inactive svg{
+    opacity: 0.3;
+}
 .slider_menu li .slide_text{
     display: flex;
     justify-content: center;
