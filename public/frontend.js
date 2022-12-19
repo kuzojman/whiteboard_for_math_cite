@@ -80,7 +80,7 @@ function clearBoard(broadcast=true){
   canvas.renderAll();
 
   if ( broadcast ){
-   socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    socket.emit("board:clear", board_id);
   }
 }
 
