@@ -552,10 +552,17 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("formula:edited", object_pass);
   });
 
+  socket.on("board:clear", async board_id => {
+    const data_saved = JSON.stringify({"board_id":board_id,"canvas":[]})
+    await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, board_id]);
+  });
+
   socket.on("canvas_save_to_json", async canvas_pass => {
-    const data_saved = JSON.parse(JSON.stringify(canvas_pass))
-    //socket.broadcast.emit('canvas_save_to_json', data_saved);
-    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
+    if (canvas_pass.canvas && canvas_pass.canvas.length > 0) {
+      const data_saved = JSON.stringify(canvas_pass)
+      //socket.broadcast.emit('canvas_save_to_json', data_saved);
+      const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
+    }
   });
 
 
