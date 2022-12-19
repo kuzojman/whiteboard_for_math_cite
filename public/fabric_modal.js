@@ -205,7 +205,6 @@ window.preloadImage = async function (url, noemit=false, id=false, params=false)
               })
             } else {
               let img = new fabric.Image(file)
-              img['src'] = url;
 
               img.crossOrigin = 'anonymous'
               if (id !== false) {
@@ -240,6 +239,8 @@ window.insertImageOnBoard = async function (url, noemit=false, id=false, params=
       if (id !== false) {
         img['id'] = id;
       }
+      
+      img['src'] = url;
 
       if (takedFirstData == false) {
         img.set({selectable: false})
