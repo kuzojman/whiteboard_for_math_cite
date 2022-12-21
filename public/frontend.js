@@ -110,8 +110,7 @@ const JSONParseAsync = (data, reviver = null) => {
             reject(error);
         }
     });
-  }
-};
+}
 
 window.onload = async () => {
     canvas.setBackgroundColor({
@@ -1515,6 +1514,7 @@ function enableFreeDrawing(){
  */
 function sliderButtonClick(){
   removeEvents();
+  console.log("click");
   let slider = new fabric.Slider(canvas);
   slider.onReady = ()=>{
     canvas.add(slider);
@@ -2160,6 +2160,11 @@ function drawLine(type_of_line) {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
+
+
+  canvas.on('object:removed',function(object){
+    console.warn(object);
+  })
 }
 
 
