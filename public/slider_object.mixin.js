@@ -73,10 +73,22 @@
        * все слайды
        */
       slides_count: 0,
+
+      recursionCount: 0,
       
-      initialize: function (canvas) {
+      initialize: function (canvas,options) {
+        options || (options = {});
         this.callSuper('initialize', canvas);
-        this.setSrc(this.default_image);
+        options && Object.keys(options).length != 0 && 
+        this.set('socket', options.socket) &&
+        this.set('upload_ready', options.upload_ready) &&
+        this.set('raw_file', options.raw_file) &&
+        this.set('slider_images', options.slider_images)
+        this.set('current_pos', options.current_pos)
+        this.set('slides_count', options.slides_count)
+        if ( this.upload_ready ){
+          this.setSrc(this.default_image);
+        }
       },
 
       /**
@@ -140,7 +152,7 @@
           next_btn.classList.add('inactive')
         }else{
           next_btn.classList.remove('inactive')
-        }
+        }        
       },
 
       /**
@@ -242,7 +254,7 @@
         }
         this._stroke(ctx);
         this._renderPaintInOrder(ctx);
-        console.log(this.left, this.top);
+        // console.log(this);
         this.alignMenu();
       },
 
@@ -256,33 +268,41 @@
           this.setElement(img);
           this.onReady();
           this._ready = true;
+          this.canvas && this.canvas.requestRenderAll();
         } );
       },
-
+      /**
+        * Returns an object representation of an instance
+        * @param {Array} [propertiesToInclude] Any properties that you might want to additionally include in the output
+        * @return {Object} Object representation of an instance
+        */
+        toObject: function (propertiesToInclude) {
+          // console.log(this.callSuper('toObject', ['socket','upload_ready','raw_file','slider_images','current_pos','slides_count'].concat(propertiesToInclude)));
+          return this.callSuper('toObject', ['upload_ready','raw_file','slider_images','current_pos','slides_count'].concat(propertiesToInclude));
+        },
     }
   );
 
   /** SLIDER_END */
 
   fabric.Slider.fromObject =  function(object, callback) {
-    function _callback(instance) {
-      instance.setSocket(socket);
-      instance.onReady = ()=>{
-        canvas.requestRenderAll(); 
-      }
-      callback && callback(instance);
-    };
-    // var options = clone(object, true);
-    object.points = [object.x1, object.y1, object.x2, object.y2];
-    fabric.Object._fromObject('Slider', object, _callback, 'points');
+    // var options = fabric.util.object.clone(object, true);
+    // delete options.objects;
+    // console.log(object);
+    return fabric.Object._fromObject('Slider', object, function(instance) {
+      // textInstance.styles = fabric.util.stylesFromArray(object.styles, object.text);
+      // instance.canvas = canvas;
+      instance.left = object.left;
+      instance.top = object.top;
+      instance.id = object.id;
+      instance.upload_ready = object.upload_ready;
+      instance.raw_file = object.raw_file;
+      instance.slider_images = object.slider_images;
+      instance.current_pos = object.current_pos;
+      instance.slides_count = object.slides_count;
+      instance.refresh();
+      callback(instance);
+    }, 'slider');
   };
-  // function (object, callback) {
-  //   callback && callback(new fabric.Slider([object.x1, object.y1, object.x2, object.y2],object))
-  //     console.log(callback, object);
-  //     // object.setSocket(socket);
-  //     // object.onReady = ()=>{
-  //     //   canvas.requestRenderAll(); 
-  //     // }
-    
-  // };
+
 })();

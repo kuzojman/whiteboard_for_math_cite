@@ -76,7 +76,7 @@ const JSONParseAsync = (data, reviver = null) => {
             reject(error);
         }
     });
-};
+}
 
 // Вызов webworker
 
@@ -1635,6 +1635,23 @@ function enableFreeDrawing(){
 }
 
 /**
+ * Добавляем 
+ */
+function sliderButtonClick(){
+  removeEvents();
+  console.log("click");
+  let slider = new fabric.Slider(canvas);
+  slider.onReady = ()=>{
+    canvas.add(slider);
+    setObjectToCanvasCenter(slider);
+    // slider.alignMenu();
+    canvas.setActiveObject(slider).requestRenderAll(); 
+  }
+  slider.setSocket(socket);  
+  
+}
+
+/**
  * Включаем инструмент лассо
  */
 function lassoButtonClick(){
@@ -2216,6 +2233,11 @@ function drawLine(type_of_line) {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
+
+
+  canvas.on('object:removed',function(object){
+    console.warn(object);
+  })
 }
 
 
