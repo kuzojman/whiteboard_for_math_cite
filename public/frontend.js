@@ -1647,8 +1647,7 @@ function sliderButtonClick(){
     // slider.alignMenu();
     canvas.setActiveObject(slider).requestRenderAll(); 
   }
-  slider.setSocket(socket);  
-  
+  slider.setSocket(socket);
 }
 
 /**
@@ -1709,6 +1708,48 @@ function enableEraser(){
       socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points); 
     }
   })
+}
+
+function enliveObjects(chunk){
+  fabric.util.enlivenObjects(chunk,function(objects)
+  {
+    // сохраняем количество объектов
+    allReceivedObjects = objects.length
+    objects.forEach(function(object) {
+      let obj_exists = false;
+
+      canvas._objects.every(function(obj_,indx_){
+          if ( obj_.id==object.id ){
+            obj_exists = true;
+            return false
+          }
+          return true;
+      });
+      // если такого объекта еще нет на канвасе, то добавляем
+      if ( obj_exists===false ){
+        if ( object.type=='image'  ){
+          if ( object.src!==undefined && object.src!='' ){
+            window.insertImageOnBoard(object.src, true, object.id, object);
+          }else{
+            if (object.formula!==undefined && object.formula!=''){
+              window.addFormula(object.formula, object.id, object,false)
+            }
+          }
+        } if ( object.type=="slider" ) {
+          // оживляем слайдер и вешаем на него сокет
+          object.setSocket(socket);
+        } else{
+          objectAddInteractive(object);
+          canvas.add(object);
+          if ( takedFirstData==false ){
+            object.set({ selectable: false })
+          }
+          decreaseRecievedObjects()
+        }
+      }                
+    })
+    
+  });
 }
 
 /**

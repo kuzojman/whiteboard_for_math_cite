@@ -80,13 +80,20 @@
         options || (options = {});
         this.callSuper('initialize', canvas);
         options && Object.keys(options).length != 0 && 
-        this.set('socket', options.socket) &&
         this.set('upload_ready', options.upload_ready) &&
         this.set('raw_file', options.raw_file) &&
-        this.set('slider_images', options.slider_images)
-        this.set('current_pos', options.current_pos)
+        this.set('slider_images', options.slider_images) &&
+        this.set('current_pos', options.current_pos) &&
         this.set('slides_count', options.slides_count)
+        if ( !this.current_pos ){
+          this.current_pos=false;
+        }
+        if ( !this.slides_count ){
+          this.slides_count=0;
+        };
         if ( this.upload_ready ){
+          this.current_pos=false;
+          this.slides_count=0;
           this.setSrc(this.default_image);
         }
       },
@@ -100,6 +107,7 @@
         }
         this.current_pos+=1;
         this.refresh();
+        this.saveState();
       },
 
       /**
@@ -111,6 +119,7 @@
         }
         this.current_pos-=1;
         this.refresh();
+        this.saveState();
       },
 
       /**
@@ -140,6 +149,7 @@
           this.setSrc(this.slider_images[this.current_pos]);
         }
         // обновляем текстовую информацию
+        // console.log(this.current_pos, this.slides_count);
         cur_slide_text.textContent=this.current_pos+1;
         all_slide_text.textContent=this.slides_count;
         // проверяем стили кнопок
@@ -152,7 +162,8 @@
           next_btn.classList.add('inactive')
         }else{
           next_btn.classList.remove('inactive')
-        }        
+        }
+        this.alignMenu();
       },
 
       /**
@@ -161,9 +172,15 @@
       alignMenu: function(){
         // anvas.vptCoords.tl.y
         let bound = this.getBoundingRect();
-        // console.log(bound);
-        slider_menu.style.top = (bound.top+bound.height)+'px';
-        slider_menu.style.left = (bound.left)+'px';
+        // console.log(this.left, this.top, this.getWidth(), this.getHeight());
+        if ( bound.top==0 && bound.left==0 ){
+          slider_menu.style.top = (this.top+this.getHeight())+'px';
+          slider_menu.style.left = (this.left)+'px';
+        }else{
+          slider_menu.style.top = (bound.top+bound.height)+'px';
+          slider_menu.style.left = (bound.left)+'px';
+        }
+        
         // this.width
         // this.x
         
@@ -215,8 +232,17 @@
       },
 
       onDeselect: function(){
-        console.log("deselect");
+        // console.log("deselect");
         slider_bar.classList.remove('active');
+      },
+
+      /**
+       * Передаем статус в сокет и сохраняем состояние заодно
+       */
+      saveState: function(){
+        if (this.socket){
+          this.socket.emit("slider:change", {'object':this});
+        }
       },
 
       onReady: function(){
@@ -229,6 +255,15 @@
        */
       setSocket: function( _socket){
         this.socket = _socket;
+        // после того как задаем сокет - сразу же подключаемся к его событию
+        // по этому событию передается вся информация с других досок
+        this.socket.on("slider:change", (obj_)=>{
+          this.set('upload_ready', obj_.upload_ready) &&
+          this.set('raw_file', obj_.raw_file) &&
+          this.set('slider_images', obj_.slider_images) &&
+          this.set('current_pos', obj_.current_pos) &&
+          this.set('slides_count', obj_.slides_count)
+        });
       },  
 
       /**
@@ -264,11 +299,19 @@
        */
       setSrc(src) {
         this._ready = false;
+        let old_pos = {left:this.left, top:this.top};
+        // console.log(this.left, this.top, this.getWidth(), this.getHeight());
         fabric.util.loadImage(src, (img)=>{
           this.setElement(img);
           this.onReady();
           this._ready = true;
           this.canvas && this.canvas.requestRenderAll();
+          if ( old_pos.left!==this.left || old_pos.top!==this.top ){
+            this.set('left',old_pos.left);
+            this.set('top',old_pos.top);
+          }
+          // console.log(this.left, this.top, this.getWidth(), this.getHeight());
+          this.alignMenu();
         } );
       },
       /**

@@ -271,6 +271,10 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("color:changed", object_pass);
   });
 
+  socket.on("slider:change", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("slider:change", object_pass);
+  });
+
   /**
    * Загрузка иображений в облако
    * @data - { name: 'filename.jpg', file: ByteArray<>, type: mimetype }
