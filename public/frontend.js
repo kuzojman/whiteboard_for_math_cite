@@ -1522,8 +1522,7 @@ function sliderButtonClick(){
     // slider.alignMenu();
     canvas.setActiveObject(slider).requestRenderAll(); 
   }
-  slider.setSocket(socket);  
-  
+  slider.setSocket(socket);
 }
 
 /**
@@ -1611,13 +1610,12 @@ function enliveObjects(chunk){
               window.addFormula(object.formula, object.id, object,false)
             }
           }
-        }else{
-          // console.log(object.type);
-
+        } if ( object.type=="slider" ) {
+          // оживляем слайдер и вешаем на него сокет
+          object.setSocket(socket);
+        } else{
           objectAddInteractive(object);
-
           canvas.add(object);
-
           if ( takedFirstData==false ){
             object.set({ selectable: false })
           }
