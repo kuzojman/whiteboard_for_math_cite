@@ -9,6 +9,10 @@ const fs = require("fs");
 const mustacheExpress = require('mustache-express');
 const S3 = require('aws-sdk/clients/s3');
 const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
+const { fromPath } = require("pdf2pic");
+const { getDocument } = require("pdfjs-dist");
+const glob = require("glob")
 
 var Canvas = new Object()
 
@@ -657,7 +661,9 @@ charactersLength));
  * @uid_ - айди папки с файлами
  */
 async function convertPDFToImages(file_, uid_, socket_id_){
-  // console.log(file_);
+  let fileContent = fs.readFileSync(file_);
+  let pdf_params = await getPdfFormatInfo(fileContent);
+
   let opts = {
     format: 'jpeg',
     saveFilename: "page",
@@ -666,18 +672,14 @@ async function convertPDFToImages(file_, uid_, socket_id_){
     quality: 78,
   }
 
+  // задаем правильный размер pdf
+  if ( pdf_params ){
+    opts['height'] = pdf_params.finalHeight;
+    opts['width'] = pdf_params.finalWidth;
+  }
+
   let result = await  fromPath(file_, opts).bulk(-1, false);
 
-  // const result = await pdf.convert(file_, opts)
-  //   .then(res => {
-  //     return true
-  //   })
-  //   .catch(error => {
-  //       console.error(error);
-  //       fs.unlinkSync(file_);
-  //       return false
-  //   })
-  // console.log("result of convert", result);
   if (result){
     fs.unlinkSync(file_);
     // console.log("saveImagesFromPathToCloud");
@@ -744,4 +746,24 @@ async function saveImagesFromPathToCloud( uid_, socket_id_ ){
   }
   
   return images;
+}
+
+/** returns size and resolution of the pdf */
+async function getPdfFormatInfo(dataBuffer){
+  const pdfDocument = await getDocument({ data: dataBuffer }).promise;
+  const page = await pdfDocument.getPage(1);
+  const viewport = page.getViewport({ scale: 1 });
+
+  const width = Math.floor(viewport.width);
+  const height = Math.floor(viewport.height);
+  const finalHeight = 800;
+  const finalWidth = (finalHeight / height) * width;
+
+  return {
+    numPages: pdfDocument.numPages,
+    width,
+    height,
+    finalWidth,
+    finalHeight,
+  };
 }
