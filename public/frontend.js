@@ -13,6 +13,8 @@ const socket = io('http://localhost:3000',{transports:['websocket']});
 
 // const socket = io();
 
+// конец принятых сообщений
+const END_OF_RECIEVE_OBJECTS = 1;
 
 const board_id = get_board_id() || 1;
 
@@ -428,9 +430,10 @@ const cursorUser = createCursor()
 function decreaseRecievedObjects(){
   if ( allReceivedObjects<=0 ){
     takedFirstData=true;
-    return
+    return END_OF_RECIEVE_OBJECTS
   }
   allReceivedObjects-=1;
+  return false;
 }
 
 function createCursor(){
@@ -1010,7 +1013,6 @@ function object_fit_apth(obj_){
 socket.on( 'connect', function()
 {
   canvasbg.isDrawingMode = false;
-
   // checkLoggedIn();
   checkLoggedInCookie()
   // получаем ответ на наш запрос - можно на доску заходить или нет?
@@ -1151,11 +1153,37 @@ socket.on( 'connect', function()
   });
   socket.on('rect:add', function(rect_taken)
   {
+    let pos_ = { "left": rect_taken.left, "top": rect_taken.top}
+    // без этого фокуса не работает рисование за границей видимости на партнерской доске
+    rect_taken.left = 1;
+    rect_taken.top = 1;
+    enliveObjects([rect_taken]);
+    let rect = canvas._objects.find( item => item.id==rect_taken.id )
+    rect.set({
+      left: pos_.left,
+      top: pos_.top
+    });
+    canvas.renderAll();
+  });
 
-      rect = new fabric.Rect(rect_taken)
-      canvas.add(rect)
-        
-      //'canvas.freeDrawingBrush.width = width_taken'
+  // slider:add
+
+  socket.on('slider:add', function(obj_)  {
+    let slider_taken = obj_.slider;
+    let pos_ = { "left": slider_taken.left, "top": slider_taken.top}
+    // без этого фокуса не работает рисование за границей видимости на партнерской доске
+    slider_taken.left = 1;
+    slider_taken.top = 1;
+    enliveObjects([slider_taken], () => {
+      let slider = canvas.getObjects().find( item => item.id==slider_taken.id );
+      if ( slider ){
+        slider.set({
+          left: pos_.left,
+          top: pos_.top
+        });
+      }
+      canvas.renderAll();
+    });    
   });
 
   let line ;
@@ -1348,19 +1376,23 @@ socket.on( 'connect', function()
       // recive_part_events.push(e);
   });
 
-  socket.on('figure_delete', e =>
-  {
-      e.forEach(function(id)
-      {
-        canvas._objects.forEach(function(object,index)
-        {
-          if(index==id)
-          {
+  socket.on('figure_delete', e => {
+    e.forEach(function(id){
+      canvas._objects.forEach(function(object,index) {
+        // console.log(object.id,id, object.id==id);
+        if(object.id==id) {
+          if ( object.type=='slider' ){
+            object.destroy();
+            // временный фикс, потому что не удаляется через сокеты
+            // скорее всего из-за того, что создается даважды, надо отловить эту штуку
             canvas.remove(object);
           }
-        })
+          canvas.remove(object);
+        }
       })
-      //canvas.loadFromJSON(e);
+    })
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
   });
 
   socket.on('figure_copied', e =>
@@ -1646,6 +1678,8 @@ function sliderButtonClick(){
     setObjectToCanvasCenter(slider);
     // slider.alignMenu();
     canvas.setActiveObject(slider).requestRenderAll(); 
+    // отправляем сигнал на сокет
+    socket.emit("slider:add", {"slider":slider});
   }
   slider.setSocket(socket);
 }
@@ -1710,7 +1744,7 @@ function enableEraser(){
   })
 }
 
-function enliveObjects(chunk){
+function enliveObjects(chunk, callback){
   fabric.util.enlivenObjects(chunk,function(objects)
   {
     // сохраняем количество объектов
@@ -1735,16 +1769,22 @@ function enliveObjects(chunk){
               window.addFormula(object.formula, object.id, object,false)
             }
           }
-        } if ( object.type=="slider" ) {
-          // оживляем слайдер и вешаем на него сокет
-          object.setSocket(socket);
         } else{
+          if ( object.type=="slider" ) {
+            // оживляем слайдер и вешаем на него сокет
+            object.setSocket(socket);
+          }
           objectAddInteractive(object);
           canvas.add(object);
           if ( takedFirstData==false ){
             object.set({ selectable: false })
           }
-          decreaseRecievedObjects()
+          let res = decreaseRecievedObjects();
+          
+          // вызываем коллбек когда все добавлено и закончили отрисовку
+          if ( res==END_OF_RECIEVE_OBJECTS && typeof(callback)=='function' ){
+            callback();
+          }
         }
       }                
     })
@@ -2410,6 +2450,7 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
+  // console.log(e);
   if (e.objects) {
     for (const object of e.objects) {
       //let d = canvas.item(object.index);

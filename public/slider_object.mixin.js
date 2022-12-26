@@ -209,7 +209,7 @@
           this.slider_images = [];
           this.socket.emit("slider:upload", {file:file,ftype:file.type}, (result) => {
             if ( result.error ){
-              console.log(result.error);
+              console.error(result.error);
               return;
             }
             // console.log(result.images);
@@ -223,6 +223,8 @@
               this.current_pos  = 0;
               this.slides_count = result.images.length;
               this.refresh();
+              // сохраняем состояние
+              this.saveState();
             }
           });
           // console.log(file);
@@ -237,11 +239,19 @@
       },
 
       /**
+       * функция разрушения удаления объекта
+       */
+      destroy: function(){
+        this.onDeselect();
+        return;
+      },
+
+      /**
        * Передаем статус в сокет и сохраняем состояние заодно
        */
       saveState: function(){
         if (this.socket){
-          this.socket.emit("slider:change", {'object':this});
+          this.socket.emit("slider:change", {'object':this, "id":this.id});
         }
       },
 
@@ -258,12 +268,16 @@
         // после того как задаем сокет - сразу же подключаемся к его событию
         // по этому событию передается вся информация с других досок
         this.socket.on("slider:change", (obj_)=>{
-          this.set('upload_ready', obj_.upload_ready) &&
-          this.set('raw_file', obj_.raw_file) &&
-          this.set('slider_images', obj_.slider_images) &&
-          this.set('current_pos', obj_.current_pos) &&
-          this.set('slides_count', obj_.slides_count)
-        });
+          if ( obj_.id==this.id ){
+            this.set('upload_ready', obj_.object.upload_ready) &&
+            this.set('raw_file', obj_.object.raw_file) &&
+            this.set('slider_images', obj_.object.slider_images) &&
+            this.set('current_pos', obj_.object.current_pos) &&
+            this.set('slides_count', obj_.object.slides_count)
+            this.refresh();
+            // this.setSrc(obj_.src)
+          }
+        });        
       },  
 
       /**

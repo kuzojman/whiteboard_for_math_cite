@@ -536,6 +536,10 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("figure_copied", object_pass);
   });
 
+  socket.on("slider:add", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("slider:add", object_pass);
+  });
+
   socket.on("text:added", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("text:added", object_pass);
   });
