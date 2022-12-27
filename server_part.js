@@ -12,6 +12,7 @@ const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 const { fromPath } = require("pdf2pic");
 const { getDocument } = require("pdfjs-dist");
+const unoconv = require('awesome-unoconv');
 const glob = require("glob")
 
 var Canvas = new Object()
@@ -627,6 +628,55 @@ io.on("connection", async socket => {
     
   });
 
+  /**
+   * Загружаем и обрабатываем файл с презентацией или ПДФ
+   */
+  socket.on("slider:upload",(file, callback) =>{
+    let uid_ = uuidv4();
+    let fname = "./uploaded/"+uid_+"/src";
+    let dir = path.dirname(fname);
+    if (!fs.existsSync(dir)){
+      fs.mkdirSync(dir);
+    }
+    fs.writeFile(fname, file.file, (err) => {
+      let imgs=[];
+      // console.log(file.ftype);
+      
+      // application/pdf
+      // application/vnd.openxmlformats-officedocument.presentationml.presentation
+      // application/vnd.ms-powerpoint
+      // для начала определить тип файла
+      if ( file.ftype=='application/pdf' ){
+        // сконвертировать в изображения
+        // загрузить в облако
+        convertPDFToImages(fname, uid_, socket.board_id ).then(res=>{
+          imgs = res;
+          // console.log('convertPDFToImages',imgs);
+          // мы должны подготовить и отправить массив загруженных картинок с амазон клауда
+          callback({ message: err ? "failure" : "success", images:imgs, error: err });
+        })
+      }else{
+        // console.log(file.ftype);
+        // сконвертировать в изображения
+        // загрузить в облако
+        convertPPTToImages(fname, uid_, socket.board_id, callback ).then( pdf_path=>{
+          // console.log(pdf_path);
+          convertPDFToImages(pdf_path, uid_, socket.board_id).then(res=>{
+            imgs = res;
+            // console.log('convertPDFToImages',imgs);
+            // мы должны подготовить и отправить массив загруженных картинок с амазон клауда
+            callback({ message: err ? "failure" : "success", images:imgs, error: err });
+          })
+        } );
+        
+        
+        // console.log(imgs);
+      }
+
+      
+    });
+  } );
+
   socket.on('disconnect', () => {
     io.to(socket.board_id).emit('coursour_disconected', socket.id);
     //const index  = arrayAllUsers.findIndex(item => item === socket.id);
@@ -682,7 +732,7 @@ async function convertPDFToImages(file_, uid_, socket_id_){
     opts['width'] = pdf_params.finalWidth;
   }
 
-  let result = await  fromPath(file_, opts).bulk(-1, false);
+  let result = await fromPath(file_, opts).bulk(-1, false);
 
   if (result){
     fs.unlinkSync(file_);
@@ -696,8 +746,20 @@ async function convertPDFToImages(file_, uid_, socket_id_){
  * Конвертируем презентацию в массив картинок и загружаем в облако
  * @param {*} file_ 
  */
-function convertPPTToImages(file_){
+function convertPPTToImages(file_,uid_, socket_id_){
+  return unoconv.convert(file_, { output: file_+'.pdf', format: 'pdf' })  // or format: 'html'
+    .then(result => {
+      console.log(`File save at ${result}`);
+      return result;
+    })
+    .catch(err => {
+      console.log(err);
+    });
 
+  // const commandOffice = `"${office}" --headless --convert-to pdf --outdir "${path.dirname(file_)}" "${file_}"`;
+  
+  // console.log(result);
+  return true;
 }
 
 /**
