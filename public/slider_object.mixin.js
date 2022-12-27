@@ -191,10 +191,7 @@
        * поэтому при выделении слайдера каждый раз надо переназначать события кнопка меню
        */
       bindMenuButton:function(this_){
-        // prev_btn.removeEventListener('click',this_.prev);
-        // next_btn.removeEventListener('click',this_.next);
-        // prev_btn.addEventListener('click',this_.prev );
-        // next_btn.addEventListener('click',this_.next );
+        // pass
       },
 
       onSelect: function(options){
@@ -227,7 +224,6 @@
               this.saveState();
             }
           });
-          // console.log(file);
         }
 
         SliderInput.click();

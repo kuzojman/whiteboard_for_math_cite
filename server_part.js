@@ -12,6 +12,7 @@ const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 const { fromPath } = require("pdf2pic");
 const { getDocument } = require("pdfjs-dist");
+const unoconv = require('awesome-unoconv');
 const glob = require("glob")
 
 
@@ -639,9 +640,21 @@ io.on("connection", async socket => {
           callback({ message: err ? "failure" : "success", images:imgs, error: err });
         })
       }else{
+        // console.log(file.ftype);
         // сконвертировать в изображения
         // загрузить в облако
-        imgs = convertPPTToImages(fname, uid_ )
+        convertPPTToImages(fname, uid_, socket.board_id, callback ).then( pdf_path=>{
+          // console.log(pdf_path);
+          convertPDFToImages(pdf_path, uid_, socket.board_id).then(res=>{
+            imgs = res;
+            // console.log('convertPDFToImages',imgs);
+            // мы должны подготовить и отправить массив загруженных картинок с амазон клауда
+            callback({ message: err ? "failure" : "success", images:imgs, error: err });
+          })
+        } );
+        
+        
+        // console.log(imgs);
       }
 
       
@@ -703,7 +716,7 @@ async function convertPDFToImages(file_, uid_, socket_id_){
     opts['width'] = pdf_params.finalWidth;
   }
 
-  let result = await  fromPath(file_, opts).bulk(-1, false);
+  let result = await fromPath(file_, opts).bulk(-1, false);
 
   if (result){
     fs.unlinkSync(file_);
@@ -717,8 +730,20 @@ async function convertPDFToImages(file_, uid_, socket_id_){
  * Конвертируем презентацию в массив картинок и загружаем в облако
  * @param {*} file_ 
  */
-function convertPPTToImages(file_){
+function convertPPTToImages(file_,uid_, socket_id_){
+  return unoconv.convert(file_, { output: file_+'.pdf', format: 'pdf' })  // or format: 'html'
+    .then(result => {
+      console.log(`File save at ${result}`);
+      return result;
+    })
+    .catch(err => {
+      console.log(err);
+    });
 
+  // const commandOffice = `"${office}" --headless --convert-to pdf --outdir "${path.dirname(file_)}" "${file_}"`;
+  
+  // console.log(result);
+  return true;
 }
 
 /**
