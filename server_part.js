@@ -565,8 +565,110 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("formula:edited", object_pass);
   });
 
+  /**
+   * Отправляем задание на доску
+   */
+  socket.on("send:task", async (object_pass) => {
+    console.log(object_pass);
+    const puppeteer = require('puppeteer-core')
+    const {executablePath} = require('puppeteer')
+    const { writeFile } = require('fs-extra')
+    let board_id = object_pass.board_id ?? false;
+    let task_id = object_pass.task_id ?? false;
+    if ( board_id==false || task_id==false ){
+      return false;
+    }
+    const tasks = await client.query('SELECT * from tasks WHERE id=$1',[task_id]).catch( ()=>{
+      console.error("Cant quering for get tasks from DB")
+      return false;
+    } );
+    if ( tasks.rows.length>0 ){
+      let task_content = tasks.rows[0].task;
+      let content = String.raw`
+      <!DOCTYPE html><html><head>
+      <link href="https://fonts.googleapis.com/css?family=Raleway:100,200,300,regular,500,600,700,800,900,100italic,200italic,300italic,italic,500italic,600italic,700italic,800italic,900italic" rel="stylesheet" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+      <script>
+        var math_loaded= false;
+      </script>
+      <script>
+        MathJax = {
+          loader: {
+            load: ['[tex]/color','[tex]/cancel','input/asciimath', 'output/chtml', 'ui/menu']
+          },
+          tex: {
+            packages: {'[+]': ['cancel', 'color']},
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            preview: "none"
+          },
+          tex2jax: {
+            inlineMath: [['$','$'], ['\\(','\\)']],
+            preview: "none"
+          },
+          startup: {
+            pageReady() {
+              return MathJax.startup.defaultPageReady().then(function () {
+                math_loaded=true;
+              });
+            }
+          }
+        };
+        </script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      </head><body>
+      <div class="homework_div my-4 p-5 is-6" style="border: 1px solid #ACACAC;">
+          <div class="homework_header">
+              <a href="" class="is-size-6"> <span class="main has-text-weight-bold">№ `+String(task_id)+`</span></a>
+          </div>
+          <div class="homework_text my-4">`+task_content+`</div>
+      </div>
+      </body></html>`;
+      
+      try {
+        const browser = await puppeteer.launch({
+          args: ['--no-sandbox',],
+          headless: true,
+          ignoreHTTPSErrors: true,
+          // add this
+          executablePath: executablePath(),
+        });
+        const page = await browser.newPage();
+        await page.setContent(content,{waitUntil: 'networkidle0'});
+        await page.setViewport({
+          width: 640,
+          height: 480,
+          deviceScaleFactor: 1,
+        });
+        // await page.waitFor(2000);
+        await page.waitForFunction('math_loaded');
+        const selector = 'body';
+        await page.waitForSelector(selector);
+        const element = await page.$(selector);
+        const imageBuffer = await element.screenshot({});
+        await page.close(); 
+        await browser.close();
+        // write file to disk as buffer
+        // await writeFile('./image.png', imageBuffer);
+        // console.log('The image was created successfully!')
+        let image = await  AWSCloud.upload({
+          file: imageBuffer, // файл
+          path: 'images/',
+          fileName: 'task_'+task_id+'.png',
+          type: "image/png"
+        }).then( (data)=> {
+          return data.Location;
+        } )
+        socket.broadcast.to(object_pass.board_id).emit("send:task", image);
+      } catch (error) {
+          console.error(error);
+      }
+    }
+    
+  });
+
   socket.on("canvas_save_to_json", async canvas_pass => {
     const data_saved = JSON.parse(JSON.stringify(canvas_pass))
+    // console.log(data_saved);
     //socket.broadcast.emit('canvas_save_to_json', data_saved);
     const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
   });

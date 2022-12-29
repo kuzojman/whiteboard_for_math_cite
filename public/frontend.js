@@ -1176,6 +1176,14 @@ socket.on( 'connect', function()
     }
   });
 
+  socket.on( "send:task", async function(image_url){
+    let loaded = await window.preloadImage(image_url,true)
+    if (loaded !== true) {
+      window.insertImageOnBoard(loaded["url"],true);
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    }
+  } )
+
   //////
 
   socket.on('take_data_from_json_file',function(data)
