@@ -1308,16 +1308,19 @@ socket.on( 'connect', function()
     }    
   });
 
-  socket.on('image:add', function(img_taken)    {
-      window.insertImageOnBoard(img_taken.src, true, img_taken.id_of);
+  socket.on('image:add', async function(img_taken)    {
+    // let loaded = await window.preloadImage(img_taken.src, true, img_taken.id_of)
+    // if (loaded !== true) {
+      window.insertImageOnBoard(img_taken.src, true, img_taken.id_of)
+    // }
   });
 
   socket.on( "send:task", async function(image_url){
-    let loaded = await window.preloadImage(image_url,true)
-    if (loaded !== true) {
-      window.insertImageOnBoard(loaded["url"],true);
+    // let loaded = await window.preloadImage(image_url,true)
+    // if (loaded !== true) {
+      window.insertImageOnBoard(image_url,true);
       socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    }
+    // }
   } )
 
   //////
@@ -1348,7 +1351,7 @@ socket.on( 'connect', function()
           {
             // сохраняем количество объектов
             allReceivedObjects = objects.length
-            objects.forEach(function(object) {
+            objects.forEach(async function(object) {
               let obj_exists = false;
 
               canvas._objects.every(function(obj_,indx_){
@@ -1362,10 +1365,18 @@ socket.on( 'connect', function()
               if ( obj_exists===false ){
                 if ( object.type=='image'  ){
                   if ( object.src!==undefined && object.src!='' ){
-                    window.insertImageOnBoard(object.src, true, object.id, object);
+                    // let loaded = await window.preloadImage(object.src, true, object.id, object)
+                    // window.loaded[object.src] = loaded
+                    // if (loaded !== true && !window.loaded[object.src]["delay"]) {
+                    await window.insertImageOnBoard(object.src, true, object.id, object);
+                    // }
                   }else{
-                    if (object.formula!==undefined && object.formula!=''){
-                      window.addFormula(object.formula, object.id, object,false)
+                    // console.log(object.type);
+                    objectAddInteractive(object);
+                    canvas.add(object);
+  
+                    if ( takedFirstData==false ){
+                      object.set({ selectable: false })
                     }
                   }
                 }else{

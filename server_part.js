@@ -15,7 +15,6 @@ const { getDocument } = require("pdfjs-dist");
 const unoconv = require('awesome-unoconv');
 const glob = require("glob")
 
-var Canvas = new Object()
 
 var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
 
@@ -189,34 +188,24 @@ app.get("/", (req, res) => {
  */
 app.get("/download/:urldata", (req, response) => {
   // console.log(req.params.urldata);
-  try {
-    let url_ = Buffer.from(req.params.urldata, 'base64').toString()
-    // console.log(url_);
-    // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
-    //   url_ = url_.replace('https:/','https://')
-    // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
-    //   url_ = url_.replace('http:/','http://')
-    // }
-    // console.log(url_);
-    const request = https.get(url_, (res_) => {
-      res_.setEncoding('binary');
-      response.contentType(res_.headers['content-type']);
-      res_.on('data', (body) => {
-        response.write(body, 'binary')
-        const fs = require('fs');
-        const fpath = '/download/' + req.params.urldata
-        try {
-          fs.writeFileSync(fpath, body, {flag: 'wx'})
-        } catch (e) {}
-        console.log(req.params.urldata)
-      });
-      res_.on('end', () => {
-        response.end()
-      })
+  let url_ = Buffer.from(req.params.urldata, 'base64').toString()
+  // console.log(url_);
+  // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
+  //   url_ = url_.replace('https:/','https://')
+  // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
+  //   url_ = url_.replace('http:/','http://')
+  // }
+  // console.log(url_);
+  const request = https.get(url_, (res_)=>{
+    res_.setEncoding('binary');
+    response.contentType( res_.headers['content-type'] );
+    res_.on('data',  (body) =>{
+      response.write(body,'binary')
+    });
+    res_.on('end',()=> {
+      response.end()
     })
-  } catch (e) {
-    console.log(e)
-  }
+  } )
 });
 
 app.use(express.static(path.join(__dirname, "public")));
@@ -336,8 +325,8 @@ io.on("connection", async socket => {
     socket.board_id = board_id;
     socket.join(board_id);
 
-    // console.log('>>', board_id, e);
-    // console.log('>>', 'before select -- board_id = ' + board_id);
+   // console.log('>>', board_id, e);
+  //  console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
     if ( res.rows.length>0 ){
       socket.emit("take_data_from_json_file", res.rows[0].board_stack);
@@ -551,6 +540,14 @@ io.on("connection", async socket => {
 
   socket.on("text:edited", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("text:edited", object_pass);
+  });
+
+  socket.on("width:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("width:changed", object_pass);
+  });
+
+  socket.on("color:changed", (object_pass) => {
+    socket.broadcast.to(socket.board_id).emit("color:changed", object_pass);
   });
 
   socket.on("formula:added", (object_pass) => {
@@ -808,16 +805,14 @@ async function convertPDFToImages(file_, uid_, socket_id_){
     quality: 78,
   }
 
-  // const result = await pdf.convert(file_, opts)
-  //   .then(res => {
-  //     return true
-  //   })
-  //   .catch(error => {
-  //       console.error(error);
-  //       fs.unlinkSync(file_);
-  //       return false
-  //   })
-  // console.log("result of convert", result);
+  // задаем правильный размер pdf
+  if ( pdf_params ){
+    opts['height'] = pdf_params.finalHeight;
+    opts['width'] = pdf_params.finalWidth;
+  }
+
+  let result = await fromPath(file_, opts).bulk(-1, false);
+
   if (result){
     fs.unlinkSync(file_);
     // console.log("saveImagesFromPathToCloud");
