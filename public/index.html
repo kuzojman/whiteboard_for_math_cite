@@ -354,6 +354,13 @@
       </div>
     </li>
 
+    <li class="tool-panel__item">
+      <button class="tool-panel__item-button tool-panel__item-button-slider" data-tool="slider" id="slider_button">
+        <svg class="tool-panel__item-icon-button">
+          <use xlink:href="./icons/sprite.svg#icon-slider"></use>
+        </svg>
+      </button>
+    </li>
 
     <li class="tool-panel__item">
       <button class="tool-panel__item-button js-modal-mobile-trigger" id="drawing-color" data-tool="color" >
@@ -486,6 +493,30 @@
   </div>
 </div>
 
+<div class="slider_menu" id="slider_menu">
+  <ul>
+    <li>
+      <button class="prev-button" id="slider_menu_prev_button">
+        <svg class="tool-panel__item-icon-button">
+          <use xlink:href="./icons/sprite.svg#icon-left-chevron"></use>
+        </svg>
+      </button>
+    </li>
+    <li>
+      <div id="current_slide" class="slide_text"></div>    
+    </li>
+    <li>
+      <div id="all_slides" class="slide_text"></div>    
+    </li>
+    <li>
+      <button class="next-button" id="slider_menu_next_button">
+        <svg class="tool-panel__item-icon-button">
+          <use xlink:href="./icons/sprite.svg#icon-right-chevron"></use>
+        </svg>
+      </button>
+    </li>
+  </ul>
+</div>
 
 <div class="notification is-info is-light is-size-3  is-hidden" id="accept_user_notify">
   Пользователь <strong id="user_name"></strong> запрашивает доступ к доске.
@@ -512,9 +543,10 @@
 
 <script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.X.X/dist/protobuf.js"></script>
 <script src="./vanilla-picker.min.js"></script>
-<script src="./fabric.min.js"></script>
+<script src="./fabric.js"></script>
 <!-- <script type="module" src="./gif.min.js"></script> -->
 <script src="./lasso.mixin.js"></script>
+<script src="./slider_object.mixin.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://www.desmos.com/api/v1.7/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>

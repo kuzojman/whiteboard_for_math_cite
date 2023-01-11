@@ -2,13 +2,16 @@ let mouse_coords;
 let _clipboard = null;
 
 function Copy() {
-  canvas.getActiveObject().clone(function (cloned) {
-    _clipboard = cloned;
-    // console.log(_clipboard);
-  },['formula']);
-  canvas.on("mouse:move", function (e) {
-    getMouse(e);
-  });
+  let act_ = canvas.getActiveObject();
+  if ( act_ ){
+    act_.clone(function (cloned) {
+      _clipboard = cloned;
+      // console.log(_clipboard);
+    },['formula']);
+    canvas.on("mouse:move", function (e) {
+      getMouse(e);
+    });
+  }
 }
 
 function getMouse(e) {
@@ -31,7 +34,7 @@ function Delete() {
   if (  doomedObj.type === "activeSelection" ) {
     doomedObj.canvas = canvas;
     doomedObj.forEachObject(function (obj) {
-      ids.push(find_object_index(obj));
+      ids.push( obj.id );//find_object_index(obj));
       canvas.remove(obj);
     });
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
@@ -40,7 +43,7 @@ function Delete() {
     var activeObject = canvas.getActiveObject();
 
     if (activeObject !== null) {
-      ids.push(find_object_index(activeObject));
+      ids.push( activeObject.id );//find_object_index(activeObject));
       canvas.remove(activeObject);
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       socket.emit("figure_delete", ids);//canvas.toJSON());
