@@ -1347,60 +1347,15 @@ socket.on( 'connect', function()
             chunk[id]=deserialize(object);
             // console.log(chunk[id]);
           });
-          fabric.util.enlivenObjects(chunk,function(objects)
-          {
-            // сохраняем количество объектов
-            allReceivedObjects = objects.length
-            objects.forEach(async function(object) {
-              let obj_exists = false;
-
-              canvas._objects.every(function(obj_,indx_){
-                  if ( obj_.id==object.id ){
-                    obj_exists = true;
-                    return false
-                  }
-                  return true;
-              });
-              // если такого объекта еще нет на канвасе, то добавляем
-              if ( obj_exists===false ){
-                if ( object.type=='image'  ){
-                  if ( object.src!==undefined && object.src!='' ){
-                    // let loaded = await window.preloadImage(object.src, true, object.id, object)
-                    // window.loaded[object.src] = loaded
-                    // if (loaded !== true && !window.loaded[object.src]["delay"]) {
-                    await window.insertImageOnBoard(object.src, true, object.id, object);
-                    // }
-                  }else{
-                    // console.log(object.type);
-                    objectAddInteractive(object);
-                    canvas.add(object);
-  
-                    if ( takedFirstData==false ){
-                      object.set({ selectable: false })
-                    }
-                  }
-                }else{
-                  // console.log(object.type);
-
-                  objectAddInteractive(object);
-
-                  canvas.add(object);
-
-                  if ( takedFirstData==false ){
-                    object.set({ selectable: false })
-                  }
-                  decreaseRecievedObjects()
-                }
-              }                
-            })
-            
-          });
+          enliveObjects(chunk);
           canvas.renderAll();
           chunk_index++;
       },150)
 
+      // socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       //canvas.loadFromJSON(data);
     }
+
   })
 
   canvas.on('object:modified', e =>    {
@@ -1815,7 +1770,7 @@ function enliveObjects(chunk, callback){
     allReceivedObjects = objects.length
     objects.forEach(function(object) {
       let obj_exists = false;
-
+      // console.log(object.type);
       canvas._objects.every(function(obj_,indx_){
           if ( obj_.id==object.id ){
             obj_exists = true;
@@ -1825,6 +1780,7 @@ function enliveObjects(chunk, callback){
       });
       // если такого объекта еще нет на канвасе, то добавляем
       if ( obj_exists===false ){
+        
         if ( object.type=='image'  ){
           if ( object.src!==undefined && object.src!='' ){
             window.insertImageOnBoard(object.src, true, object.id, object);
@@ -1834,8 +1790,10 @@ function enliveObjects(chunk, callback){
             }
           }
         } else{
+          
           if ( object.type=="slider" ) {
             // оживляем слайдер и вешаем на него сокет
+            // console.log("socket ");
             object.setSocket(socket);
           }
           objectAddInteractive(object);

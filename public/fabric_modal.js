@@ -66,7 +66,7 @@ async function  getImgContentType (url) {
  * @param {*} url 
  */
 window.insertImageOnBoard = async function (url, noemit=false, id=false, params=false){
-  console.log(url.indexOf('/download/'),url.indexOf('data:'));
+  // console.log(url.indexOf('/download/'),url.indexOf('data:'));
   if (url.indexOf('/download/')!==0 && url.indexOf('data:')!==0 ){
     url = "/download/"+window.btoa(url)
   }
