@@ -133,6 +133,7 @@ const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,.
 
 function serialize_canvas(canvas)
 {
+    // console.log("sdf");
     let result =[];
     if ( canvas._objects ){
         canvas._objects.forEach(function(object)

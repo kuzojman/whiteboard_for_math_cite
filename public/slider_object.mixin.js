@@ -3,7 +3,7 @@
   var SliderInput = document.createElement('input');
   SliderInput.setAttribute('accept','.pdf, .ppt, .pptx')
   SliderInput.type = 'file';
-
+  let slider_acitve_id = false;
   let slider_bar     = document.getElementById('slider_menu');
   let prev_btn       = slider_bar.querySelector('#slider_menu_prev_button');
   let next_btn       = slider_bar.querySelector('#slider_menu_next_button');
@@ -150,6 +150,9 @@
         }
         // обновляем текстовую информацию
         // console.log(this.current_pos, this.slides_count);
+        if ( slider_acitve_id!=this.id ){
+          return;
+        }
         cur_slide_text.textContent=this.current_pos+1;
         all_slide_text.textContent=this.slides_count;
         // проверяем стили кнопок
@@ -171,7 +174,11 @@
        */
       alignMenu: function(){
         // anvas.vptCoords.tl.y
+        if ( slider_acitve_id!=this.id ){
+          return;
+        }
         let bound = this.getBoundingRect();
+        // console.log(this.id);
         // console.log(this.left, this.top, this.getWidth(), this.getHeight());
         if ( bound.top==0 && bound.left==0 ){
           slider_menu.style.top = (this.top+this.getHeight())+'px';
@@ -195,35 +202,39 @@
       },
 
       onSelect: function(options){
+        // console.log(options);
+        slider_acitve_id = this.id;
         // показываем меню
         slider_bar.classList.add('active');
-
+        this.refresh();
         if ( this.upload_ready==false ){
           return false;
         }
         SliderInput.onchange = e => { 
           var file = e.target.files[0];
           this.slider_images = [];
-          this.socket.emit("slider:upload", {file:file,ftype:file.type}, (result) => {
-            if ( result.error ){
-              console.error(result.error);
-              return;
-            }
-            // console.log(result.images);
-            if (result.images.length){
-              result.images.forEach(el => {
-                // console.log(el);
-                this.slider_images.push(el);
-              });
-              this.upload_ready = false;
-              this.raw_file     = false;
-              this.current_pos  = 0;
-              this.slides_count = result.images.length;
-              this.refresh();
-              // сохраняем состояние
-              this.saveState();
-            }
-          });
+          if (this.socket){
+            this.socket.emit("slider:upload", {file:file,ftype:file.type}, (result) => {
+              if ( result.error ){
+                console.error(result.error);
+                return;
+              }
+              // console.log(result.images);
+              if (result.images.length){
+                result.images.forEach(el => {
+                  // console.log(el);
+                  this.slider_images.push(el);
+                });
+                this.upload_ready = false;
+                this.raw_file     = false;
+                this.current_pos  = 0;
+                this.slides_count = result.images.length;
+                this.refresh();
+                // сохраняем состояние
+                this.saveState();
+              }
+            });
+          }
         }
 
         SliderInput.click();
@@ -232,6 +243,7 @@
       onDeselect: function(){
         // console.log("deselect");
         slider_bar.classList.remove('active');
+        slider_acitve_id = false;
       },
 
       /**
@@ -264,7 +276,9 @@
         // после того как задаем сокет - сразу же подключаемся к его событию
         // по этому событию передается вся информация с других досок
         this.socket.on("slider:change", (obj_)=>{
+          // console.log(obj_);
           if ( obj_.id==this.id ){
+            // console.log(obj_);
             this.set('upload_ready', obj_.object.upload_ready) &&
             this.set('raw_file', obj_.object.raw_file) &&
             this.set('slider_images', obj_.object.slider_images) &&
