@@ -807,8 +807,20 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
               this.lastClientX=x_;
               this.lastClientY=y_;
               let delta = new fabric.Point(deltaX, deltaY);
-              this.relativePan(delta);
-              canvasbg.relativePan(delta);
+              //this.relativePan(delta);
+              //canvasbg.relativePan(delta);
+              fabric.util.animate({
+                duration: 1,
+                onChange: function() {
+                    canvas.relativePan(delta)
+                    canvasbg.relativePan(delta);
+                },
+                onComplete: function() {
+                    e.e.preventDefault();
+                    e.e.stopPropagation();
+                }
+            });
+
           }
           handleMouseMovement(e)
           // console.log("mouse:move 1");
