@@ -846,6 +846,7 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
 };
 
 
+
 const freeDrawingButton          = document.querySelector('#free_drawing_button');
       freeDrawingButton.onclick  = enableFreeDrawing;
 const freeEraseingButton         = document.querySelector('#free_erasing_button');
