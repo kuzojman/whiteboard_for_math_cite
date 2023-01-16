@@ -197,4 +197,16 @@ html, body, .canvasWrapper
     transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 /* .slider_menu */
-/* .slider_menu */
+
+@media screen and (max-device-width: 767px) and (orientation: portrait),
+screen and (max-device-height: 767px) and (orientation: landscape){
+ .picker_wrapper{
+    position: fixed!important;
+    bottom: 60px!important;
+    right: 0px!important;
+    left: auto!important;
+ }
+ .picker_arrow{
+    display: none!important;
+ }
+}
