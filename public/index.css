@@ -121,3 +121,92 @@ html, body, .canvasWrapper
     height: auto;
     min-height: 60vh;
 }
+
+.slider_menu{
+    position: absolute;
+    display: none;
+    background-color: white;
+    border-radius: 3px;
+    z-index: 2;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+    z-index: 2;
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+}
+.slider_menu.active{
+    display: block!important;
+}
+.slider_menu ul{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: inline-flex;
+}
+.slider_menu button.inactive svg{
+    opacity: 0.3;
+}
+.slider_menu li .slide_text{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 50px;
+    border: 0px;
+    background-color: #f9fafb;
+    border-color: #f9fafb;
+    cursor: pointer;
+    font-weight: 400;
+    color: #212529;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+}
+.slider_menu li button{
+    display: block;
+    width: 60px;
+    height: 50px;
+    border: 0px;
+    color: #000;
+    background-color: #f9fafb;
+    border-color: #f9fafb;
+    cursor: pointer;
+    display: inline-block;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-top-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+/* .slider_menu */
+
+@media screen and (max-device-width: 767px) and (orientation: portrait),
+screen and (max-device-height: 767px) and (orientation: landscape){
+ .picker_wrapper{
+    position: fixed!important;
+    bottom: 60px!important;
+    right: 0px!important;
+    left: auto!important;
+ }
+ .picker_arrow{
+    display: none!important;
+ }
+}

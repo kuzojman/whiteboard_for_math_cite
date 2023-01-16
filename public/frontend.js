@@ -9,10 +9,12 @@ const socket = io('http://localhost:3000',{transports:['websocket']});
 
 // const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
-// const socket = io('https://kuzovkin.info',{transports:['websocket']});
+//const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
 // const socket = io();
 
+// конец принятых сообщений
+const END_OF_RECIEVE_OBJECTS = 1;
 
 const board_id = get_board_id() || 1;
 
@@ -28,6 +30,41 @@ canvas.renderAll = () => {
         });
     }
 };
+
+fabric.util.object.extend(fabric.Object.prototype, {
+  transform: function(ctx, fromLeft) {
+    
+    // if (this.group && !this.group._transformDone && this.group === this.canvas._activeGroup) {
+    //   this.group.transform(ctx);
+    // }
+    var center = fromLeft ? this._getLeftTopCoords() : this.getCenterPoint();
+    // ADDED CODE FOR THE ANSWER
+    // console.log(this.ignoreZoom && !this.group && this.canvas);
+    if (this.ignoreZoom && !this.group && this.canvas) {
+      var zoom = 1 / this.canvas.getZoom();
+      ctx.scale(zoom, zoom);
+      ctx.translate(center.x*this.canvas.getZoom(), center.y*this.canvas.getZoom());
+      return;
+    }
+    // }else{
+    //   ctx.translate(center.x, center.y);
+    // }
+    // END OF ADDED CODE FOR THE ANSWER
+    // this.angle && ctx.rotate(degreesToRadians(this.angle));
+    // ctx.scale(
+    //   this.scaleX * (this.flipX ? -1 : 1),
+    //   this.scaleY * (this.flipY ? -1 : 1)
+    // );
+    // this.skewX && ctx.transform(1, 0, Math.tan(degreesToRadians(this.skewX)), 1, 0, 0);
+    // this.skewY && ctx.transform(1, Math.tan(degreesToRadians(this.skewY)), 0, 1, 0, 0);
+
+    var needFullTransform = (this.group && !this.group._transformDone) ||
+        (this.group && this.canvas && ctx === this.canvas.contextTop);
+    var m = this.calcTransformMatrix(!needFullTransform);
+    ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+
+  }
+});
 
 // Передача обновлённого состояния canvas'а на сервер через webworker
 // В случае добавления или удаления элементов передаётся разница между
@@ -76,7 +113,7 @@ const JSONParseAsync = (data, reviver = null) => {
             reject(error);
         }
     });
-};
+}
 
 // Вызов webworker
 
@@ -428,9 +465,10 @@ const cursorUser = createCursor()
 function decreaseRecievedObjects(){
   if ( allReceivedObjects<=0 ){
     takedFirstData=true;
-    return
+    return END_OF_RECIEVE_OBJECTS
   }
   allReceivedObjects-=1;
+  return false;
 }
 
 function createCursor(){
@@ -806,6 +844,8 @@ const BladeButton                = document.querySelector('#blade_button');
       BladeButton.onclick        = bladeButtonClick;
 const LassoButton                = document.querySelector('#lasso_button');
       LassoButton.onclick        = lassoButtonClick;
+const SliderButton               = document.querySelector('#slider_button');
+      SliderButton.onclick       = sliderButtonClick;
 
 
 const downloadImage = () =>  {
@@ -909,7 +949,7 @@ function checkLoggedInCookie(){
   let user_id = Cookies.get('user_id');
 
   // если пользователь не залогинен - перенаправляем на страницу логина
-  if ( user_id===undefined || !user_id || user_id==false ){
+  if ( user_id===undefined || !user_id || user_id==false||user_id==='-1' ){
     window.location.href=serverHostDebug+"/auth?parametr_enter=email";
     return;
   }
@@ -1010,7 +1050,6 @@ function object_fit_apth(obj_){
 socket.on( 'connect', function()
 {
   canvasbg.isDrawingMode = false;
-
   // checkLoggedIn();
   checkLoggedInCookie()
   // получаем ответ на наш запрос - можно на доску заходить или нет?
@@ -1115,47 +1154,79 @@ socket.on( 'connect', function()
   });
   
 
-  let circle ;
+  // let circle ;
   socket.on('circle:edit', function(circle_taken)
   {
-    circle.set({
-      radius: circle_taken.radius
-    });
-    canvas.renderAll();
+    let circle = canvas._objects.find( item => item.id==circle_taken.id )
+    if ( circle ){
+      circle.set({
+        radius: circle_taken.radius
+      });
+      canvas.renderAll();
+    }
   });
   
   socket.on('circle:add', function(circle_taken)
   {
-      circle = new fabric.Circle(circle_taken)
-      canvas.add(circle)
-  });
-
-  let rect ;
-
-  socket.on('rect:edit', function(rect_taken)
-  {
-
-    rect.set({
-      top: rect_taken.top
-    });
-    rect.set({
-      left: rect_taken.left
-    });
-    rect.set({
-      width: rect_taken.width
-    });
-    rect.set({
-      height: rect_taken.height
+    let pos_ = { "left": circle_taken.left, "top": circle_taken.top}
+    // без этого фокуса не работает рисование за границей видимости на партнерской доске
+    circle_taken.left = 1;
+    circle_taken.top = 1;
+    enliveObjects([circle_taken]);
+    let circle = canvas._objects.find( item => item.id==circle_taken.id )
+    circle.set({
+      left: pos_.left,
+      top: pos_.top
     });
     canvas.renderAll();
   });
+
+  socket.on('rect:edit', function(rect_taken)   {
+    let rect = canvas._objects.find( item => item.id==rect_taken.id )
+    if ( rect ){
+      rect.set({
+        top: rect_taken.top,
+        left: rect_taken.left,
+        width: rect_taken.width,
+        height: rect_taken.height
+      });
+      canvas.renderAll();
+    }
+  });
+
   socket.on('rect:add', function(rect_taken)
   {
+    let pos_ = { "left": rect_taken.left, "top": rect_taken.top}
+    // без этого фокуса не работает рисование за границей видимости на партнерской доске
+    rect_taken.left = 1;
+    rect_taken.top = 1;
+    enliveObjects([rect_taken]);
+    let rect = canvas._objects.find( item => item.id==rect_taken.id )
+    rect.set({
+      left: pos_.left,
+      top: pos_.top
+    });
+    canvas.renderAll();
+  });
 
-      rect = new fabric.Rect(rect_taken)
-      canvas.add(rect)
-        
-      //'canvas.freeDrawingBrush.width = width_taken'
+  // slider:add
+
+  socket.on('slider:add', function(obj_)  {
+    let slider_taken = obj_.slider;
+    let pos_ = { "left": slider_taken.left, "top": slider_taken.top}
+    // без этого фокуса не работает рисование за границей видимости на партнерской доске
+    slider_taken.left = 1;
+    slider_taken.top = 1;
+    enliveObjects([slider_taken], () => {
+      let slider = canvas.getObjects().find( item => item.id==slider_taken.id );
+      if ( slider ){
+        slider.set({
+          left: pos_.left,
+          top: pos_.top
+        });
+      }
+      canvas.renderAll();
+    });    
   });
 
   let line ;
@@ -1237,9 +1308,22 @@ socket.on( 'connect', function()
     }    
   });
 
-  socket.on('image:add', function(img_taken)    {
-      window.insertImageOnBoard(img_taken.src, true, img_taken.id_of);
+  socket.on('image:add', async function(img_taken)    {
+    // let loaded = await window.preloadImage(img_taken.src, true, img_taken.id_of)
+    // if (loaded !== true) {
+      window.insertImageOnBoard(img_taken.src, true, img_taken.id_of)
+    // }
   });
+
+  socket.on( "send:task", async function(image_url){
+    // let loaded = await window.preloadImage(image_url,true)
+    // if (loaded !== true) {
+      window.insertImageOnBoard(image_url,true);
+      socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    // }
+  } )
+
+  //////
 
   socket.on('take_data_from_json_file',function(data)
   {
@@ -1263,52 +1347,15 @@ socket.on( 'connect', function()
             chunk[id]=deserialize(object);
             // console.log(chunk[id]);
           });
-          fabric.util.enlivenObjects(chunk,function(objects)
-          {
-            // сохраняем количество объектов
-            allReceivedObjects = objects.length
-            objects.forEach(function(object) {
-              let obj_exists = false;
-
-              canvas._objects.every(function(obj_,indx_){
-                  if ( obj_.id==object.id ){
-                    obj_exists = true;
-                    return false
-                  }
-                  return true;
-              });
-              // если такого объекта еще нет на канвасе, то добавляем
-              if ( obj_exists===false ){
-                if ( object.type=='image'  ){
-                  if ( object.src!==undefined && object.src!='' ){
-                    window.insertImageOnBoard(object.src, true, object.id, object);
-                  }else{
-                    if (object.formula!==undefined && object.formula!=''){
-                      window.addFormula(object.formula, object.id, object,false)
-                    }
-                  }
-                }else{
-                  // console.log(object.type);
-
-                  objectAddInteractive(object);
-
-                  canvas.add(object);
-
-                  if ( takedFirstData==false ){
-                    object.set({ selectable: false })
-                  }
-                  decreaseRecievedObjects()
-                }
-              }                
-            })
-            
-          });
+          enliveObjects(chunk);
           canvas.renderAll();
           chunk_index++;
       },150)
 
+      // socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
       //canvas.loadFromJSON(data);
     }
+
   })
 
   canvas.on('object:modified', e =>    {
@@ -1348,19 +1395,23 @@ socket.on( 'connect', function()
       // recive_part_events.push(e);
   });
 
-  socket.on('figure_delete', e =>
-  {
-      e.forEach(function(id)
-      {
-        canvas._objects.forEach(function(object,index)
-        {
-          if(index==id)
-          {
+  socket.on('figure_delete', e => {
+    e.forEach(function(id){
+      canvas._objects.forEach(function(object,index) {
+        // console.log(object.id,id, object.id==id);
+        if(object.id==id) {
+          if ( object.type=='slider' ){
+            object.destroy();
+            // временный фикс, потому что не удаляется через сокеты
+            // скорее всего из-за того, что создается даважды, надо отловить эту штуку
             canvas.remove(object);
           }
-        })
+          canvas.remove(object);
+        }
       })
-      //canvas.loadFromJSON(e);
+    })
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
   });
 
   socket.on('figure_copied', e =>
@@ -1635,6 +1686,24 @@ function enableFreeDrawing(){
 }
 
 /**
+ * Добавляем 
+ */
+function sliderButtonClick(){
+  removeEvents();
+  console.log("click");
+  let slider = new fabric.Slider(canvas);
+  slider.onReady = ()=>{
+    canvas.add(slider);
+    setObjectToCanvasCenter(slider);
+    // slider.alignMenu();
+    canvas.setActiveObject(slider).requestRenderAll(); 
+    // отправляем сигнал на сокет
+    socket.emit("slider:add", {"slider":slider});
+  }
+  slider.setSocket(socket);
+}
+
+/**
  * Включаем инструмент лассо
  */
 function lassoButtonClick(){
@@ -1692,6 +1761,57 @@ function enableEraser(){
       socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'eraser'});//canvas.freeDrawingBrush._points); 
     }
   })
+}
+
+function enliveObjects(chunk, callback){
+  fabric.util.enlivenObjects(chunk,function(objects)
+  {
+    // сохраняем количество объектов
+    allReceivedObjects = objects.length
+    objects.forEach(function(object) {
+      let obj_exists = false;
+      // console.log(object.type);
+      canvas._objects.every(function(obj_,indx_){
+          if ( obj_.id==object.id ){
+            obj_exists = true;
+            return false
+          }
+          return true;
+      });
+      // если такого объекта еще нет на канвасе, то добавляем
+      if ( obj_exists===false ){
+        
+        if ( object.type=='image'  ){
+          if ( object.src!==undefined && object.src!='' ){
+            window.insertImageOnBoard(object.src, true, object.id, object);
+          }else{
+            if (object.formula!==undefined && object.formula!=''){
+              window.addFormula(object.formula, object.id, object,false)
+            }
+          }
+        } else{
+          
+          if ( object.type=="slider" ) {
+            // оживляем слайдер и вешаем на него сокет
+            // console.log("socket ");
+            object.setSocket(socket);
+          }
+          objectAddInteractive(object);
+          canvas.add(object);
+          if ( takedFirstData==false ){
+            object.set({ selectable: false })
+          }
+          let res = decreaseRecievedObjects();
+          
+          // вызываем коллбек когда все добавлено и закончили отрисовку
+          if ( res==END_OF_RECIEVE_OBJECTS && typeof(callback)=='function' ){
+            callback();
+          }
+        }
+      }                
+    })
+    
+  });
 }
 
 /**
@@ -2216,6 +2336,11 @@ function drawLine(type_of_line) {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": canvas.toJSON(['id'])});
   });
+
+
+  canvas.on('object:removed',function(object){
+    console.warn(object);
+  })
 }
 
 
@@ -2284,15 +2409,6 @@ function find_object_index(target_object) {
       target_index = index;
     }
   });
-  if(!target_index)
-  {
-    objects.forEach(function (object, index) {
-      if (object.id == target_object.id) {
-        target_index = index;
-      }
-    });
-  }
-
   return target_index;
 }
 
@@ -2347,6 +2463,7 @@ function send_part_of_data(e) {
 
 
 function recive_part_of_data(e) {
+  // console.log(e);
   if (e.objects) {
     for (const object of e.objects) {
       //let d = canvas.item(object.index);

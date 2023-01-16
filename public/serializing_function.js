@@ -48,6 +48,14 @@ const rect_and_line_add ={
     "eraser":"eraser"
 }
 
+const to_slider_add ={
+    'upload_ready' : "ur",
+    'raw_file'     : "rf",
+    'slider_images': "si",
+    'current_pos'  : "cp",
+    'slides_count' : "sc"
+}
+
 const to_image_add ={
     "strokeDashOffset":"sDO",
     "strokeUniform":"sU",
@@ -118,12 +126,14 @@ const to_text_add ={
 
 const serializer_dictionary = {...serializer_dictionary_for_bezier,...rect_and_line_add}
 const serializer_dictionary_image = {...serializer_dictionary,...to_image_add, ...serializer_dictionary_for_bezier};
+const serializer_dictionary_slider = {...serializer_dictionary_image,...to_slider_add};
 const serializer_dictionary_for_circle =  {...serializer_dictionary,...to_circle_add};
 const serializer_dictionary_for_text =  {...serializer_dictionary,...to_text_add};
-const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,...serializer_dictionary_for_circle,...serializer_dictionary_for_text};
+const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,...serializer_dictionary_for_circle,...serializer_dictionary_for_text,...serializer_dictionary_slider};
 
 function serialize_canvas(canvas)
 {
+    // console.log("sdf");
     let result =[];
     if ( canvas._objects ){
         canvas._objects.forEach(function(object)
@@ -149,6 +159,9 @@ function serialize_canvas(canvas)
             }
             else if(object.type=="i-text")    {
                 my_dict=serializer_dictionary_for_text;
+            }
+            else if ( object.type=='slider' ){
+                my_dict = serializer_dictionary_slider;
             }
             else    {
                 my_dict=serializer_dictionary;
@@ -219,6 +232,9 @@ function serialize_canvas_objects(objects)
         else if(object.type=="i-text")    {
             my_dict=serializer_dictionary_for_text;
         }
+        else if ( object.type=='slider' ){
+            my_dict = serializer_dictionary_slider;
+        }
         else    {
             my_dict=serializer_dictionary;
         }
@@ -278,6 +294,10 @@ function serialize_object(object)
     else if(object.type=="i-text")
     {
         my_dict=serializer_dictionary_for_text;
+    }
+    else if(object.type=="slider")
+    {
+        my_dict=serializer_dictionary_slider;
     }
     else
     {

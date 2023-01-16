@@ -1,7 +1,7 @@
 .tool-panel {
     border-radius: 15px;
     position: fixed;
-    top: 200px;
+    top: 10vh;
     left: 20px;
     z-index: 2;
 }
