@@ -495,8 +495,8 @@ function createCursor(){
     top: currentRadiusCursor*2,
     objectCaching: false  });
   let cursor_ = new fabric.Group([curs_,text_],{
-    left: -10,
-    top: -10,
+    left: 1,
+    top: 1,
     erasable:false,
     selectable:false,
     cursor:true,
@@ -591,52 +591,58 @@ let colors = ['#ff0000','#0f71d3','#14ff00'];
 let color_index =0;                                            // Курсор
 let moveCursorsToFront = false;
 const getCursorData = (data) => {
-
+  // console.log(data);
   let existing_coursor = canvas._objects.find(item=>item.socket_id==data.userId)
+  // console.log(existing_coursor);
   if(!existing_coursor)
   {
     cursorUser.socket_id=data.userId;
+    cursorUser.ignoreZoom = true;
     cursorUser.item(0).fill = colors[color_index];
+    cursorUser.item(0).ignoreZoom = true;
+    cursorUser.item(1).ignoreZoom = true;
     cursorUser.item(1).text = data.username || "unknown"
     color_index++;
     if(!colors[color_index]){
       color_index=0;
     }
     //cursorUser.left = data.cursorCoordinates.x
-       //canvas.sendToBack(cursorUser);
-
+    //canvas.sendToBack(cursorUser);
     canvas.add(cursorUser);
-
     existing_coursor = cursorUser;
-    
   }else{
-    
-    // console.log(h,w,data.cursorCoordinates);
-    if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-20 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-20 ){
-      data.cursor='leave'
-      if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )
-        data.cursorCoordinates.x = canvas.vptCoords.tl.x
-      if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-20  )
-        data.cursorCoordinates.x = canvas.vptCoords.tr.x-20
-      if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )
-        data.cursorCoordinates.y = canvas.vptCoords.tl.y
-      if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-20  )
-        data.cursorCoordinates.y = canvas.vptCoords.br.y-20
-    }
-      
-    existing_coursor.set({
-      top:  data.cursorCoordinates.y,
-      left: data.cursorCoordinates.x,
-    }); 
-    if ( data.cursor!==undefined && data.cursor=='leave' ){
+      // console.log(data.cursorCoordinates);
+      // if (!(data && data.cursorCoordinates && canvas.vptCoords && canvas.vptCoords.tl && data.cursorCoordinates.x && canvas.vptCoords.tl.x && canvas.vptCoords.tr.x)) {
+      if (!(data && data.cursorCoordinates )) {
+        data.cursor = 'leave'
+        data.cursorCoordinates = {}
+        data.cursorCoordinates.x = cursorUser.left
+        data.cursorCoordinates.y = cursorUser.top
+      } else if (data.cursorCoordinates.x < canvas.vptCoords.tl.x || data.cursorCoordinates.x > canvas.vptCoords.tr.x - 20 || data.cursorCoordinates.y < canvas.vptCoords.tl.y || data.cursorCoordinates.y > canvas.vptCoords.br.y - 20) {
+        data.cursor = 'leave'
+        if (data.cursorCoordinates.x < canvas.vptCoords.tl.x)
+          data.cursorCoordinates.x = canvas.vptCoords.tl.x
+        if (data.cursorCoordinates.x > canvas.vptCoords.tr.x - 20)
+          data.cursorCoordinates.x = canvas.vptCoords.tr.x - 20
+        if (data.cursorCoordinates.y < canvas.vptCoords.tl.y)
+          data.cursorCoordinates.y = canvas.vptCoords.tl.y
+        if (data.cursorCoordinates.y > canvas.vptCoords.br.y - 20)
+          data.cursorCoordinates.y = canvas.vptCoords.br.y - 20
+      }
+
       existing_coursor.set({
-        opacity: 0.2
-      })
-    }else{
-      existing_coursor.set({
-        opacity: 1
-      })
-    }
+        top: data.cursorCoordinates.y,
+        left: data.cursorCoordinates.x,
+      });
+      if (data.cursor !== undefined && data.cursor == 'leave') {
+        existing_coursor.set({
+          opacity: 0.2
+        })
+      } else {
+        existing_coursor.set({
+          opacity: 1
+        })
+      }
   }
   // помещаем курсор поверх всех элементов
   if ( moveCursorsToFront && existing_coursor){
@@ -644,34 +650,25 @@ const getCursorData = (data) => {
     moveCursorsToFront = false;
   }
   canvas.renderAll();
-}                                                   // Получение координат курсора
+}                                                     // Получение координат курсора
 
 
 
-function handleScale (delta)
-{
-    if (delta<0)
-    {
-        if(currentValueZoom<=MAX_ZOOM_OUT)
-        {
+function handleScale (delta){
+    if (delta<0)   {
+        if(currentValueZoom<=MAX_ZOOM_OUT)    {
             return;
         }
-        else
-        {
+        else        {
             currentValueZoom = (parseFloat(currentValueZoom)-SCALE_STEP).toFixed(2);
-
         }
     }
-    else
-    {
-        if(currentValueZoom>=MAX_ZOOM_IN)
-        {
+    else    {
+        if(currentValueZoom>=MAX_ZOOM_IN)        {
             return;
         }
-        else
-        {
+        else        {
             currentValueZoom = (parseFloat(currentValueZoom)+SCALE_STEP).toFixed(2);
-
         }
     }
 }
