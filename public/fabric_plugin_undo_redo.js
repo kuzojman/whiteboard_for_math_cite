@@ -25,7 +25,7 @@ fabric.Canvas.prototype.dispose = (function (originalFn) {
  * Returns current state of the string of the canvas
  */
 fabric.Canvas.prototype._historyNext = function () {
-	// return JSON.stringify(this.toDatalessJSON(this.extraProps));
+	return JSON.stringify(this.toDatalessJSON(this.extraProps));
 }
 
 /**
@@ -63,6 +63,7 @@ fabric.Canvas.prototype._historyDispose = function () {
  * It pushes the state of the canvas into history stack
  */
 fabric.Canvas.prototype._historySaveAction = function (type) {
+  // console.log(this.historyProcessing);
 	if (this.historyProcessing)
 		return;
 	const json = this.historyNextState;
@@ -82,8 +83,9 @@ fabric.Canvas.prototype.undo = function (callback) {
 	// Therefore, object:added and object:modified events will triggered again
 	// To ignore those events, we are setting a flag.
 	this.historyProcessing = true;
-
+  
 	const history = this.historyUndo.pop();
+  // console.log("history", history);
 	if (history) {
 		// Push the current state to the redo history
 		this.historyRedo.push(this._historyNext());
