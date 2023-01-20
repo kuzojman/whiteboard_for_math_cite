@@ -1099,7 +1099,12 @@ socket.on( 'connect', function()
       if (pointer.type!==undefined && pointer.type=='eraser'){
         canvas.isDrawingMode = true
         canvas.freeDrawingBrush = new fabric.EraserBrush(canvas)
-        canvas.freeDrawingBrush.btype = 'eraser'
+        canvas.freeDrawingBrush.btype = 'eraser';
+        canvas.freeDrawingBrush.width = pointer.width;
+        canvasbg.isDrawingMode = true
+        canvasbg.freeDrawingBrush = new fabric.EraserBrush(canvasbg)
+        canvasbg.freeDrawingBrush.btype = 'eraser'
+        canvasbg.freeDrawingBrush.width = pointer.width;
       }
     }else{
       if (pointer.type!==undefined && pointer.type=='brush'){
@@ -1354,6 +1359,22 @@ socket.on( 'connect', function()
     }
 
   })
+
+
+  // { "object":obj_, "id":obj_.id, "color":color.rgbaString}
+  socket.on('color:changed', function(data)    {
+    let t = canvas._objects.find( item => item.id==data.id )
+    if ( t ){
+      t.changedColour(data.color)
+    }
+  });
+
+  socket.on('width:changed', function(data)    {
+    let t = canvas._objects.find( item => item.id==data.id )
+    if ( t ){
+      t.changedWidth(data.width)
+    }
+  });
 
   canvas.on('object:modified', e =>    {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
@@ -2029,6 +2050,7 @@ function drawcle(type_of_circle) {
     circle.setCoords();
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   });
+
 }
 
 canvas.setBackgroundColor(
@@ -2206,7 +2228,8 @@ drawingLineWidthEl.oninput = function()
   if ( obj_ && obj_.changedWidth ){
     // console.log(obj_.id);
     socket.emit("width:changed",{"object": obj_, "id":obj_.id, "width":canvas.freeDrawingBrush.width});
-    obj_.changedWidth(drawingLineWidthEl.value)
+    obj_.changedWidth(drawingLineWidthEl.value);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   }
 
 };
