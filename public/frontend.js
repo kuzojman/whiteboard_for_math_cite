@@ -42,8 +42,67 @@ fabric.util.object.extend(fabric.Object.prototype, {
     // console.log(this.ignoreZoom && !this.group && this.canvas);
     if (this.ignoreZoom && !this.group && this.canvas) {
       var zoom = 1 / this.canvas.getZoom();
-      ctx.scale(zoom, zoom);
-      ctx.translate(center.x*this.canvas.getZoom(), center.y*this.canvas.getZoom());
+      // ctx.scale(zoom, zoom);
+      // ctx.webkitImageSmoothingEnabled = false;
+      // ctx.mozImageSmoothingEnabled = false;
+      // ctx.imageSmoothingEnabled = false;
+      // if ( this.w === undefined ){
+      //   this.w = this.width;
+      //   this.h = this.height;
+      // }
+      // let   w = this.w * zoom,
+      //       h = this.h * zoom,
+      //       s = this.strokeWidth;
+      // console.log( this.w, this.h, zoom, w,h, this._objects );
+      if ( this._objects && this._objects.length >0 ){
+        this._objects.forEach(el => {
+          if ( el.w === undefined ){
+            el.w = el.width;
+            el.h = el.height;
+          }
+          if ( el.text && el.text!='' && el.t === undefined ){
+            el.t = el.top
+            el.f = el.fontSize
+            el.l = el.left
+          }
+          if ( el.radius && el.radius>0 && el.r === undefined ){
+            el.r = el.radius
+          }
+          let   t_ = el.t * zoom,
+            f_ = el.f * zoom,
+            l_ = el.l * zoom,
+            r_ = el.r * zoom;
+          if ( el.radius && el.radius>0){
+            el.set({
+              'radius'     : r_,
+            })  
+          }
+          if ( el.text && el.text!='' ){
+            el.set({
+              'fontSize'  : f_,
+              'top'       : t_,
+              'left'      : l_,
+            })  
+          }
+          
+        });
+      }
+      // ctx.translate(center.x*this.canvas.getZoom(), center.y*this.canvas.getZoom());
+      // ctx.translate(center.x, center.y);
+      var needFullTransform = (this.group && !this.group._transformDone) ||
+        (this.group && this.canvas && ctx === this.canvas.contextTop);
+      var m = this.calcTransformMatrix(!needFullTransform);
+      ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      // this.set({
+      //     'height'     : w,
+      //     'width'      : h,
+      //     'zoomX'     : 1,
+      //     'zoomY'     : 1,
+      //     'scaleX'     : 1,
+      //     'scaleY'     : 1,
+      // });
+      // console.log(this);
+      // ctx.translate(0.5, 0.5);
       return;
     }
     // }else{
