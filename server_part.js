@@ -542,14 +542,6 @@ io.on("connection", async socket => {
     socket.broadcast.to(socket.board_id).emit("text:edited", object_pass);
   });
 
-  socket.on("width:changed", (object_pass) => {
-    socket.broadcast.to(socket.board_id).emit("width:changed", object_pass);
-  });
-
-  socket.on("color:changed", (object_pass) => {
-    socket.broadcast.to(socket.board_id).emit("color:changed", object_pass);
-  });
-
   socket.on("formula:added", (object_pass) => {
     socket.broadcast.to(socket.board_id).emit("formula:added", object_pass);
   });

@@ -93,81 +93,20 @@ function Paste() {
   }
 }
 
-// function find_object_index(target_object) {
-//   let target_index; 
-//   let objects = canvas.getObjects();
-//   console.log(objects,'objects',target_object)
-//   objects.forEach(function (object, index) {
-//     if (object == target_object) {
-//       target_index = index;
-//     }
-//   });
-//   if(!target_index)
-//   {
-//     objects.forEach(function (object, index) {
-//       if (object.id == target_object.id) {
-//         target_index = index;
-//       }
-//     });
-//   }
-//   console.log(target_index,'target_index')
-//   return target_index;
-// }
-
-
-
-
-
-
-
-
-
-
-/*
-var state = [];
-var mods = 0;
-canvas.on(
-  'object:modified', function () 
-  {
-  updateModifications(true);
-},
-  'object:added', function () {
-  updateModifications(true);
-});
-function updateModifications(savehistory) 
-{
-  if (savehistory === true) 
-  {
-      let myjson = JSON.stringify(canvas);
-      state.push(myjson);
-  }
-}
-  function undo() 
-  {
-    if (mods < state.length) 
-    {
-        //canvas.clear().renderAll();
-        let index = state.length - 1 - mods - 1;
-        if(index<0)
-        {
-          index = 0;
-        }
-        canvas.loadFromJSON(state[index]);
-        //canvas.renderAll();
-        console.log(state,state.length - 1 - mods - 1)
-        mods += 1;
-    }
-  }
-*/
-
 document.body.addEventListener(
   "keydown",
   function (e) {
     e = e || window.event;
     var key = e.which || e.keyCode; // keyCode detection
     var ctrl = e.ctrlKey ? e.ctrlKey : key === 17 ? true : false; // ctrl detection
-
-    if (key == 86 && ctrl) {
+    // console.log(key, ctrl);
+    if (key == 90 && ctrl) {
+      // Check pressed button is Z - Ctrl+Z.
+      canvas.undo();
+    } else if (key == 89 && ctrl) {
+      // Check pressed button is Y - Ctrl+Y.
+      canvas.redo();
+    } else if (key == 86 && ctrl) {
       //alert("Ctrl + V Pressed !");
       // Paste();
     } else if (key == 67 && ctrl) {
@@ -181,22 +120,22 @@ document.body.addEventListener(
   false
 );
 
-document.addEventListener("keyup", ({ keyCode, ctrlKey } = event) => {
-  // Check Ctrl key is pressed.
-  if (!ctrlKey) {
-    return;
-  }
+// document.addEventListener("keyup", ({ keyCode, ctrlKey } = event) => {
+//   // Check Ctrl key is pressed.
+//   if (!ctrlKey) {
+//     return;
+//   }
 
-  // Check pressed button is Z - Ctrl+Z.
-  if (keyCode === 90) {
-    canvas.undo();
-  }
+//   // Check pressed button is Z - Ctrl+Z.
+//   if (keyCode === 90) {
+//     canvas.undo();
+//   }
 
-  // Check pressed button is Y - Ctrl+Y.
-  if (keyCode === 89) {
-    canvas.redo();
-  }
-});
+//   // Check pressed button is Y - Ctrl+Y.
+//   if (keyCode === 89) {
+//     canvas.redo();
+//   }
+// });
 
 // copy event
 addEventListener('copy', (e) => { 

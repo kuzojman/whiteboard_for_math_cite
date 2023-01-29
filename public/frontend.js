@@ -42,8 +42,67 @@ fabric.util.object.extend(fabric.Object.prototype, {
     // console.log(this.ignoreZoom && !this.group && this.canvas);
     if (this.ignoreZoom && !this.group && this.canvas) {
       var zoom = 1 / this.canvas.getZoom();
-      ctx.scale(zoom, zoom);
-      ctx.translate(center.x*this.canvas.getZoom(), center.y*this.canvas.getZoom());
+      // ctx.scale(zoom, zoom);
+      // ctx.webkitImageSmoothingEnabled = false;
+      // ctx.mozImageSmoothingEnabled = false;
+      // ctx.imageSmoothingEnabled = false;
+      // if ( this.w === undefined ){
+      //   this.w = this.width;
+      //   this.h = this.height;
+      // }
+      // let   w = this.w * zoom,
+      //       h = this.h * zoom,
+      //       s = this.strokeWidth;
+      // console.log( this.w, this.h, zoom, w,h, this._objects );
+      if ( this._objects && this._objects.length >0 ){
+        this._objects.forEach(el => {
+          if ( el.w === undefined ){
+            el.w = el.width;
+            el.h = el.height;
+          }
+          if ( el.text && el.text!='' && el.t === undefined ){
+            el.t = el.top
+            el.f = el.fontSize
+            el.l = el.left
+          }
+          if ( el.radius && el.radius>0 && el.r === undefined ){
+            el.r = el.radius
+          }
+          let   t_ = el.t * zoom,
+            f_ = el.f * zoom,
+            l_ = el.l * zoom,
+            r_ = el.r * zoom;
+          if ( el.radius && el.radius>0){
+            el.set({
+              'radius'     : r_,
+            })  
+          }
+          if ( el.text && el.text!='' ){
+            el.set({
+              'fontSize'  : f_,
+              'top'       : t_,
+              'left'      : l_,
+            })  
+          }
+          
+        });
+      }
+      // ctx.translate(center.x*this.canvas.getZoom(), center.y*this.canvas.getZoom());
+      // ctx.translate(center.x, center.y);
+      var needFullTransform = (this.group && !this.group._transformDone) ||
+        (this.group && this.canvas && ctx === this.canvas.contextTop);
+      var m = this.calcTransformMatrix(!needFullTransform);
+      ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
+      // this.set({
+      //     'height'     : w,
+      //     'width'      : h,
+      //     'zoomX'     : 1,
+      //     'zoomY'     : 1,
+      //     'scaleX'     : 1,
+      //     'scaleY'     : 1,
+      // });
+      // console.log(this);
+      // ctx.translate(0.5, 0.5);
       return;
     }
     // }else{
@@ -495,8 +554,8 @@ function createCursor(){
     top: currentRadiusCursor*2,
     objectCaching: false  });
   let cursor_ = new fabric.Group([curs_,text_],{
-    left: -10,
-    top: -10,
+    left: 1,
+    top: 1,
     erasable:false,
     selectable:false,
     cursor:true,
@@ -591,52 +650,58 @@ let colors = ['#ff0000','#0f71d3','#14ff00'];
 let color_index =0;                                            // Курсор
 let moveCursorsToFront = false;
 const getCursorData = (data) => {
-
+  // console.log(data);
   let existing_coursor = canvas._objects.find(item=>item.socket_id==data.userId)
+  // console.log(existing_coursor);
   if(!existing_coursor)
   {
     cursorUser.socket_id=data.userId;
+    cursorUser.ignoreZoom = true;
     cursorUser.item(0).fill = colors[color_index];
+    cursorUser.item(0).ignoreZoom = true;
+    cursorUser.item(1).ignoreZoom = true;
     cursorUser.item(1).text = data.username || "unknown"
     color_index++;
     if(!colors[color_index]){
       color_index=0;
     }
     //cursorUser.left = data.cursorCoordinates.x
-       //canvas.sendToBack(cursorUser);
-
+    //canvas.sendToBack(cursorUser);
     canvas.add(cursorUser);
-
     existing_coursor = cursorUser;
-    
   }else{
-    
-    // console.log(h,w,data.cursorCoordinates);
-    if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-20 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-20 ){
-      data.cursor='leave'
-      if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )
-        data.cursorCoordinates.x = canvas.vptCoords.tl.x
-      if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-20  )
-        data.cursorCoordinates.x = canvas.vptCoords.tr.x-20
-      if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )
-        data.cursorCoordinates.y = canvas.vptCoords.tl.y
-      if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-20  )
-        data.cursorCoordinates.y = canvas.vptCoords.br.y-20
-    }
-      
-    existing_coursor.set({
-      top:  data.cursorCoordinates.y,
-      left: data.cursorCoordinates.x,
-    }); 
-    if ( data.cursor!==undefined && data.cursor=='leave' ){
+      // console.log(data.cursorCoordinates);
+      // if (!(data && data.cursorCoordinates && canvas.vptCoords && canvas.vptCoords.tl && data.cursorCoordinates.x && canvas.vptCoords.tl.x && canvas.vptCoords.tr.x)) {
+      if (!(data && data.cursorCoordinates )) {
+        data.cursor = 'leave'
+        data.cursorCoordinates = {}
+        data.cursorCoordinates.x = cursorUser.left
+        data.cursorCoordinates.y = cursorUser.top
+      } else if (data.cursorCoordinates.x < canvas.vptCoords.tl.x || data.cursorCoordinates.x > canvas.vptCoords.tr.x - 20 || data.cursorCoordinates.y < canvas.vptCoords.tl.y || data.cursorCoordinates.y > canvas.vptCoords.br.y - 20) {
+        data.cursor = 'leave'
+        if (data.cursorCoordinates.x < canvas.vptCoords.tl.x)
+          data.cursorCoordinates.x = canvas.vptCoords.tl.x
+        if (data.cursorCoordinates.x > canvas.vptCoords.tr.x - 20)
+          data.cursorCoordinates.x = canvas.vptCoords.tr.x - 20
+        if (data.cursorCoordinates.y < canvas.vptCoords.tl.y)
+          data.cursorCoordinates.y = canvas.vptCoords.tl.y
+        if (data.cursorCoordinates.y > canvas.vptCoords.br.y - 20)
+          data.cursorCoordinates.y = canvas.vptCoords.br.y - 20
+      }
+
       existing_coursor.set({
-        opacity: 0.2
-      })
-    }else{
-      existing_coursor.set({
-        opacity: 1
-      })
-    }
+        top: data.cursorCoordinates.y,
+        left: data.cursorCoordinates.x,
+      });
+      if (data.cursor !== undefined && data.cursor == 'leave') {
+        existing_coursor.set({
+          opacity: 0.2
+        })
+      } else {
+        existing_coursor.set({
+          opacity: 1
+        })
+      }
   }
   // помещаем курсор поверх всех элементов
   if ( moveCursorsToFront && existing_coursor){
@@ -644,34 +709,25 @@ const getCursorData = (data) => {
     moveCursorsToFront = false;
   }
   canvas.renderAll();
-}                                                   // Получение координат курсора
+}                                                     // Получение координат курсора
 
 
 
-function handleScale (delta)
-{
-    if (delta<0)
-    {
-        if(currentValueZoom<=MAX_ZOOM_OUT)
-        {
+function handleScale (delta){
+    if (delta<0)   {
+        if(currentValueZoom<=MAX_ZOOM_OUT)    {
             return;
         }
-        else
-        {
+        else        {
             currentValueZoom = (parseFloat(currentValueZoom)-SCALE_STEP).toFixed(2);
-
         }
     }
-    else
-    {
-        if(currentValueZoom>=MAX_ZOOM_IN)
-        {
+    else    {
+        if(currentValueZoom>=MAX_ZOOM_IN)        {
             return;
         }
-        else
-        {
+        else        {
             currentValueZoom = (parseFloat(currentValueZoom)+SCALE_STEP).toFixed(2);
-
         }
     }
 }
@@ -1115,7 +1171,12 @@ socket.on( 'connect', function()
       if (pointer.type!==undefined && pointer.type=='eraser'){
         canvas.isDrawingMode = true
         canvas.freeDrawingBrush = new fabric.EraserBrush(canvas)
-        canvas.freeDrawingBrush.btype = 'eraser'
+        canvas.freeDrawingBrush.btype = 'eraser';
+        canvas.freeDrawingBrush.width = pointer.width;
+        canvasbg.isDrawingMode = true
+        canvasbg.freeDrawingBrush = new fabric.EraserBrush(canvasbg)
+        canvasbg.freeDrawingBrush.btype = 'eraser'
+        canvasbg.freeDrawingBrush.width = pointer.width;
       }
     }else{
       if (pointer.type!==undefined && pointer.type=='brush'){
@@ -1370,6 +1431,22 @@ socket.on( 'connect', function()
     }
 
   })
+
+
+  // { "object":obj_, "id":obj_.id, "color":color.rgbaString}
+  socket.on('color:changed', function(data)    {
+    let t = canvas._objects.find( item => item.id==data.id )
+    if ( t ){
+      t.changedColour(data.color)
+    }
+  });
+
+  socket.on('width:changed', function(data)    {
+    let t = canvas._objects.find( item => item.id==data.id )
+    if ( t ){
+      t.changedWidth(data.width)
+    }
+  });
 
   canvas.on('object:modified', e =>    {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
@@ -2045,6 +2122,7 @@ function drawcle(type_of_circle) {
     circle.setCoords();
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   });
+
 }
 
 canvas.setBackgroundColor(
@@ -2222,7 +2300,8 @@ drawingLineWidthEl.oninput = function()
   if ( obj_ && obj_.changedWidth ){
     // console.log(obj_.id);
     socket.emit("width:changed",{"object": obj_, "id":obj_.id, "width":canvas.freeDrawingBrush.width});
-    obj_.changedWidth(drawingLineWidthEl.value)
+    obj_.changedWidth(drawingLineWidthEl.value);
+    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   }
 
 };
