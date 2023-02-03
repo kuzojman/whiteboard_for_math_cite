@@ -1415,14 +1415,14 @@ socket.on( 'connect', function()
           if(!chunk){
             clearInterval(init_interval)
             canvas.renderOnAddRemove=true;
+            canvas.renderAll();
             return false;
           }
           chunk.forEach((object,id)=>{
             chunk[id]=deserialize(object);
             // console.log(chunk[id]);
           });
-          enliveObjects(chunk);
-          canvas.renderAll();
+          enliveObjects(chunk);          
           chunk_index++;
       },150)
 
