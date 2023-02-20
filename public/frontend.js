@@ -5,11 +5,11 @@ const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
 });
 
 
-const socket = io('http://localhost:3000',{transports:['websocket']});
+//const socket = io('http://localhost:3000',{transports:['websocket']});
 
 // const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
-//const socket = io('https://kuzovkin.info',{transports:['websocket']});
+const socket = io('https://kuzovkin.info',{transports:['websocket']});
 
 // const socket = io();
 
@@ -274,7 +274,7 @@ async function callWorker(worker) {
 // }
 
 // для продакшна надо оставить пустым
-let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
+let serverHostDebug = "https://kuzovkin.info"  //"http://localhost:5000/" //
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
@@ -457,6 +457,7 @@ const SCALE_STEP = 0.05;
 let currentValueZoom = 1;
 
 let currentRadiusCursor = 10;
+let currentTextCursor   = 14;
 // когда получили первые данные
 let takedFirstData = false;
 let allReceivedObjects = false;
@@ -473,7 +474,7 @@ function decreaseRecievedObjects(){
 
 function createCursor(){
   let curs_ =  new fabric.Circle({              // Представление курсора
-    radius: currentRadiusCursor,
+    radius: currentRadiusCursor/ (currentValueZoom),
     fill: 'red',
     left: 0,
     top: 0,
@@ -485,7 +486,7 @@ function createCursor(){
   });
   let text_ = new fabric.Text("Username", {
     fontFamily: 'Calibri',
-    fontSize: 14,
+    fontSize: 14/ (currentValueZoom),
     textAlign: 'left',
     originX: 'center',
     originY: 'center',
@@ -509,6 +510,14 @@ canvas.on('mouse:wheel',function(opt){
   const delta =opt.e.deltaY;
   handleScale(delta);
   as.textContent = (currentValueZoom * 100).toFixed(0)+'%';
+  let coursours =  canvas._objects.filter(item=>item.socket_id)
+  coursours.forEach(cursor =>{
+    cursor.zoomX = 1;
+    cursor.zoomY = 1;
+    cursor._objects[0].radius =   10 / (currentValueZoom );
+    cursor._objects[1].fontSize = 14 / (currentValueZoom );
+
+  })
   canvas.zoomToPoint({x:opt.e.offsetX, y: opt.e.offsetY},currentValueZoom);
   canvasbg.zoomToPoint({x:opt.e.offsetX, y: opt.e.offsetY},currentValueZoom);
   opt.e.preventDefault();
@@ -561,6 +570,30 @@ const handleUpKeySpace = (event) => {
 let cursorCoordinateOtherUsers;
 
 const handleMouseMovement = (event) => {
+
+  if (canvasDragModeEnabled){
+    let coursours =  canvas._objects.filter(item=>item.socket_id)
+    console.log(coursours,55555555)
+    coursours.forEach(cursor =>{
+      if ( cursor.left< canvas.vptCoords.tl.x || cursor.left>canvas.vptCoords.tr.x-60 || cursor.top< canvas.vptCoords.tl.y || cursor.top>canvas.vptCoords.br.y-60 ){
+        if ( cursor.left<canvas.vptCoords.tl.x  )
+          cursor.left = canvas.vptCoords.tl.x
+        if ( cursor.left>canvas.vptCoords.tr.x-90  )
+          cursor.left = canvas.vptCoords.tr.x-90
+        if ( cursor.top<canvas.vptCoords.tl.y  )
+          cursor.top = canvas.vptCoords.tl.y
+        if ( cursor.top>canvas.vptCoords.br.y-90  )
+          cursor.top = canvas.vptCoords.br.y-90
+      }
+    
+    /*    
+      existing_coursor.set({
+        top:  data.cursorCoordinates.y,
+        left: data.cursorCoordinates.x,
+      }); */
+    })
+
+  }
   const cursorCoordinate = canvas.getPointer(event.e);
   let data = {
       userId: socket.id,
@@ -583,7 +616,7 @@ const handleMouseOut = (ev)=>{
         coords: cursorCoordinate,
         cursor:'leave'
     }
-    socket.emit('cursor-data', data);
+    //socket.emit('cursor-data', data);
   }
 }
 
@@ -612,18 +645,38 @@ const getCursorData = (data) => {
   }else{
     
     // console.log(h,w,data.cursorCoordinates);
-    if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-20 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-20 ){
-      data.cursor='leave'
-      if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )
-        data.cursorCoordinates.x = canvas.vptCoords.tl.x
-      if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-20  )
-        data.cursorCoordinates.x = canvas.vptCoords.tr.x-20
-      if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )
-        data.cursorCoordinates.y = canvas.vptCoords.tl.y
-      if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-20  )
-        data.cursorCoordinates.y = canvas.vptCoords.br.y-20
+    if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-60 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-60 ){
+      data.cursor='leave';
+
+      let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
+      if (!cursor_clone){
+        cursor_clone=createCursor();
+        cursor_clone._objects[1].text = `${existing_coursor._objects[1].text}_clone`;
+        cursor_clone.clone_id = `${data.userId}_clone`;
+        canvas._objects[canvas._objects.length]=cursor_clone;
+      }
+      let coords={x:0,y:0}
+      if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )    coords.x = canvas.vptCoords.tl.x
+      if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-90  ) coords.x = canvas.vptCoords.tr.x-90
+      if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )    coords.y = canvas.vptCoords.tl.y
+      if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-90  ) coords.y = canvas.vptCoords.br.y-90
+        
+        console.log(cursor_clone);
+        cursor_clone.set({
+          top:  coords.y,
+          left: coords.x,
+          visible: true,
+          clone_id:`${data.userId}_clone`
+        }); 
     }
-      
+    else{
+      let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
+      if (cursor_clone){
+        cursor_clone.set({
+          visible:false
+        })
+      }
+    }  
     existing_coursor.set({
       top:  data.cursorCoordinates.y,
       left: data.cursorCoordinates.x,
@@ -1097,58 +1150,62 @@ socket.on( 'connect', function()
   });
 
   socket.on('mouse:up', function(pointer) {
-    if ( canvasbg.freeDrawingBrush!==undefined ){
-      canvasbg.freeDrawingBrush.onMouseUp({e:{}});
+    let brushName = `freeDrawingBrush_${pointer.id}`;
+    if ( canvasbg[brushName]!==undefined ){
+      canvasbg[brushName].onMouseUp({e:{}});
 
     }
     canvasbg.isDrawingMode = false
   });
 
   socket.on('mouse:down', function(pointer)    {
-    canvasbg.isDrawingMode = true
-    if ( canvasbg.freeDrawingBrush===undefined ){
-      canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
+    canvasbg.isDrawingMode = true;
+    console.log('socket:mouse:down',pointer);
+    let brushName = `freeDrawingBrush_${pointer.id}`;
+    if ( canvasbg[brushName]===undefined ){
+      canvasbg[brushName] = new fabric.PencilBrush(canvasbg)
     }
-    // canvasbg.freeDrawingBrush.width = pointer.width;
-    // canvasbg.freeDrawingBrush.color = pointer.color;
-    if (canvasbg.freeDrawingBrush.btype ===undefined || canvasbg.freeDrawingBrush.btype!='eraser' ){
+    // canvasbg[brushName].width = pointer.width;
+    // canvasbg[brushName].color = pointer.color;
+    if (canvasbg[brushName].btype ===undefined || canvasbg[brushName].btype!='eraser' ){
       if (pointer.type!==undefined && pointer.type=='eraser'){
         canvas.isDrawingMode = true
-        canvas.freeDrawingBrush = new fabric.EraserBrush(canvas)
-        canvas.freeDrawingBrush.btype = 'eraser'
+        canvas[brushName] = new fabric.EraserBrush(canvas)
+        canvas[brushName].btype = 'eraser'
       }
     }else{
       if (pointer.type!==undefined && pointer.type=='brush'){
-        canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
-        canvasbg.freeDrawingBrush.btype = 'brush'
+        canvasbg[brushName] = new fabric.PencilBrush(canvasbg)
+        canvasbg[brushName].btype = 'brush'
       }
     }
 
     if (pointer.type!==undefined && pointer.type=='brush'){
-      canvasbg.freeDrawingBrush = new fabric.PencilBrush(canvasbg)
-      canvasbg.freeDrawingBrush.btype = 'brush';
-      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas)
-      canvas.freeDrawingBrush.btype = 'brush'
-      canvasbg.freeDrawingBrush.color = pointer.color;
-      canvasbg.freeDrawingBrush.width = pointer.width;
+      canvasbg[brushName] = new fabric.PencilBrush(canvasbg)
+      canvasbg[brushName].btype = 'brush';
+      canvas[brushName] = new fabric.PencilBrush(canvas)
+      canvas[brushName].btype = 'brush'
+      canvasbg[brushName].color = pointer.color;
+      canvasbg[brushName].width = pointer.width;
     }
     if (pointer.type!==undefined && pointer.type=='lasso'){
-      canvasbg.freeDrawingBrush = new fabric.LassoBrush(canvasbg);
-      canvasbg.freeDrawingBrush.color = pointer.color;
-      canvasbg.freeDrawingBrush.btype = 'lasso'
+      canvasbg[brushName] = new fabric.LassoBrush(canvasbg);
+      canvasbg[brushName].color = pointer.color;
+      canvasbg[brushName].btype = 'lasso'
       canvasbg.isDrawingMode = true;
-      canvasbg.freeDrawingBrush.width = 0;
+      canvasbg[brushName].width = 0;
     }
 
-
-    canvasbg.freeDrawingBrush.onMouseDown(pointer.pointer,{e:{}});
+    console.log(canvasbg[brushName],brushName)
+    canvasbg[brushName].onMouseDown(pointer.pointer,{e:{}});
   });
 
   socket.on('mouse:draw', function(e)  {
-    if ( canvasbg.freeDrawingBrush!==undefined && canvasbg.isDrawingMode ){
+    let brushName = `freeDrawingBrush_${e.id}`;
+    if ( canvasbg[brushName]!==undefined && canvasbg.isDrawingMode ){
       // canvasbg.freeDrawingBrush.color = e.color;
       // canvasbg.freeDrawingBrush.width = e.width;
-      canvasbg.freeDrawingBrush.onMouseMove(e.pointer,{e:{}});
+      canvasbg[brushName].onMouseMove(e.pointer,{e:{}});
     }
   });
 
@@ -1372,8 +1429,18 @@ socket.on( 'connect', function()
   })
 
   canvas.on('object:modified', e =>    {
+    if(e.action =="drag" && e.target._objects){
+      /*
+      e.target._objects.forEach(object => {
+        object.top  = e.transform.target.top;
+        object.left = e.transform.target.left;
+
+      })*/
+      canvas.discardActiveObject().renderAll()
+    }
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     send_part_of_data(e);
+    console.log('object:modified', e)
     // send_part_events.push(e);
   });
 
@@ -1397,7 +1464,18 @@ socket.on( 'connect', function()
   canvas.on('object:moving',e =>
   {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+    console.log('object:moving');
     send_part_of_data(e);
+      // send_part_events.push(e);
+  });
+  canvas.on('moving',e =>
+  {
+    console.log('moving');
+      // send_part_events.push(e);
+  });
+  canvas.on('dragenter',e =>
+  {
+    console.log('dragenter');
       // send_part_events.push(e);
   });
 
@@ -1679,21 +1757,22 @@ function enableFreeDrawing(){
     canvas.freeDrawingBrush.onMouseDown(pointer,{e:{}});
     
     // canvas.remoteDrawingBrush.onMouseDown({x:pointer.x-50, y:pointer.y},{e:{}});
-    socket.emit('mouse:down', {pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
+    socket.emit('mouse:down', {pointer, id:socket.id,width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
   })
   canvas.on('mouse:up', e => {
     isDrawing = false;
     const pointer = canvas.getPointer(e);
-    socket.emit('mouse:up',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
+    socket.emit('mouse:up',{pointer, id:socket.id, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   })
   canvas.on('mouse:move', function (e) {
+    console.log('mouse:move')
     if (isDrawing) {
       const pointer = canvas.getPointer(e);
       // canvas.freeDrawingBrush.width=7;
       canvas.freeDrawingBrush.onMouseMove(pointer,{e:{}});
       // canvas.remoteDrawingBrush.onMouseMove({x:pointer.x-50, y:pointer.y},{e:{}});
-      socket.emit('mouse:draw',{pointer, width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
+      socket.emit('mouse:draw',{pointer, id:socket.id,width:canvas.freeDrawingBrush.width, color:canvas.freeDrawingBrush.color, type:'brush'});//canvas.freeDrawingBrush._points); 
     }
   })
 }
@@ -2514,8 +2593,10 @@ function recive_part_of_data(e) {
 document.body.addEventListener('keydown', handleDownKeySpace);
 document.body.addEventListener('keyup', handleUpKeySpace);
 
+let canvasDragModeEnabled = false;
 
 const handleButtonCursorMoveClick = (ev) => {
+  canvasDragModeEnabled = true;
   removeEvents();
   ev.preventDefault()
   isCursorMove = !isCursorMove;
@@ -2724,4 +2805,55 @@ function compare_path(f,s){
   if ( !object_equals(f.path,s.path) )
     return false
   return true
+}
+setInterval(function(){
+  let coursours =  canvas._objects.filter(item=>item.socket_id)
+  coursours.forEach(cursor =>{
+    checkCursorClones({
+      cursorCoordinates:{x:cursor.left,y:cursor.top},
+      userId:cursor.socket_id,
+      existing_coursor:cursor
+    })
+
+  })
+
+
+
+},500)
+
+function checkCursorClones(data){
+  
+  if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-60 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-60 ){
+    data.cursor='leave';
+
+    let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
+    if (!cursor_clone){
+      cursor_clone=createCursor();
+      cursor_clone._objects[1].text = `${data.existing_coursor._objects[1].text}_clone`;
+      cursor_clone.clone_id = `${data.userId}_clone`;
+      canvas._objects[canvas._objects.length]=cursor_clone;
+    }
+    let coords={x:0,y:0}
+    if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )    coords.x = canvas.vptCoords.tl.x
+    if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-90  ) coords.x = canvas.vptCoords.tr.x-90
+    if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )    coords.y = canvas.vptCoords.tl.y
+    if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-90  ) coords.y = canvas.vptCoords.br.y-90
+      
+      console.log(cursor_clone);
+      cursor_clone.set({
+        top:  coords.y,
+        left: coords.x,
+        visible: true,
+        clone_id:`${data.userId}_clone`
+      }); 
+  }
+  else{
+    let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
+    if (cursor_clone){
+      cursor_clone.set({
+        visible:false
+      })
+    }
+  }  
+
 }
