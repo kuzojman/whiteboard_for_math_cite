@@ -510,14 +510,21 @@ canvas.on('mouse:wheel',function(opt){
   const delta =opt.e.deltaY;
   handleScale(delta);
   as.textContent = (currentValueZoom * 100).toFixed(0)+'%';
-  let coursours =  canvas._objects.filter(item=>item.socket_id)
+  let coursours =  canvas._objects.filter(item=>item.socket_id || item.clone_id);
   coursours.forEach(cursor =>{
     cursor.zoomX = 1;
     cursor.zoomY = 1;
-    cursor._objects[0].radius =   10 / (currentValueZoom );
-    cursor._objects[1].fontSize = 14 / (currentValueZoom );
+    //cursor._objects[0].radius =   10 / (currentValueZoom );
+    //cursor._objects[1].fontSize = 14 / (currentValueZoom );
+    cursor._objects[0].set({
+      radius:10 / (currentValueZoom ),
 
+    })
+    cursor._objects[1].set({
+      fontSize : 14 / (currentValueZoom )
+    })
   })
+  canvas.renderAll();
   canvas.zoomToPoint({x:opt.e.offsetX, y: opt.e.offsetY},currentValueZoom);
   canvasbg.zoomToPoint({x:opt.e.offsetX, y: opt.e.offsetY},currentValueZoom);
   opt.e.preventDefault();
@@ -573,24 +580,12 @@ const handleMouseMovement = (event) => {
 
   if (canvasDragModeEnabled){
     let coursours =  canvas._objects.filter(item=>item.socket_id)
-    console.log(coursours,55555555)
     coursours.forEach(cursor =>{
-      if ( cursor.left< canvas.vptCoords.tl.x || cursor.left>canvas.vptCoords.tr.x-60 || cursor.top< canvas.vptCoords.tl.y || cursor.top>canvas.vptCoords.br.y-60 ){
-        if ( cursor.left<canvas.vptCoords.tl.x  )
-          cursor.left = canvas.vptCoords.tl.x
-        if ( cursor.left>canvas.vptCoords.tr.x-90  )
-          cursor.left = canvas.vptCoords.tr.x-90
-        if ( cursor.top<canvas.vptCoords.tl.y  )
-          cursor.top = canvas.vptCoords.tl.y
-        if ( cursor.top>canvas.vptCoords.br.y-90  )
-          cursor.top = canvas.vptCoords.br.y-90
-      }
-    
-    /*    
-      existing_coursor.set({
-        top:  data.cursorCoordinates.y,
-        left: data.cursorCoordinates.x,
-      }); */
+      checkCursorClones({
+        cursorCoordinates:{x:cursor.left,y:cursor.top},
+        userId:cursor.socket_id,
+        existing_coursor:cursor
+      })
     })
 
   }
@@ -623,14 +618,19 @@ const handleMouseOut = (ev)=>{
 let colors = ['#ff0000','#0f71d3','#14ff00'];
 let color_index =0;                                            // Курсор
 let moveCursorsToFront = false;
+let createdCursors = {}
 const getCursorData = (data) => {
 
   let existing_coursor = canvas._objects.find(item=>item.socket_id==data.userId)
-  if(!existing_coursor)
+  if(!existing_coursor )
   {
-    cursorUser.socket_id=data.userId;
-    cursorUser.item(0).fill = colors[color_index];
-    cursorUser.item(1).text = data.username || "unknown"
+    if(createdCursors[data.userId]) return false;
+    let copyCursorUser = createCursor(); //CursorUser
+    createdCursors[data.userId]=true;
+    copyCursorUser.socket_id=data.userId;
+    console.log('creating_new_coursour', data,existing_coursor,canvas._objects.length,copyCursorUser);
+    copyCursorUser.item(0).fill = colors[color_index];
+    copyCursorUser.item(1).text = data.username || "unknown"
     color_index++;
     if(!colors[color_index]){
       color_index=0;
@@ -638,56 +638,23 @@ const getCursorData = (data) => {
     //cursorUser.left = data.cursorCoordinates.x
        //canvas.sendToBack(cursorUser);
 
-    canvas.add(cursorUser);
+    canvas._objects.push(copyCursorUser);
 
-    existing_coursor = cursorUser;
+    existing_coursor = copyCursorUser;
     
   }else{
     
     // console.log(h,w,data.cursorCoordinates);
-    if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-60 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-60 ){
-      data.cursor='leave';
 
-      let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
-      if (!cursor_clone){
-        cursor_clone=createCursor();
-        cursor_clone._objects[1].text = `${existing_coursor._objects[1].text}_clone`;
-        cursor_clone.clone_id = `${data.userId}_clone`;
-        canvas._objects[canvas._objects.length]=cursor_clone;
-      }
-      let coords={x:0,y:0}
-      if ( data.cursorCoordinates.x<canvas.vptCoords.tl.x  )    coords.x = canvas.vptCoords.tl.x
-      if ( data.cursorCoordinates.x>canvas.vptCoords.tr.x-90  ) coords.x = canvas.vptCoords.tr.x-90
-      if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )    coords.y = canvas.vptCoords.tl.y
-      if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-90  ) coords.y = canvas.vptCoords.br.y-90
-        
-        console.log(cursor_clone);
-        cursor_clone.set({
-          top:  coords.y,
-          left: coords.x,
-          visible: true,
-          clone_id:`${data.userId}_clone`
-        }); 
-    }
-    else{
-      let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
-      if (cursor_clone){
-        cursor_clone.set({
-          visible:false
-        })
-      }
-    }  
+
     existing_coursor.set({
       top:  data.cursorCoordinates.y,
       left: data.cursorCoordinates.x,
+      opacity: 1
     }); 
     if ( data.cursor!==undefined && data.cursor=='leave' ){
       existing_coursor.set({
         opacity: 0.2
-      })
-    }else{
-      existing_coursor.set({
-        opacity: 1
       })
     }
   }
@@ -827,7 +794,7 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
             this.lastClientX = e.e.clientX;
             this.lastClientY = e.e.clientY;
           }
-          // console.log("mouse:down 1");
+
       });
       // When the mouse moves, and we're panning (mouse down), we continue
       this.on("mouse:move", (e) => {
@@ -876,7 +843,6 @@ fabric.Canvas.prototype.toggleDragMode = function (state_=false) {
 
           }
           handleMouseMovement(e)
-          // console.log("mouse:move 1");
       });
       // this.on("mouse:move", (event) => handleMouseMovement(event))
   } else {
@@ -1082,7 +1048,7 @@ function object_fit_apth(obj_){
     const error = 30;
     let bezierCurves = fitCurve(massiv_of_points, error);
     if( bezierCurves===undefined || bezierCurves[0]===undefined || !bezierCurves[0]) {
-      console.log('bezier error',bezierCurves,massiv_of_points);
+
     }
     let bezierProcessedPath = [
       ['M',...bezierCurves[0][0]]
@@ -1160,7 +1126,7 @@ socket.on( 'connect', function()
 
   socket.on('mouse:down', function(pointer)    {
     canvasbg.isDrawingMode = true;
-    console.log('socket:mouse:down',pointer);
+
     let brushName = `freeDrawingBrush_${pointer.id}`;
     if ( canvasbg[brushName]===undefined ){
       canvasbg[brushName] = new fabric.PencilBrush(canvasbg)
@@ -1196,7 +1162,7 @@ socket.on( 'connect', function()
       canvasbg[brushName].width = 0;
     }
 
-    console.log(canvasbg[brushName],brushName)
+
     canvasbg[brushName].onMouseDown(pointer.pointer,{e:{}});
   });
 
@@ -1440,7 +1406,7 @@ socket.on( 'connect', function()
     }
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
     send_part_of_data(e);
-    console.log('object:modified', e)
+
     // send_part_events.push(e);
   });
 
@@ -1464,13 +1430,12 @@ socket.on( 'connect', function()
   canvas.on('object:moving',e =>
   {
     socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    console.log('object:moving');
+
     send_part_of_data(e);
       // send_part_events.push(e);
   });
   canvas.on('moving',e =>
   {
-    console.log('moving');
       // send_part_events.push(e);
   });
   canvas.on('dragenter',e =>
@@ -1766,7 +1731,6 @@ function enableFreeDrawing(){
     //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
   })
   canvas.on('mouse:move', function (e) {
-    console.log('mouse:move')
     if (isDrawing) {
       const pointer = canvas.getPointer(e);
       // canvas.freeDrawingBrush.width=7;
@@ -1782,7 +1746,6 @@ function enableFreeDrawing(){
  */
 function sliderButtonClick(){
   removeEvents();
-  console.log("click");
   let slider = new fabric.Slider(canvas);
   slider.onReady = ()=>{
     canvas.add(slider);
@@ -2672,6 +2635,16 @@ socket.on('coursour_disconected', function(user_id){
   if (index_of_existing_coursor!==-1){
     (canvas._objects).splice(index_of_existing_coursor,1);
     canvas.renderAll();
+  }else{
+    console.log('where is coursour coursour_disconected ')
+  }
+  
+  let index_of_clone_coursor = canvas._objects.findIndex(item=>item.clone_id==`${user_id}_clone`);
+  if (index_of_clone_coursor!==-1){
+    (canvas._objects).splice(index_of_clone_coursor,1);
+    canvas.renderAll();
+  }else{
+    console.log('where is coursour index_of_clone_coursor ')
   }
 }
 
@@ -2819,17 +2792,18 @@ setInterval(function(){
 
 
 
-},500)
+},150)
 
 function checkCursorClones(data){
-  
-  if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x-60 || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y-60 ){
+  let cursor_original = canvas._objects.find(item=>item.socket_id==data.userId);
+  if ( data.cursorCoordinates.x< canvas.vptCoords.tl.x || data.cursorCoordinates.x>canvas.vptCoords.tr.x || data.cursorCoordinates.y< canvas.vptCoords.tl.y || data.cursorCoordinates.y>canvas.vptCoords.br.y ){
     data.cursor='leave';
 
     let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
     if (!cursor_clone){
       cursor_clone=createCursor();
-      cursor_clone._objects[1].text = `${data.existing_coursor._objects[1].text}_clone`;
+      console.log('creating clone of coursor',data.userId,cursor_clone)
+      cursor_clone._objects[1].text = `${data.existing_coursor._objects[1].text}`;
       cursor_clone.clone_id = `${data.userId}_clone`;
       canvas._objects[canvas._objects.length]=cursor_clone;
     }
@@ -2839,20 +2813,30 @@ function checkCursorClones(data){
     if ( data.cursorCoordinates.y<canvas.vptCoords.tl.y  )    coords.y = canvas.vptCoords.tl.y
     if ( data.cursorCoordinates.y>canvas.vptCoords.br.y-90  ) coords.y = canvas.vptCoords.br.y-90
       
-      console.log(cursor_clone);
+
       cursor_clone.set({
         top:  coords.y,
         left: coords.x,
         visible: true,
-        clone_id:`${data.userId}_clone`
+       // clone_id:`${data.userId}_clone`
       }); 
+      cursor_original.set({
+        visible:false
+      })
   }
   else{
-    let cursor_clone = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
+    let cursor_clone    = canvas._objects.find(item=>item.clone_id==`${data.userId}_clone`);
+
+    cursor_original.set({
+      visible:true
+    })
     if (cursor_clone){
       cursor_clone.set({
         visible:false
       })
+      
+    }else{
+      console.log('where is clone of coursor?')
     }
   }  
 
