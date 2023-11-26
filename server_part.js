@@ -180,7 +180,14 @@ app.get("/", (req, res) => {
   let role = req.query.role;
   // res.cookie('user_id', '1');
   // console.log('cookie exists', req.cookies.user_id);
-  res.render(path.join(__dirname,"public/index.html"), {board_id: board_id});
+  res.render(
+    path.join(__dirname,"public/index.html"), 
+    {
+      board_id: board_id, 
+      siteAddress: encodeURI(process.env.SITE_ADDRESS),
+      backUrl: process.env.BACK_URL
+    }
+    );
 });
 
 /**

@@ -333,7 +333,7 @@ async function callWorker(worker) {
 // }
 
 // для продакшна надо оставить пустым
-let serverHostDebug = "http://localhost:5000/" //"https://kuzovkin.info"  //
+let serverHostDebug = siteAddress //"https://kuzovkin.info"  //
 // есть ли доступ к доске? и в качестве какой роли
 let accessBoard = false;
 // ожидаем ли мы одобрения от учителя?
@@ -384,7 +384,7 @@ function clearBoard(broadcast=true){
  * Перенаправление в личный кабинет
  */
 function goUserBoard(){
-  window.location.href="/my_private_office?parametr_enter=my_board"
+  window.location.href = backUrl;
 }
 
 /**
