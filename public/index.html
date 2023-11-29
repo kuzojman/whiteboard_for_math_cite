@@ -46,7 +46,7 @@
         <ul class="logo-menu__list">
           <li class="logo-menu__item" onclick="clearBoard()">Очистить доску</li>
           <li class="logo-menu__item" onclick="downloadImage()">Экспорт в PNG</li>
-          <li class="logo-menu__item" onclick="goUserBoard()">Личный кабинет</li>
+          <li class="logo-menu__item" onclick="goUserBoard()">Вернуться в мои доски</li>
         </ul>
       </div>
     </div>
@@ -533,8 +533,9 @@
 
 
 <script>
-  let siteAddress = "{{ siteAddress }}";
-  let backUrl = "{{ backUrl }}";
+  let siteAddress = decodeURIComponent("{{ siteAddress }}");
+  let backUrl = decodeURIComponent("{{ backUrl }}");
+  let witeboardServiceHost = decodeURIComponent("{{ witeboardServiceHost }}");
 </script>
 <script
         src="https://cdn.socket.io/4.4.0/socket.io.min.js"

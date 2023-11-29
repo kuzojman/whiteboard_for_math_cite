@@ -9,7 +9,7 @@ const canvas = new fabric.Canvas(document.getElementById("canvasId"),{
 
 // const socket = io('http://192.168.1.46:3000',{transports:['websocket']});
 
-const socket = io('https://kuzovkin.info',{transports:['websocket']});
+const socket = io(witeboardServiceHost,{transports:['websocket']});
 
 // const socket = io();
 
@@ -384,7 +384,7 @@ function clearBoard(broadcast=true){
  * Перенаправление в личный кабинет
  */
 function goUserBoard(){
-  window.location.href = backUrl;
+  window.location.href = siteAddress + backUrl;
 }
 
 /**
@@ -1129,11 +1129,11 @@ function object_fit_apth(obj_){
  * Событие подключения к сокету
  *
  */
-socket.on( 'connect', function()
+socket.on('connect', function()
 {
   canvasbg.isDrawingMode = false;
   // checkLoggedIn();
-  checkLoggedInCookie()
+  checkLoggedInCookie();
   // получаем ответ на наш запрос - можно на доску заходить или нет?
   socket.on('access:response', function(data){
     if ( data.role!='' && data.role!='waiting' ){

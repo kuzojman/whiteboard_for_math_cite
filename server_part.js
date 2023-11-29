@@ -16,6 +16,9 @@ const unoconv = require('awesome-unoconv');
 const glob = require("glob")
 
 
+const witeboardServiceHost = process.env.WITEBOARD_SERVICE_HOST;
+
+
 var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
 
 var root = protobuf.Root.fromJSON(jsonDescriptor);
@@ -178,14 +181,13 @@ app.get("/", (req, res) => {
     board_id = 1;
   }
   let role = req.query.role;
-  // res.cookie('user_id', '1');
-  // console.log('cookie exists', req.cookies.user_id);
   res.render(
     path.join(__dirname,"public/index.html"), 
     {
       board_id: board_id, 
-      siteAddress: encodeURI(process.env.SITE_ADDRESS),
-      backUrl: process.env.BACK_URL
+      siteAddress: encodeURIComponent(process.env.SITE_ADDRESS),
+      backUrl: encodeURIComponent(process.env.BACK_URL),
+      witeboardServiceHost
     }
     );
 });
@@ -336,7 +338,7 @@ io.on("connection", async socket => {
   //  console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
     if ( res.rows.length>0 ){
-      socket.emit("take_data_from_json_file", res.rows[0].board_stack);
+      socket.emit("take_data_from_json_file", res.rows[0].state);
     }
   });
 
@@ -662,7 +664,7 @@ io.on("connection", async socket => {
     const data_saved = JSON.parse(JSON.stringify(canvas_pass))
     // console.log(data_saved);
     //socket.broadcast.emit('canvas_save_to_json', data_saved);
-    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
+    const res = await client.query("UPDATE boards set state = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
   });
 
 
@@ -686,7 +688,7 @@ io.on("connection", async socket => {
     let board_stack;
     // console.log(board);
     if ( board.rows.length>0 ){
-      board_stack = board.rows[0].board_stack;
+      board_stack = board.rows[0].state;
     }
     if ( board_stack !==undefined && board_stack && board_stack.canvas!==undefined && board_stack.canvas.length>0 ){
       item_index = board_stack.canvas.indexOf(db_item => db_item.id==canvas_pass.id)
@@ -702,7 +704,7 @@ io.on("connection", async socket => {
       board_stack.canvas.push(canvas_pass.object);
     }
     const data_saved = JSON.stringify(board_stack);
-    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
+    const res = await client.query("UPDATE boards set state = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
     
   });
 
