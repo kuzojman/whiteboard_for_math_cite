@@ -1413,7 +1413,7 @@ socket.on('connect', function()
 
   socket.on('take_data_from_json_file',function(data)
   {
-    if(!data)
+    if(!data || data.constructor !== Object || Object.keys(data).length === 0)
     {
       return false;
     }
