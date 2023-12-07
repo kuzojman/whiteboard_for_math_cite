@@ -482,7 +482,8 @@ function createCursor(){
     originY: 'center',
     erasable:false,
     selectable:false,
-    objectCaching: false
+    objectCaching: true
+    //objectCaching: false
   });
   let text_ = new fabric.Text("Username", {
     fontFamily: 'Calibri',
@@ -494,7 +495,10 @@ function createCursor(){
     selectable:false,
     left: currentRadiusCursor*2,
     top: currentRadiusCursor*2,
-    objectCaching: false  });
+    objectCaching: true
+    //objectCaching: false
+  
+  });
   let cursor_ = new fabric.Group([curs_,text_],{
     left: -10,
     top: -10,
@@ -1292,7 +1296,8 @@ socket.on( 'connect', function()
         originX: "center",
         originY: "center",
         selectable: false,
-        objectCaching: false,
+        objectCaching: true
+        //objectCaching: false,
       });
 
     }else if ( line_taken.line_type == "arrowtwo" ){
@@ -1306,7 +1311,8 @@ socket.on( 'connect', function()
         originX: "center",
         originY: "center",
         selectable: false,
-        objectCaching: false,
+        objectCaching: true
+        //objectCaching: false,
       });
     }else{
       
@@ -1319,7 +1325,8 @@ socket.on( 'connect', function()
         originY: 'center',
         strokeDashArray: line_taken.strokeDashArray,
         selectable: false,
-        objectCaching: false
+        objectCaching: true
+        //objectCaching: false
       });
     }
       //line = new fabric.Line(line_taken)
@@ -1594,7 +1601,9 @@ function objectAddInteractive(object){
   let fn_ = (color)=>{return};
   if ( ['rect','circle'].indexOf(object.type)!==-1  ){
     fn_ = (color)=>{
-      object.objectCaching = false;
+      //object.objectCaching = false;
+      object.objectCaching =  true;
+      //objectCaching: false
       object.fill = color;
       canvas.renderAll();
       // object.objectCaching = true;
@@ -1612,7 +1621,9 @@ function objectAddInteractive(object){
   }
   object.changedColour = fn_;
   object.changedWidth = function(width){
-    object.objectCaching = false;
+          //object.objectCaching = false;
+          object.objectCaching =  true;
+    //object.objectCaching = false;
     // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
     this.strokeWidth = parseInt(width);
     canvas.renderAll();
@@ -1959,7 +1970,9 @@ function drawrec(type_of_rectangle) {
       stroke: 'Black',//drawing_color_border.value,
       strokeDashArray: [stroke_line, stroke_line],
       transparentCorners: false,
-      objectCaching: false,
+      //objectCaching: false,
+            //object.objectCaching = false;
+      objectCaching: true
     });
     rect.changedColour = function(color){
       rect.fill = color;
@@ -1967,7 +1980,9 @@ function drawrec(type_of_rectangle) {
       canvas.renderAll();
     }
     rect.changedWidth = function(width){
-      rect.objectCaching = false;
+     // rect.objectCaching = false;
+            //object.objectCaching = false;
+            rect.objectCaching =  true;
       // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
       this.strokeWidth = parseInt(width);
       canvas.renderAll();
@@ -2055,7 +2070,8 @@ function drawcle(type_of_circle) {
       selectable: false,
       originX: "center",
       originY: "center",
-      objectCaching: false,
+     // objectCaching: false,
+      objectCaching: true
     });
     circle.changedColour = function(color){
       circle.fill = color;
@@ -2063,7 +2079,10 @@ function drawcle(type_of_circle) {
       canvas.renderAll();
     }
     circle.changedWidth = function(width){
-      circle.objectCaching = false;
+      //circle.objectCaching = false;
+      circle.objectCaching = true;
+
+
       // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
       this.strokeWidth = parseInt(width);
       canvas.renderAll();
@@ -2164,7 +2183,8 @@ function adding_line_to_partner_board(line_taken) {
     originX: "center",
     originY: "center",
     selectable: false,
-    objectCaching: false,
+  //  objectCaching: false,
+    objectCaching: true,
   });
   //line = new fabric.Line(line_taken)
   canvas.add(line);
@@ -2315,7 +2335,8 @@ function drawLine(type_of_line) {
         originX: "center",
         originY: "center",
         selectable: false,
-        objectCaching: false,
+        objectCaching: true,        
+        //objectCaching: false,
       });
       
     }else if ( type_of_line == "arrowtwo" ){
@@ -2328,7 +2349,8 @@ function drawLine(type_of_line) {
         originX: "center",
         originY: "center",
         selectable: false,
-        objectCaching: false,
+        objectCaching: true        
+ //       objectCaching: false,
       });
     }else{
       line = new fabric.Line(points, {
@@ -2340,7 +2362,8 @@ function drawLine(type_of_line) {
         originX: "center",
         originY: "center",
         selectable: false,
-        objectCaching: false,
+        objectCaching: true
+       // objectCaching: false,
       });
     }
     line.changedColour = function(color){
@@ -2349,7 +2372,8 @@ function drawLine(type_of_line) {
       canvas.renderAll();
     }
     line.changedWidth = function(width){
-      line.objectCaching = false;
+     // line.objectCaching = false;
+      line.objectCaching = true;
       // canvas.freeDrawingBrush.width = parseInt(drawingLineWidthEl.value, 10);
       this.strokeWidth = parseInt(width);
       canvas.renderAll();

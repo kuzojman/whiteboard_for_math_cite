@@ -133,13 +133,20 @@ const serializer_dictionary_for_circle =  {...serializer_dictionary,...to_circle
 const serializer_dictionary_for_text =  {...serializer_dictionary,...to_text_add};
 const max_dictionary ={...serializer_dictionary,...serializer_dictionary_image,...serializer_dictionary_for_circle,...serializer_dictionary_for_text,...serializer_dictionary_slider};
 
+
+let cache = {};
+
 function serialize_canvas(canvas)
 {
     // console.log("sdf");
     let result =[];
     if ( canvas._objects ){
-        canvas._objects.forEach(function(object)
+        result = canvas._objects.map(function(object)
         {
+            let obj_cache = cache[object.id];
+            if (obj_cache) {
+                return obj_cache;
+            }
             // console.log(object.toJSON());
             let replaced_object ={};
             let my_dict = {};
@@ -199,7 +206,9 @@ function serialize_canvas(canvas)
                 // if ( object.formula!==undefined && object.formula!="" ){
                 //   // console.log(replaced_object);
                 // }
-                result.push(replaced_object);
+                cache[object.id] = replaced_object;
+                return replaced_object;
+                
             }
         });
     }
@@ -207,13 +216,16 @@ function serialize_canvas(canvas)
     return result//JSON.stringify(result);
 }
 
+
+
 function serialize_canvas_objects(objects)
 {
     let result =[];
 
     for (let o in objects)
     {
-        let object = objects[o]
+        let object = objects[o];
+
         let replaced_object ={};
         let my_dict = {};
         if(object.type=="path")    {
@@ -369,6 +381,7 @@ function deserialize(object)
         }
     }
     // console.log(result);
+    cache[result.id] = object;
     return result;
 }
 

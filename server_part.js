@@ -65,8 +65,13 @@ const client = new Client({
 })
 
 async function initdb(){
-  await client.connect()
-  const res = await client.query('SELECT * from boards')
+  try {
+    await client.connect()
+    //const res = await client.query('SELECT * from boards')
+  } catch ( e) {
+    console.log(e)
+  }
+
   //console.log(res.rows[0]) // Hello world!
   //await client.end()  
 }
