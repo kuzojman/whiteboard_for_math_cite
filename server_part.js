@@ -120,9 +120,9 @@ class YandexCloud {
 class AmazonCloud {
   constructor () {
     this.aws = new AWS.S3({
-      endpoint: process.env.END_POINT, 
-      accessKeyId: process.env.ACCESS_KEY, // берем ключ из переменной окружения
-      secretAccessKey: process.env.SECRET_ACCESS_KEY, // берем секрет из переменной окружения
+      endpoint: process.env.S3_ENDPOINT_URL, 
+      accessKeyId: process.env.S3_AWS_ACCESS_KEY_ID, // берем ключ из переменной окружения
+      secretAccessKey: process.env.S3_AWS_SECRET_ACCESS_KEY, // берем секрет из переменной окружения
       httpOptions: {
         timeout: 100000,
         connectTimeout: 100000
@@ -135,7 +135,7 @@ class AmazonCloud {
       // console.log(file);
       // const fileContent = Buffer.from(file.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
       const params = {
-        Bucket: 'hot_data_kuzovkin_info_private', // название созданного bucket
+        Bucket: process.env.S3_BUCKET, // название созданного bucket
         Key: `${path}/${fileName}`, // путь и название файла в облаке (path без слэша впереди)
         Body: file, // сам файл
         ContentType: fileType, // тип файла
