@@ -23,6 +23,8 @@ const serializer_dictionary_for_bezier = {
     "pathOffset":"pO",
     "top":"tp",
     "left":"lt",
+    "top_all":"tp_a",
+    "left_all":"lf_a",
     "objects":"obj",
     "strokeUniform":"su",
     "strokeMiterLimit":"sml",

@@ -16,6 +16,9 @@ const unoconv = require('awesome-unoconv');
 const glob = require("glob")
 
 
+const witeboardServiceHost = process.env.WITEBOARD_SERVICE_HOST;
+
+
 var jsonDescriptor = require("./public/awesome.json"); // exemplary for node
 
 var root = protobuf.Root.fromJSON(jsonDescriptor);
@@ -117,9 +120,9 @@ class YandexCloud {
 class AmazonCloud {
   constructor () {
     this.aws = new AWS.S3({
-      endpoint: process.env.END_POINT, 
-      accessKeyId: process.env.ACCESS_KEY, // берем ключ из переменной окружения
-      secretAccessKey: process.env.SECRET_ACCESS_KEY, // берем секрет из переменной окружения
+      endpoint: process.env.S3_ENDPOINT_URL, 
+      accessKeyId: process.env.S3_AWS_ACCESS_KEY_ID, // берем ключ из переменной окружения
+      secretAccessKey: process.env.S3_AWS_SECRET_ACCESS_KEY, // берем секрет из переменной окружения
       httpOptions: {
         timeout: 100000,
         connectTimeout: 100000
@@ -132,7 +135,7 @@ class AmazonCloud {
       // console.log(file);
       // const fileContent = Buffer.from(file.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
       const params = {
-        Bucket: 'hot_data_kuzovkin_info_private', // название созданного bucket
+        Bucket: process.env.S3_BUCKET, // название созданного bucket
         Key: `${path}/${fileName}`, // путь и название файла в облаке (path без слэша впереди)
         Body: file, // сам файл
         ContentType: fileType, // тип файла
@@ -178,9 +181,15 @@ app.get("/", (req, res) => {
     board_id = 1;
   }
   let role = req.query.role;
-  // res.cookie('user_id', '1');
-  // console.log('cookie exists', req.cookies.user_id);
-  res.render(path.join(__dirname,"public/index.html"), {board_id: board_id});
+  res.render(
+    path.join(__dirname,"public/index.html"), 
+    {
+      board_id: board_id, 
+      siteAddress: encodeURIComponent(process.env.SITE_ADDRESS),
+      backUrl: encodeURIComponent(process.env.BACK_URL),
+      witeboardServiceHost
+    }
+    );
 });
 
 /**
@@ -329,7 +338,7 @@ io.on("connection", async socket => {
   //  console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1',[board_id]);
     if ( res.rows.length>0 ){
-      socket.emit("take_data_from_json_file", res.rows[0].board_stack);
+      socket.emit("take_data_from_json_file", res.rows[0].state);
     }
   });
 
@@ -655,7 +664,7 @@ io.on("connection", async socket => {
     const data_saved = JSON.parse(JSON.stringify(canvas_pass))
     // console.log(data_saved);
     //socket.broadcast.emit('canvas_save_to_json', data_saved);
-    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
+    const res = await client.query("UPDATE boards set state = $1 WHERE id=$2 ", [data_saved, canvas_pass["board_id"]]);
   });
 
 
@@ -679,7 +688,7 @@ io.on("connection", async socket => {
     let board_stack;
     // console.log(board);
     if ( board.rows.length>0 ){
-      board_stack = board.rows[0].board_stack;
+      board_stack = board.rows[0].state;
     }
     if ( board_stack !==undefined && board_stack && board_stack.canvas!==undefined && board_stack.canvas.length>0 ){
       item_index = board_stack.canvas.indexOf(db_item => db_item.id==canvas_pass.id)
@@ -695,7 +704,7 @@ io.on("connection", async socket => {
       board_stack.canvas.push(canvas_pass.object);
     }
     const data_saved = JSON.stringify(board_stack);
-    const res = await client.query("UPDATE boards set board_stack = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
+    const res = await client.query("UPDATE boards set state = $1 WHERE id=$2 ",[data_saved,canvas_pass["board_id"]]);
     
   });
 
