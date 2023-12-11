@@ -1,0 +1,12 @@
+version: "3.9"
+
+
+services:
+  witeboard:
+    build:
+      context: .
+    container_name: witeboard
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
