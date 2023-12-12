@@ -10,13 +10,11 @@ export default class AmazonCloud {
       },
     });
 
-    // Сохраняем bucket в переменной окружения класса
     this.bucket = bucket;
   }
 
   upload = async ({ file, path, fileName, fileType }) => {
     try {
-      // console.log(file);
       // const fileContent = Buffer.from(file.replace('data:image/jpeg;base64,',"").replace('data:image/png;base64,',""),'base64')  ;
       const params = {
         Bucket: this.bucket, // название созданного bucket

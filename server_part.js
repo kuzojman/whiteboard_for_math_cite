@@ -23,15 +23,9 @@ var jsonDescriptor = require('./public/awesome.json'); // exemplary for node
 
 var root = protobuf.Root.fromJSON(jsonDescriptor);
 let boards_schema = root.lookupType('awesomepackage.AwesomeMessage');
-
 let pathOffset_schema = root.lookupType('awesomepackage.pathOffset');
-//console.log(pathOffset_schema);
-
 let buf_encoded = boards_schema.encode({ board_id: 123, bc: '#ffff' }).finish();
-//console.log(buf_encoded);
-
 let buf_decoded = boards_schema.decode(buf_encoded);
-//console.log(buf_decoded);
 
 require('dotenv').config();
 
@@ -41,7 +35,7 @@ const arrayOfUserCursorCoordinates = [];
 // все запросы пользователей на добавление к доске
 // для каждого пользователя/доски содается комната, в которую складываются все реквесты
 // реквесты не убираются пока создатель доски не нажмет "одобрить" или "отклонить"
-// эти реквесты постоянно передаются на фронтетд
+// эти реквесты постоянно передаются на фронтенд
 const roomRequestFromUser = {};
 
 const app = express();
@@ -52,11 +46,11 @@ const io = new Server(server, {
 
 const port = process.env.PORT || 3000;
 
-////////////////////work with postresql start
+// work with postresql start
 const { Client } = require('pg');
 const { Console } = require('console');
 const { response } = require('express');
-// console.log(process.env);
+
 const client = new Client({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -68,11 +62,10 @@ const client = new Client({
 async function initdb() {
   await client.connect();
   const res = await client.query('SELECT * from boards');
-  //console.log(res.rows[0]) // Hello world!
   //await client.end()
 }
 initdb();
-////////////////////////work with postresql end
+// work with postresql end
 
 let AWSCloud = null;
 AWSCloud = new AmazonCloud({
@@ -82,8 +75,7 @@ AWSCloud = new AmazonCloud({
   bucket: process.env.S3_BUCKET,
 });
 
-//app.use(express.static(path.join(__dirname, "public"),{index: false}));
-
+// app.use(express.static(path.join(__dirname, "public"),{index: false}));
 // const cookieParser = require('cookie-parser');
 // app.use(cookieParser());
 
@@ -94,9 +86,6 @@ app.set('view engine', 'mustache');
 app.set('views', __dirname + '/public');
 
 app.get('/', (req, res) => {
-  //console.log(req.query);
-  //res.send({});
-  //return;
   let board_id = req.query.board_id;
   if (!board_id) {
     board_id = 1;
@@ -110,19 +99,14 @@ app.get('/', (req, res) => {
   });
 });
 
-/**
- * перескачиваем файл для сохранения на доске
- */
+// перескачиваем файл для сохранения на доске
 app.get('/download/:urldata', (req, response) => {
-  // console.log(req.params.urldata);
   let url_ = Buffer.from(req.params.urldata, 'base64').toString();
-  // console.log(url_);
   // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
   //   url_ = url_.replace('https:/','https://')
   // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
   //   url_ = url_.replace('http:/','http://')
   // }
-  // console.log(url_);
   const request = https.get(url_, (res_) => {
     res_.setEncoding('binary');
     response.contentType(res_.headers['content-type']);
@@ -156,11 +140,10 @@ async function getUserData(user_id) {
 }
 
 io.on('connection', async (socket) => {
-  //array_all_users.push(socket.id);
-  //var board_id = 1;
+  // array_all_users.push(socket.id);
+  // var board_id = 1;
   // let user_id=false;
   // const response = await axios.get('http://localhost:5000/check_user_id/');
-  // console.log( response.data );
 
   arrayAllUsers.push(socket.id);
 
@@ -173,6 +156,7 @@ io.on('connection', async (socket) => {
       y: 0,
     },
   });
+
   socket.on('cursor-data', (data) => {
     const cursorDataUser = arrayOfUserCursorCoordinates.find(
       (item) => item.userId === data.userId
@@ -208,7 +192,7 @@ io.on('connection', async (socket) => {
     let fileFormat = data.name.split('.');
     let savePath = makeid(32) + '.' + fileFormat[fileFormat.length - 1];
     AWSCloud.upload({
-      file: data.file, // файл
+      file: data.file,
       path: 'images/' + socket.board_id,
       fileName: savePath,
       type: data.type,
@@ -221,7 +205,6 @@ io.on('connection', async (socket) => {
 
   socket.on('user:user_id', async (e) => {
     // user:e.user, board:board_id
-    // console.log(e);
     socket.user_id = e.user;
 
     let userdata = await getUserData(e.user);
@@ -233,7 +216,6 @@ io.on('connection', async (socket) => {
 
     // socket.join(e);
     const admin_board_id = 'board_' + e.board + '/user_' + e.user;
-    // console.log(admin_board_id, Object.keys(roomRequestFromUser), Object.keys(roomRequestFromUser).indexOf(admin_board_id)!==-1);
 
     if (
       Object.keys(roomRequestFromUser).indexOf(admin_board_id) !== -1 &&
@@ -241,9 +223,6 @@ io.on('connection', async (socket) => {
     ) {
       // отправляем один реквест администратору
       let keys_ = Object.keys(roomRequestFromUser[admin_board_id]);
-
-      // console.log("keys", keys_[0]);
-      // console.log("request", roomRequestFromUser[admin_board_id][keys_[0]]);
 
       socket.join(admin_board_id);
       io.sockets
@@ -258,8 +237,6 @@ io.on('connection', async (socket) => {
     socket.board_id = board_id;
     socket.join(board_id);
 
-    // console.log('>>', board_id, e);
-    //  console.log('>>', 'before select -- board_id = ' + board_id);
     const res = await client.query('SELECT * from boards WHERE id=$1', [
       board_id,
     ]);
@@ -283,7 +260,6 @@ io.on('connection', async (socket) => {
     }
     e.user = parseInt(e.user);
 
-    // console.log('board_'+e.board+'/user_'+e.user)
     socket.join('board_' + e.board + '/user_' + e.user);
 
     let res = await client.query(
@@ -298,7 +274,6 @@ io.on('connection', async (socket) => {
     let r_ = await getUserData(e.user);
     response.username = r_.username;
     response.email = r_.email;
-    // console.log(response);
     // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
     if (response.role == '') {
       res = await client.query(
@@ -327,7 +302,6 @@ io.on('connection', async (socket) => {
             };
           }
 
-          // console.log('-> board_'+e.board+'/user_'+r_.users_id);
           io.sockets.in(admin_board_id).emit('creator:request', {
             board_id: e.board,
             user_id: e.user,
@@ -338,7 +312,6 @@ io.on('connection', async (socket) => {
       }
     }
 
-    // console.log('---> board_'+e.board+'/user_'+e.user);
     io.sockets
       .in('board_' + e.board + '/user_' + e.user)
       .emit('access:response', response);
@@ -346,11 +319,6 @@ io.on('connection', async (socket) => {
 
   // ответ от администратора комнаты
   socket.on('creator:response', async (e) => {
-    // creator_id
-    // user_id
-    // board_id
-    // role (accept)
-
     const res = await client.query(
       'INSERT INTO boards_users (boards_id, users_id, role) VALUES ($1,$2,$3)',
       [e.board_id, e.user_id, e.role]
@@ -370,7 +338,6 @@ io.on('connection', async (socket) => {
         Object.keys(roomRequestFromUser[admin_board_id]).indexOf(e.user_id) !==
         -1
       ) {
-        // console.log(roomRequestFromUser[admin_board_id], e.user_id);
         if (roomRequestFromUser[admin_board_id] !== undefined) {
           delete roomRequestFromUser[admin_board_id][e.user_id];
         }
@@ -388,23 +355,17 @@ io.on('connection', async (socket) => {
     }
   });
 
-  /**
-   * Убираем из листа ожидания
-   */
+  // Убираем из листа ожидания
   socket.on('creator:decline', async (e) => {
-    // console.log(e);
     // убираем из массива ожидания
     const admin_board_id = 'board_' + e.board_id + '/user_' + e.creator_id;
-    // console.log(admin_board_id);
     // удаляем отклоненного пользователя
     if (roomRequestFromUser[admin_board_id] !== undefined) {
       delete roomRequestFromUser[admin_board_id][e.user_id];
-      // console.log(roomRequestFromUser[admin_board_id]);
       if (Object.keys(roomRequestFromUser[admin_board_id]).length > 0) {
         // отправляем все реквесты администратору
         // отправляем один реквест администратору
         let keys_ = Object.keys(roomRequestFromUser[admin_board_id]);
-        // console.log("send requrst", roomRequestFromUser[admin_board_id][keys_[0]]  );
         io.sockets
           .in(admin_board_id)
           .emit(
@@ -450,12 +411,10 @@ io.on('connection', async (socket) => {
 
   socket.on('rect:edit', (rect_pass) => {
     socket.broadcast.to(socket.board_id).emit('rect:edit', rect_pass);
-    // console.log(rect_pass);
   });
 
   socket.on('rect:add', (rect_pass) => {
     socket.broadcast.to(socket.board_id).emit('rect:add', rect_pass);
-    // console.log(rect_pass);
   });
 
   socket.on('line:edit', (line_pass) => {
@@ -522,9 +481,7 @@ io.on('connection', async (socket) => {
     socket.broadcast.to(socket.board_id).emit('formula:edited', object_pass);
   });
 
-  /**
-   * Отправляем задание на доску
-   */
+  // Отправляем задание на доску
   socket.on('send:task', async (object_pass) => {
     console.log(object_pass);
     const puppeteer = require('puppeteer-core');
@@ -613,7 +570,6 @@ io.on('connection', async (socket) => {
         await browser.close();
         // write file to disk as buffer
         // await writeFile('./image.png', imageBuffer);
-        // console.log('The image was created successfully!')
         let image = await AWSCloud.upload({
           file: imageBuffer, // файл
           path: 'images/',
@@ -631,7 +587,6 @@ io.on('connection', async (socket) => {
 
   socket.on('canvas_save_to_json', async (canvas_pass) => {
     const data_saved = JSON.parse(JSON.stringify(canvas_pass));
-    // console.log(data_saved);
     //socket.broadcast.emit('canvas_save_to_json', data_saved);
     const res = await client.query(
       'UPDATE boards set state = $1 WHERE id=$2 ',
@@ -642,7 +597,7 @@ io.on('connection', async (socket) => {
   socket.on('upload_to_aws', (image_pass, callback) => {
     let name_obj = makeid(32);
     AWSCloud.upload({
-      file: image_pass, // файл
+      file: image_pass,
       path: 'images',
       fileName: savePath,
       type: data.type,
@@ -655,13 +610,11 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('object:added', async (canvas_pass) => {
-    // console.log('SELECT * from boards WHERE id=',[canvas_pass.board_id]);
     const board = await client.query('SELECT * from boards WHERE id=$1', [
       canvas_pass.board_id,
     ]);
     let item_index = 0;
     let board_stack;
-    // console.log(board);
     if (board.rows.length > 0) {
       board_stack = board.rows[0].state;
     }
@@ -674,7 +627,6 @@ io.on('connection', async (socket) => {
       item_index = board_stack.canvas.indexOf(
         (db_item) => db_item.id == canvas_pass.id
       );
-      // console.log(item_index);
     }
 
     if (item_index >= 0) {
@@ -688,9 +640,7 @@ io.on('connection', async (socket) => {
     );
   });
 
-  /**
-   * Загружаем и обрабатываем файл с презентацией или ПДФ
-   */
+  // Загружаем и обрабатываем файл с презентацией или ПДФ
   socket.on('slider:upload', (file, callback) => {
     let uid_ = uuidv4();
     let fname = './uploaded/' + uid_ + '/src';
@@ -700,7 +650,6 @@ io.on('connection', async (socket) => {
     }
     fs.writeFile(fname, file.file, (err) => {
       let imgs = [];
-      // console.log(file.ftype);
 
       // application/pdf
       // application/vnd.openxmlformats-officedocument.presentationml.presentation
@@ -711,7 +660,6 @@ io.on('connection', async (socket) => {
         // загрузить в облако
         convertPDFToImages(fname, uid_, socket.board_id).then((res) => {
           imgs = res;
-          // console.log('convertPDFToImages',imgs);
           // мы должны подготовить и отправить массив загруженных картинок с амазон клауда
           callback({
             message: err ? 'failure' : 'success',
@@ -720,15 +668,12 @@ io.on('connection', async (socket) => {
           });
         });
       } else {
-        // console.log(file.ftype);
         // сконвертировать в изображения
         // загрузить в облако
         convertPPTToImages(fname, uid_, socket.board_id, callback).then(
           (pdf_path) => {
-            // console.log(pdf_path);
             convertPDFToImages(pdf_path, uid_, socket.board_id).then((res) => {
               imgs = res;
-              // console.log('convertPDFToImages',imgs);
               // мы должны подготовить и отправить массив загруженных картинок с амазон клауда
               callback({
                 message: err ? 'failure' : 'success',
@@ -738,23 +683,12 @@ io.on('connection', async (socket) => {
             });
           }
         );
-
-        // console.log(imgs);
       }
     });
   });
 
   socket.on('disconnect', () => {
     io.to(socket.board_id).emit('coursour_disconected', socket.id);
-    //const index  = arrayAllUsers.findIndex(item => item === socket.id);
-    //const index2 = arrayOfUserCursorCoordinates.findIndex(item => item.userId === socket.id);
-    /*
-    if(index !== -1) {
-        arrayAllUsers.splice(index, 1)
-    }
-    if(index2 !== -1){
-        arrayOfUserCursorCoordinates.splice(index2, 1)
-    }*/
   });
 });
 
@@ -801,7 +735,6 @@ async function convertPDFToImages(file_, uid_, socket_id_) {
 
   if (result) {
     fs.unlinkSync(file_);
-    // console.log("saveImagesFromPathToCloud");
     return saveImagesFromPathToCloud(uid_, socket_id_);
   }
   return [];
@@ -821,11 +754,6 @@ function convertPPTToImages(file_, uid_, socket_id_) {
     .catch((err) => {
       console.log(err);
     });
-
-  // const commandOffice = `"${office}" --headless --convert-to pdf --outdir "${path.dirname(file_)}" "${file_}"`;
-
-  // console.log(result);
-  return true;
 }
 
 /**
@@ -837,28 +765,21 @@ async function saveImagesFromPathToCloud(uid_, socket_id_) {
   let images = [];
   var promises = [];
   let dir = './uploaded/' + uid_ + '/';
-  // console.log("saveImagesFromPathToCloud",dir,fs.existsSync(dir));
 
   if (fs.existsSync(dir)) {
-    // options is optional
-
     let files = glob.sync(dir + '*.jpeg');
 
-    // console.log(files);
     if (files) {
       var i = 0;
       for (const file of files) {
-        // console.log(file, path.basename(file));
-        // promises.push(
         let fileContent = fs.readFileSync(file);
         let one = await AWSCloud.upload({
-          file: fileContent, // файл
+          file: fileContent,
           path: 'images/' + socket_id_ + '/' + uid_,
           fileName: path.basename(file),
           type: 'image/jpeg',
         }).then((data) => {
           fs.unlinkSync(file);
-          // console.log(data.Location);
           return data.Location;
         });
         images.push(one);
@@ -866,11 +787,6 @@ async function saveImagesFromPathToCloud(uid_, socket_id_) {
 
         i++;
       }
-      // return Promise.allSettled(promises).then((a) => {
-      //   console.log("promisec");
-      //   fs.rmSync(dir, { recursive: true, force: true });
-      //   return a;
-      // });
     }
 
     fs.rmSync(dir, { recursive: true, force: true });
@@ -879,7 +795,7 @@ async function saveImagesFromPathToCloud(uid_, socket_id_) {
   return images;
 }
 
-/** returns size and resolution of the pdf */
+// returns size and resolution of the pdf
 async function getPdfFormatInfo(dataBuffer) {
   const pdfDocument = await getDocument({ data: dataBuffer }).promise;
   const page = await pdfDocument.getPage(1);
