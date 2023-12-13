@@ -1,4 +1,6 @@
-export default class AmazonCloud {
+const AWS = require('aws-sdk');
+
+class AmazonCloud {
   constructor({ endpoint, accessKeyId, secretAccessKey, bucket }) {
     this.aws = new AWS.S3({
       endpoint: endpoint,
@@ -34,3 +36,5 @@ export default class AmazonCloud {
     }
   };
 }
+
+module.exports = AmazonCloud;

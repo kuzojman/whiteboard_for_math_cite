@@ -1,4 +1,4 @@
-import AmazonCloud from './public/js/aws/amazon';
+const AmazonCloud = require('./public/js/aws/amazon.js');
 
 const protobuf = require('protobufjs');
 const express = require('express');
@@ -127,10 +127,9 @@ async function getUserData(user_id) {
     username: '',
     email: '',
   };
-  res = await client.query(
-    'SELECT users.username,users.email FROM users WHERE  users.id=$1',
-    [user_id]
-  );
+  res = await client.query('SELECT users.username,users.email FROM users WHERE  users.id=$1', [
+    user_id,
+  ]);
   if (res.rows.length > 0) {
     let r_ = res.rows[0];
     response.username = r_.username;
@@ -158,9 +157,7 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('cursor-data', (data) => {
-    const cursorDataUser = arrayOfUserCursorCoordinates.find(
-      (item) => item.userId === data.userId
-    );
+    const cursorDataUser = arrayOfUserCursorCoordinates.find((item) => item.userId === data.userId);
     if (cursorDataUser) {
       cursorDataUser.cursorCoordinates = data.coords;
       if (data.cursor !== undefined) {
@@ -208,9 +205,7 @@ io.on('connection', async (socket) => {
     socket.user_id = e.user;
 
     let userdata = await getUserData(e.user);
-    const cursorDataUser = arrayOfUserCursorCoordinates.find(
-      (item) => item.userId === e.socket_id
-    );
+    const cursorDataUser = arrayOfUserCursorCoordinates.find((item) => item.userId === e.socket_id);
     cursorDataUser.username = userdata.username;
     cursorDataUser.email = userdata.email;
 
@@ -237,9 +232,7 @@ io.on('connection', async (socket) => {
     socket.board_id = board_id;
     socket.join(board_id);
 
-    const res = await client.query('SELECT * from boards WHERE id=$1', [
-      board_id,
-    ]);
+    const res = await client.query('SELECT * from boards WHERE id=$1', [board_id]);
     if (res.rows.length > 0) {
       socket.emit('take_data_from_json_file', res.rows[0].state);
     }
@@ -276,10 +269,9 @@ io.on('connection', async (socket) => {
     response.email = r_.email;
     // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
     if (response.role == '') {
-      res = await client.query(
-        "SELECT * from boards_users WHERE boards_id=$1 and role='creator'",
-        [response.board]
-      );
+      res = await client.query("SELECT * from boards_users WHERE boards_id=$1 and role='creator'", [
+        response.board,
+      ]);
 
       if (res.rows.length > 0) {
         for (let l = 0; l < res.rows.length; l++) {
@@ -290,10 +282,7 @@ io.on('connection', async (socket) => {
             roomRequestFromUser[admin_board_id] = {};
           }
           // добавляем в массив
-          if (
-            Object.keys(roomRequestFromUser[admin_board_id]).indexOf(e.user) ===
-            -1
-          ) {
+          if (Object.keys(roomRequestFromUser[admin_board_id]).indexOf(e.user) === -1) {
             roomRequestFromUser[admin_board_id][e.user] = {
               board_id: e.board,
               user_id: e.user,
@@ -312,9 +301,7 @@ io.on('connection', async (socket) => {
       }
     }
 
-    io.sockets
-      .in('board_' + e.board + '/user_' + e.user)
-      .emit('access:response', response);
+    io.sockets.in('board_' + e.board + '/user_' + e.user).emit('access:response', response);
   });
 
   // ответ от администратора комнаты
@@ -328,16 +315,11 @@ io.on('connection', async (socket) => {
       user: e.user_id,
       board: e.board_id,
     };
-    io.sockets
-      .in('board_' + e.board_id + '/user_' + e.user_id)
-      .emit('access:response', response);
+    io.sockets.in('board_' + e.board_id + '/user_' + e.user_id).emit('access:response', response);
     // убираем из массива ожидания
     const admin_board_id = 'board_' + e.board_id + '/user_' + e.creator_id;
     if (Object.keys(roomRequestFromUser).indexOf(admin_board_id) !== -1) {
-      if (
-        Object.keys(roomRequestFromUser[admin_board_id]).indexOf(e.user_id) !==
-        -1
-      ) {
+      if (Object.keys(roomRequestFromUser[admin_board_id]).indexOf(e.user_id) !== -1) {
         if (roomRequestFromUser[admin_board_id] !== undefined) {
           delete roomRequestFromUser[admin_board_id][e.user_id];
         }
@@ -346,10 +328,7 @@ io.on('connection', async (socket) => {
           let keys_ = Object.keys(roomRequestFromUser[admin_board_id]);
           io.sockets
             .in(admin_board_id)
-            .emit(
-              'creator:request',
-              roomRequestFromUser[admin_board_id][keys_[0]]
-            );
+            .emit('creator:request', roomRequestFromUser[admin_board_id][keys_[0]]);
         }
       }
     }
@@ -368,10 +347,7 @@ io.on('connection', async (socket) => {
         let keys_ = Object.keys(roomRequestFromUser[admin_board_id]);
         io.sockets
           .in(admin_board_id)
-          .emit(
-            'creator:request',
-            roomRequestFromUser[admin_board_id][keys_[0]]
-          );
+          .emit('creator:request', roomRequestFromUser[admin_board_id][keys_[0]]);
       }
     }
   });
@@ -492,12 +468,10 @@ io.on('connection', async (socket) => {
     if (board_id == false || task_id == false) {
       return false;
     }
-    const tasks = await client
-      .query('SELECT * from tasks WHERE id=$1', [task_id])
-      .catch(() => {
-        console.error('Cant quering for get tasks from DB');
-        return false;
-      });
+    const tasks = await client.query('SELECT * from tasks WHERE id=$1', [task_id]).catch(() => {
+      console.error('Cant quering for get tasks from DB');
+      return false;
+    });
     if (tasks.rows.length > 0) {
       let task_content = tasks.rows[0].task;
       let content =
@@ -588,10 +562,10 @@ io.on('connection', async (socket) => {
   socket.on('canvas_save_to_json', async (canvas_pass) => {
     const data_saved = JSON.parse(JSON.stringify(canvas_pass));
     //socket.broadcast.emit('canvas_save_to_json', data_saved);
-    const res = await client.query(
-      'UPDATE boards set state = $1 WHERE id=$2 ',
-      [data_saved, canvas_pass['board_id']]
-    );
+    const res = await client.query('UPDATE boards set state = $1 WHERE id=$2 ', [
+      data_saved,
+      canvas_pass['board_id'],
+    ]);
   });
 
   socket.on('upload_to_aws', (image_pass, callback) => {
@@ -603,16 +577,12 @@ io.on('connection', async (socket) => {
       type: data.type,
     }).then((data) => {
       socket.emit('cloud:image:saved', data);
-      callback(
-        'https://hb.bizmrg.com/hot_data_kuzovkin_info_private/' + name_obj
-      );
+      callback('https://hb.bizmrg.com/hot_data_kuzovkin_info_private/' + name_obj);
     });
   });
 
   socket.on('object:added', async (canvas_pass) => {
-    const board = await client.query('SELECT * from boards WHERE id=$1', [
-      canvas_pass.board_id,
-    ]);
+    const board = await client.query('SELECT * from boards WHERE id=$1', [canvas_pass.board_id]);
     let item_index = 0;
     let board_stack;
     if (board.rows.length > 0) {
@@ -624,9 +594,7 @@ io.on('connection', async (socket) => {
       board_stack.canvas !== undefined &&
       board_stack.canvas.length > 0
     ) {
-      item_index = board_stack.canvas.indexOf(
-        (db_item) => db_item.id == canvas_pass.id
-      );
+      item_index = board_stack.canvas.indexOf((db_item) => db_item.id == canvas_pass.id);
     }
 
     if (item_index >= 0) {
@@ -634,10 +602,10 @@ io.on('connection', async (socket) => {
       board_stack.canvas.push(canvas_pass.object);
     }
     const data_saved = JSON.stringify(board_stack);
-    const res = await client.query(
-      'UPDATE boards set state = $1 WHERE id=$2 ',
-      [data_saved, canvas_pass['board_id']]
-    );
+    const res = await client.query('UPDATE boards set state = $1 WHERE id=$2 ', [
+      data_saved,
+      canvas_pass['board_id'],
+    ]);
   });
 
   // Загружаем и обрабатываем файл с презентацией или ПДФ
@@ -670,19 +638,17 @@ io.on('connection', async (socket) => {
       } else {
         // сконвертировать в изображения
         // загрузить в облако
-        convertPPTToImages(fname, uid_, socket.board_id, callback).then(
-          (pdf_path) => {
-            convertPDFToImages(pdf_path, uid_, socket.board_id).then((res) => {
-              imgs = res;
-              // мы должны подготовить и отправить массив загруженных картинок с амазон клауда
-              callback({
-                message: err ? 'failure' : 'success',
-                images: imgs,
-                error: err,
-              });
+        convertPPTToImages(fname, uid_, socket.board_id, callback).then((pdf_path) => {
+          convertPDFToImages(pdf_path, uid_, socket.board_id).then((res) => {
+            imgs = res;
+            // мы должны подготовить и отправить массив загруженных картинок с амазон клауда
+            callback({
+              message: err ? 'failure' : 'success',
+              images: imgs,
+              error: err,
             });
-          }
-        );
+          });
+        });
       }
     });
   });
@@ -698,8 +664,7 @@ server.listen(port, () => {
 
 function makeid(length) {
   var result = '';
-  var characters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var charactersLength = characters.length;
   for (var i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
