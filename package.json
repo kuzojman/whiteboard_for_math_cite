@@ -4,7 +4,8 @@
   "description": "",
   "main": "server_part.js",
   "scripts": {
-    "start": "node server_part.js"
+    "start": "node server_part.js",
+    "format": "prettier --write ."
   },
   "author": "",
   "license": "ISC",
@@ -26,5 +27,8 @@
     "puppeteer": "^19.4.1",
     "socket.io": "^4.4.1",
     "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.1"
   }
 }
