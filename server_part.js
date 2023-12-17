@@ -17,7 +17,7 @@ const { getDocument } = require('pdfjs-dist');
 const unoconv = require('awesome-unoconv');
 const glob = require('glob');
 
-const witeboardServiceHost = process.env.WITEBOARD_SERVICE_HOST;
+const witeboardServiceHost = encodeURIComponent(process.env.WITEBOARD_SERVICE_HOST);
 
 var jsonDescriptor = require('./public/awesome.json'); // exemplary for node
 
