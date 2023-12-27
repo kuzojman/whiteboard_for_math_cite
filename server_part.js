@@ -1,33 +1,29 @@
+require('dotenv').config();
+const initExpressApp = require('./public/js/express_app.js');
 const AmazonCloud = require('./public/js/aws/amazon.js');
 
 const protobuf = require('protobufjs');
-const express = require('express');
-const axios = require('axios');
 const { Server } = require('socket.io');
-const http = require('http');
-const https = require('https');
-const path = require('path');
 const fs = require('fs');
-const mustacheExpress = require('mustache-express');
-const S3 = require('aws-sdk/clients/s3');
-const AWS = require('aws-sdk');
 const { v4: uuidv4 } = require('uuid');
 const { fromPath } = require('pdf2pic');
 const { getDocument } = require('pdfjs-dist');
 const unoconv = require('awesome-unoconv');
 const glob = require('glob');
+// const S3 = require('aws-sdk/clients/s3');
+// const https = require('https');
+// const axios = require('axios');
 
 const witeboardServiceHost = encodeURIComponent(process.env.WITEBOARD_SERVICE_HOST);
+const { server } = initExpressApp(witeboardServiceHost);
 
 var jsonDescriptor = require('./public/awesome.json'); // exemplary for node
 
 var root = protobuf.Root.fromJSON(jsonDescriptor);
 let boards_schema = root.lookupType('awesomepackage.AwesomeMessage');
-let pathOffset_schema = root.lookupType('awesomepackage.pathOffset');
+// let pathOffset_schema = root.lookupType('awesomepackage.pathOffset');
 let buf_encoded = boards_schema.encode({ board_id: 123, bc: '#ffff' }).finish();
 let buf_decoded = boards_schema.decode(buf_encoded);
-
-require('dotenv').config();
 
 const arrayAllUsers = [];
 const arrayOfUserCursorCoordinates = [];
@@ -38,8 +34,6 @@ const arrayOfUserCursorCoordinates = [];
 // эти реквесты постоянно передаются на фронтенд
 const roomRequestFromUser = {};
 
-const app = express();
-const server = http.createServer(app);
 const io = new Server(server, {
   maxHttpBufferSize: 1e7,
 });
@@ -48,8 +42,8 @@ const port = process.env.PORT || 3000;
 
 // work with postresql start
 const { Client } = require('pg');
-const { Console } = require('console');
-const { response } = require('express');
+// const { Console } = require('console');
+// const { response } = require('express');
 
 const client = new Client({
   user: process.env.DB_USER,
@@ -61,65 +55,17 @@ const client = new Client({
 
 async function initdb() {
   await client.connect();
-  const res = await client.query('SELECT * from boards');
-  //await client.end()
+  // const res = await client.query('SELECT * from boards');
 }
 initdb();
 // work with postresql end
 
-let AWSCloud = null;
-AWSCloud = new AmazonCloud({
+const AWSCloud = new AmazonCloud({
   endpoint: process.env.S3_ENDPOINT_URL,
   accessKeyId: process.env.S3_AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.S3_AWS_SECRET_ACCESS_KEY,
   bucket: process.env.S3_BUCKET,
 });
-
-// app.use(express.static(path.join(__dirname, "public"),{index: false}));
-// const cookieParser = require('cookie-parser');
-// app.use(cookieParser());
-
-// Register '.html' extension with The Mustache Express
-app.engine('html', mustacheExpress());
-
-app.set('view engine', 'mustache');
-app.set('views', __dirname + '/public');
-
-app.get('/', (req, res) => {
-  let board_id = req.query.board_id;
-  if (!board_id) {
-    board_id = 1;
-  }
-  let role = req.query.role;
-  res.render(path.join(__dirname, 'public/index.html'), {
-    board_id: board_id,
-    siteAddress: encodeURIComponent(process.env.SITE_ADDRESS),
-    backUrl: encodeURIComponent(process.env.BACK_URL),
-    witeboardServiceHost,
-  });
-});
-
-// перескачиваем файл для сохранения на доске
-app.get('/download/:urldata', (req, response) => {
-  let url_ = Buffer.from(req.params.urldata, 'base64').toString();
-  // if ( url_.indexOf('https://')==-1 && url_.indexOf('https:/')==0 ){
-  //   url_ = url_.replace('https:/','https://')
-  // }else if ( url_.indexOf('http://')==-1 && url_.indexOf('http:/')==0 ){
-  //   url_ = url_.replace('http:/','http://')
-  // }
-  const request = https.get(url_, (res_) => {
-    res_.setEncoding('binary');
-    response.contentType(res_.headers['content-type']);
-    res_.on('data', (body) => {
-      response.write(body, 'binary');
-    });
-    res_.on('end', () => {
-      response.end();
-    });
-  });
-});
-
-app.use(express.static(path.join(__dirname, 'public')));
 
 async function getUserData(user_id) {
   let response = {
@@ -201,7 +147,6 @@ io.on('connection', async (socket) => {
   socket.on('cloud:image:list', (data) => {});
 
   socket.on('user:user_id', async (e) => {
-    // user:e.user, board:board_id
     socket.user_id = e.user;
 
     let userdata = await getUserData(e.user);
@@ -209,7 +154,6 @@ io.on('connection', async (socket) => {
     cursorDataUser.username = userdata.username;
     cursorDataUser.email = userdata.email;
 
-    // socket.join(e);
     const admin_board_id = 'board_' + e.board + '/user_' + e.user;
 
     if (
@@ -306,10 +250,10 @@ io.on('connection', async (socket) => {
 
   // ответ от администратора комнаты
   socket.on('creator:response', async (e) => {
-    const res = await client.query(
-      'INSERT INTO boards_users (boards_id, users_id, role) VALUES ($1,$2,$3)',
-      [e.board_id, e.user_id, e.role]
-    );
+    // const res = await client.query(
+    //   'INSERT INTO boards_users (boards_id, users_id, role) VALUES ($1,$2,$3)',
+    //   [e.board_id, e.user_id, e.role]
+    // );
     let response = {
       role: e.role,
       user: e.user_id,
@@ -534,7 +478,6 @@ io.on('connection', async (socket) => {
           height: 480,
           deviceScaleFactor: 1,
         });
-        // await page.waitFor(2000);
         await page.waitForFunction('math_loaded');
         const selector = 'body';
         await page.waitForSelector(selector);
@@ -542,10 +485,8 @@ io.on('connection', async (socket) => {
         const imageBuffer = await element.screenshot({});
         await page.close();
         await browser.close();
-        // write file to disk as buffer
-        // await writeFile('./image.png', imageBuffer);
         let image = await AWSCloud.upload({
-          file: imageBuffer, // файл
+          file: imageBuffer,
           path: 'images/',
           fileName: 'task_' + task_id + '.png',
           type: 'image/png',
@@ -561,7 +502,6 @@ io.on('connection', async (socket) => {
 
   socket.on('canvas_save_to_json', async (canvas_pass) => {
     const data_saved = JSON.parse(JSON.stringify(canvas_pass));
-    //socket.broadcast.emit('canvas_save_to_json', data_saved);
     const res = await client.query('UPDATE boards set state = $1 WHERE id=$2 ', [
       data_saved,
       canvas_pass['board_id'],
@@ -619,9 +559,6 @@ io.on('connection', async (socket) => {
     fs.writeFile(fname, file.file, (err) => {
       let imgs = [];
 
-      // application/pdf
-      // application/vnd.openxmlformats-officedocument.presentationml.presentation
-      // application/vnd.ms-powerpoint
       // для начала определить тип файла
       if (file.ftype == 'application/pdf') {
         // сконвертировать в изображения

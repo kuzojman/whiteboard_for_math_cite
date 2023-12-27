@@ -5,6 +5,7 @@
   "main": "server_part.js",
   "scripts": {
     "start": "node server_part.js",
+    "dev": "webpack --mode development --watch & nodemon server_part.js",
     "format": "prettier --write ."
   },
   "author": "",
@@ -29,6 +30,9 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "prettier": "^3.1.1"
+    "nodemon": "^3.0.2",
+    "prettier": "^3.1.1",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
   }
 }
