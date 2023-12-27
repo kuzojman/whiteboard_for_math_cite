@@ -1,5 +1,6 @@
 require('dotenv').config();
 const initExpressApp = require('./public/js/express_app.js');
+const { initdb, db_client } = require('./public/js/database/db.js');
 const AmazonCloud = require('./public/js/aws/amazon.js');
 
 const protobuf = require('protobufjs');
@@ -10,9 +11,6 @@ const { fromPath } = require('pdf2pic');
 const { getDocument } = require('pdfjs-dist');
 const unoconv = require('awesome-unoconv');
 const glob = require('glob');
-// const S3 = require('aws-sdk/clients/s3');
-// const https = require('https');
-// const axios = require('axios');
 
 const witeboardServiceHost = encodeURIComponent(process.env.WITEBOARD_SERVICE_HOST);
 const { server } = initExpressApp(witeboardServiceHost);
@@ -40,25 +38,7 @@ const io = new Server(server, {
 
 const port = process.env.PORT || 3000;
 
-// work with postresql start
-const { Client } = require('pg');
-// const { Console } = require('console');
-// const { response } = require('express');
-
-const client = new Client({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_DB,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
-
-async function initdb() {
-  await client.connect();
-  // const res = await client.query('SELECT * from boards');
-}
 initdb();
-// work with postresql end
 
 const AWSCloud = new AmazonCloud({
   endpoint: process.env.S3_ENDPOINT_URL,
@@ -73,7 +53,7 @@ async function getUserData(user_id) {
     username: '',
     email: '',
   };
-  res = await client.query('SELECT users.username,users.email FROM users WHERE  users.id=$1', [
+  res = await db_client.query('SELECT users.username,users.email FROM users WHERE  users.id=$1', [
     user_id,
   ]);
   if (res.rows.length > 0) {
@@ -176,7 +156,7 @@ io.on('connection', async (socket) => {
     socket.board_id = board_id;
     socket.join(board_id);
 
-    const res = await client.query('SELECT * from boards WHERE id=$1', [board_id]);
+    const res = await db_client.query('SELECT * from boards WHERE id=$1', [board_id]);
     if (res.rows.length > 0) {
       socket.emit('take_data_from_json_file', res.rows[0].state);
     }
@@ -199,7 +179,7 @@ io.on('connection', async (socket) => {
 
     socket.join('board_' + e.board + '/user_' + e.user);
 
-    let res = await client.query(
+    let res = await db_client.query(
       'SELECT boards_users.* from boards_users  WHERE boards_users.boards_id=$1 and boards_users.users_id=$2;',
       [e.board, e.user]
     );
@@ -213,9 +193,10 @@ io.on('connection', async (socket) => {
     response.email = r_.email;
     // проверяем, что роли нет, тогда отправляем запрос в комнату создателя
     if (response.role == '') {
-      res = await client.query("SELECT * from boards_users WHERE boards_id=$1 and role='creator'", [
-        response.board,
-      ]);
+      res = await db_client.query(
+        "SELECT * from boards_users WHERE boards_id=$1 and role='creator'",
+        [response.board]
+      );
 
       if (res.rows.length > 0) {
         for (let l = 0; l < res.rows.length; l++) {
@@ -250,7 +231,7 @@ io.on('connection', async (socket) => {
 
   // ответ от администратора комнаты
   socket.on('creator:response', async (e) => {
-    // const res = await client.query(
+    // const res = await db_client.query(
     //   'INSERT INTO boards_users (boards_id, users_id, role) VALUES ($1,$2,$3)',
     //   [e.board_id, e.user_id, e.role]
     // );
@@ -412,7 +393,7 @@ io.on('connection', async (socket) => {
     if (board_id == false || task_id == false) {
       return false;
     }
-    const tasks = await client.query('SELECT * from tasks WHERE id=$1', [task_id]).catch(() => {
+    const tasks = await db_client.query('SELECT * from tasks WHERE id=$1', [task_id]).catch(() => {
       console.error('Cant quering for get tasks from DB');
       return false;
     });
@@ -502,7 +483,7 @@ io.on('connection', async (socket) => {
 
   socket.on('canvas_save_to_json', async (canvas_pass) => {
     const data_saved = JSON.parse(JSON.stringify(canvas_pass));
-    const res = await client.query('UPDATE boards set state = $1 WHERE id=$2 ', [
+    const res = await db_client.query('UPDATE boards set state = $1 WHERE id=$2 ', [
       data_saved,
       canvas_pass['board_id'],
     ]);
@@ -522,7 +503,7 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('object:added', async (canvas_pass) => {
-    const board = await client.query('SELECT * from boards WHERE id=$1', [canvas_pass.board_id]);
+    const board = await db_client.query('SELECT * from boards WHERE id=$1', [canvas_pass.board_id]);
     let item_index = 0;
     let board_stack;
     if (board.rows.length > 0) {
@@ -542,7 +523,7 @@ io.on('connection', async (socket) => {
       board_stack.canvas.push(canvas_pass.object);
     }
     const data_saved = JSON.stringify(board_stack);
-    const res = await client.query('UPDATE boards set state = $1 WHERE id=$2 ', [
+    const res = await db_client.query('UPDATE boards set state = $1 WHERE id=$2 ', [
       data_saved,
       canvas_pass['board_id'],
     ]);
