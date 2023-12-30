@@ -1,8 +1,19 @@
 const { Server } = require('socket.io');
+const AWSCloud = require('./aws/amazon.js');
 
 module.exports = (server, db_client) => {
   const arrayAllUsers = [];
   const arrayOfUserCursorCoordinates = [];
+
+  function makeid(length) {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
 
   // все запросы пользователей на добавление к доске
   // для каждого пользователя/доски содается комната, в которую складываются все реквесты

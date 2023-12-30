@@ -37,4 +37,11 @@ class AmazonCloud {
   };
 }
 
-module.exports = AmazonCloud;
+const AWSCloud = new AmazonCloud({
+  endpoint: process.env.S3_ENDPOINT_URL,
+  accessKeyId: process.env.S3_AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.S3_AWS_SECRET_ACCESS_KEY,
+  bucket: process.env.S3_BUCKET,
+});
+
+module.exports = AWSCloud;

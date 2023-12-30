@@ -1,7 +1,7 @@
 require('dotenv').config();
 const initExpressApp = require('./public/js/express_app.js');
 const { initdb, db_client } = require('./public/js/database/db.js');
-const AmazonCloud = require('./public/js/aws/amazon.js');
+const AWSCloud = require('./public/js/aws/amazon.js');
 const createSocketServer = require('./public/js/socket_io.js');
 
 const protobuf = require('protobufjs');
@@ -27,12 +27,6 @@ const port = process.env.PORT || 3000;
 
 initdb();
 
-const AWSCloud = new AmazonCloud({
-  endpoint: process.env.S3_ENDPOINT_URL,
-  accessKeyId: process.env.S3_AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.S3_AWS_SECRET_ACCESS_KEY,
-  bucket: process.env.S3_BUCKET,
-});
 
 createSocketServer(server, db_client);
 
@@ -40,15 +34,6 @@ server.listen(port, () => {
   console.log(`Server running at port ` + port);
 });
 
-function makeid(length) {
-  var result = '';
-  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  var charactersLength = characters.length;
-  for (var i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
 
 /**
  * Конвертируем файл в массив картинок и загружаем в облако
