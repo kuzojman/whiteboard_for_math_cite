@@ -1,10 +1,16 @@
-const express = require('express');
-const http = require('http');
-const https = require("https");
-const mustacheExpress = require('mustache-express');
-const path = require('path');
+import express from 'express';
+import http from 'http';
+import https from 'https';
+import mustacheExpress from 'mustache-express';
+import path from 'path';
+import {fileURLToPath} from 'url';
 
-const initExpressApp = (witeboardServiceHost) => {
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+
+export const initExpressApp = (witeboardServiceHost) => {
   const app = express();
   const server = http.createServer(app);
 
@@ -46,5 +52,3 @@ const initExpressApp = (witeboardServiceHost) => {
 
   return { server };
 };
-
-module.exports = initExpressApp;

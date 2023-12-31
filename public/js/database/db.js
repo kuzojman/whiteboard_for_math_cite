@@ -1,7 +1,10 @@
-require('dotenv').config();
-const { Client } = require('pg');
+import 'dotenv/config';
+import pg from 'pg';
 
-const db_client = new Client({
+
+const { Client } = pg;
+
+export const db_client = new Client({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_DB,
@@ -9,11 +12,6 @@ const db_client = new Client({
   port: process.env.DB_PORT,
 });
 
-async function initdb() {
+export async function initdb() {
   await db_client.connect();
 }
-
-module.exports = {
-  initdb,
-  db_client,
-};

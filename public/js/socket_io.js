@@ -1,7 +1,10 @@
-const { Server } = require('socket.io');
-const AWSCloud = require('./aws/amazon.js');
+import { Server } from 'socket.io';
+import { AWSCloud } from './aws/amazon.js';
+import { convertPDFToImages, convertPPTToImages } from './utils.js';
+import { v4 as uuidv4 } from 'uuid';
 
-module.exports = (server, db_client) => {
+
+export function createSocketServer (server, db_client) {
   const arrayAllUsers = [];
   const arrayOfUserCursorCoordinates = [];
 
@@ -30,7 +33,7 @@ module.exports = (server, db_client) => {
       username: '',
       email: '',
     };
-    res = await db_client.query('SELECT users.username,users.email FROM users WHERE  users.id=$1', [
+    let res = await db_client.query('SELECT users.username,users.email FROM users WHERE  users.id=$1', [
       user_id,
     ]);
     if (res.rows.length > 0) {
@@ -132,7 +135,7 @@ module.exports = (server, db_client) => {
     });
 
     socket.on('board:board_id', async (e) => {
-      board_id = e;
+      let board_id = e;
 
       socket.board_id = board_id;
       socket.join(board_id);
