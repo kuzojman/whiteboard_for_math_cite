@@ -1,4 +1,5 @@
 import AWS from 'aws-sdk';
+import { s3AwsAccessKeyID, s3AwsSecretAccessKey, s3Bucket, s3EndpointUrl } from '../envs.js';
 
 
 class AmazonCloud {
@@ -39,8 +40,8 @@ class AmazonCloud {
 }
 
 export const AWSCloud = new AmazonCloud({
-  endpoint: process.env.S3_ENDPOINT_URL,
-  accessKeyId: process.env.S3_AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.S3_AWS_SECRET_ACCESS_KEY,
-  bucket: process.env.S3_BUCKET,
+  endpoint: s3EndpointUrl,
+  accessKeyId: s3AwsAccessKeyID,
+  secretAccessKey: s3AwsSecretAccessKey,
+  bucket: s3Bucket,
 });

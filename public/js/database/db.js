@@ -1,16 +1,16 @@
 import pg from 'pg';
-import { db_user, db_password, db_base, db_host, db_port } from '../envs.js';
+import { dbUser, dbPassword, dbBase, dbHost, dbPort } from '../envs.js';
 
 
 const { Client } = pg;
 
 
 export const db_client = new Client({
-  user: db_user,
-  host: db_host,
-  database: db_base,
-  password: db_password,
-  port: db_port,
+  user: dbUser,
+  host: dbHost,
+  database: dbBase,
+  password: dbPassword,
+  port: dbPort,
 });
 
 export async function initdb() {
