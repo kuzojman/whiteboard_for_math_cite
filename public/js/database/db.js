@@ -1,15 +1,16 @@
-import 'dotenv/config';
 import pg from 'pg';
+import { db_user, db_password, db_base, db_host, db_port } from '../envs.js';
 
 
 const { Client } = pg;
 
+
 export const db_client = new Client({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_DB,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  user: db_user,
+  host: db_host,
+  database: db_base,
+  password: db_password,
+  port: db_port,
 });
 
 export async function initdb() {
