@@ -3,12 +3,15 @@ let _clipboard = null;
 
 function Copy() {
   let act_ = canvas.getActiveObject();
-  if ( act_ ){
-    act_.clone(function (cloned) {
-      _clipboard = cloned;
-      // console.log(_clipboard);
-    },['formula']);
-    canvas.on("mouse:move", function (e) {
+  if (act_) {
+    act_.clone(
+      function (cloned) {
+        _clipboard = cloned;
+        // console.log(_clipboard);
+      },
+      ['formula']
+    );
+    canvas.on('mouse:move', function (e) {
       getMouse(e);
     });
   }
@@ -23,30 +26,30 @@ function getMouse(e) {
 }
 
 function Delete() {
-  if ( formulaEditMode!==false ){
+  if (formulaEditMode !== false) {
     return;
   }
   var doomedObj = canvas.getActiveObject();
   let ids = [];
-  if ( doomedObj===undefined || !doomedObj  ){
+  if (doomedObj === undefined || !doomedObj) {
     return;
   }
-  if (  doomedObj.type === "activeSelection" ) {
+  if (doomedObj.type === 'activeSelection') {
     doomedObj.canvas = canvas;
     doomedObj.forEachObject(function (obj) {
-      ids.push( obj.id );//find_object_index(obj));
+      ids.push(obj.id); //find_object_index(obj));
       canvas.remove(obj);
     });
-    socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-    socket.emit("figure_delete", ids);//canvas.toJSON());
+    socket.emit('canvas_save_to_json', { board_id: board_id, canvas: serialize_canvas(canvas) });
+    socket.emit('figure_delete', ids); //canvas.toJSON());
   } else {
     var activeObject = canvas.getActiveObject();
 
     if (activeObject !== null) {
-      ids.push( activeObject.id );//find_object_index(activeObject));
+      ids.push(activeObject.id); //find_object_index(activeObject));
       canvas.remove(activeObject);
       //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-      socket.emit("figure_delete", ids);//canvas.toJSON());
+      socket.emit('figure_delete', ids); //canvas.toJSON());
     }
   }
   canvas.discardActiveObject();
@@ -54,47 +57,49 @@ function Delete() {
 }
 
 function Paste() {
-
-  if ( _clipboard ){
+  if (_clipboard) {
     // clone again, so you can do multiple copies.
-    _clipboard.clone(function (clonedObj) {
-      canvas.discardActiveObject();
-      clonedObj = object_set_id(clonedObj);
-      // console.log(clonedObj, clonedObj.id);
-      setObjectToCanvasCenter(clonedObj)
-      clonedObj.set({
-        evented: true,
-      });
-      
-      if (clonedObj.type === "activeSelection") {
-        // active selection needs a reference to the canvas.
-        clonedObj.canvas = canvas;
-        clonedObj.forEachObject(function (obj) {
-          canvas.add(obj);
-        });
+    _clipboard.clone(
+      function (clonedObj) {
         canvas.discardActiveObject();
-        //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-        socket.emit("figure_copied", canvas.toJSON());
-        // this should solve the unselectability
-        clonedObj.setCoords();
-      } else {
-        canvas.add(clonedObj);
-        //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
-        socket.emit("figure_copied",clonedObj) //canvas.toJSON());
-      }
-      objectAddInteractive(clonedObj);
-      // _clipboard.top += 10;
-      // _clipboard.left += 10;
-      // setObjectToCanvasCenter(_clipboard)
-      
-      canvas.setActiveObject(clonedObj);
-      canvas.requestRenderAll();
-    },['formula']);
+        clonedObj = object_set_id(clonedObj);
+        // console.log(clonedObj, clonedObj.id);
+        setObjectToCanvasCenter(clonedObj);
+        clonedObj.set({
+          evented: true,
+        });
+
+        if (clonedObj.type === 'activeSelection') {
+          // active selection needs a reference to the canvas.
+          clonedObj.canvas = canvas;
+          clonedObj.forEachObject(function (obj) {
+            canvas.add(obj);
+          });
+          canvas.discardActiveObject();
+          //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+          socket.emit('figure_copied', canvas.toJSON());
+          // this should solve the unselectability
+          clonedObj.setCoords();
+        } else {
+          canvas.add(clonedObj);
+          //socket.emit("canvas_save_to_json", {"board_id": board_id, "canvas": serialize_canvas(canvas)});
+          socket.emit('figure_copied', clonedObj); //canvas.toJSON());
+        }
+        objectAddInteractive(clonedObj);
+        // _clipboard.top += 10;
+        // _clipboard.left += 10;
+        // setObjectToCanvasCenter(_clipboard)
+
+        canvas.setActiveObject(clonedObj);
+        canvas.requestRenderAll();
+      },
+      ['formula']
+    );
   }
 }
 
 document.body.addEventListener(
-  "keydown",
+  'keydown',
   function (e) {
     e = e || window.event;
     var key = e.which || e.keyCode; // keyCode detection
@@ -138,47 +143,79 @@ document.body.addEventListener(
 // });
 
 // copy event
-addEventListener('copy', (e) => { 
-  Copy()
+addEventListener('copy', (e) => {
+  Copy();
 });
 
 // paste from buffer
-addEventListener('paste', (e) => { 
-  // console.log('paste',_clipboard );
-  if ( _clipboard ){
+addEventListener('paste', async (e) => {
+  if (_clipboard) {
+    debugger;
     Paste();
     _clipboard = null;
     return;
   }
-  let items=e.clipboardData.items;
-  // e.preventDefault();
-  // e.stopPropagation();
-  let paste = (e.clipboardData || window.clipboardData).getData('text');
-  if (paste){
-    // вставляем текст в центр экрана
-    
-    let txt = addTextField( {x:0,y:0}, paste);
-    setObjectToCanvasCenter(txt);
-    // return;
-  }
 
-  //Loop through files
-  for(var i=0;i<items.length;i++){
-    let tp = items[i].type;
-    if (tp.indexOf('image')!== -1) {
-      var imageData = items[i].getAsFile(); 
-      // console.log(imageData);
-      socket.emit('cloud:image:add',{ name:imageData.name, file: imageData, type: imageData.type})
-      // insertImageOnBoard(window.webkitURL.createObjectURL(imageData));
+  let items = e.clipboardData.items;
+
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+
+    if (item.type === 'text/plain') {
+      // Обработка текста
+      let paste = (e.clipboardData || window.clipboardData).getData('text');
+      if (paste) {
+        // вставляем текст в центр экрана
+        let txt = addTextField({ x: 0, y: 0 }, paste);
+        setObjectToCanvasCenter(txt);
+      }
+    } else if (item.type.indexOf('image') !== -1) {
+      // Обработка изображений
+      var imageData = item.getAsFile();
+
+      if (imageData) {
+        try {
+          let imageUrl = await readFileAsDataURL(imageData);
+
+          // Вставляем изображение на доску
+          insertImageOnBoard(imageUrl);
+
+          // Отправляем изображение на сервер
+          socket.emit('cloud:image:add', {
+            name: imageData.name,
+            file: imageData,
+            type: imageData.type,
+          });
+        } catch (error) {
+          console.error('Error reading image file:', error);
+        }
+      }
     }
   }
 });
 
+// Функция для чтения файла и возврата Data URL
+async function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    var reader = new FileReader();
+
+    reader.onload = function (event) {
+      resolve(event.target.result);
+    };
+
+    reader.onerror = function (error) {
+      reject(error);
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 /**
- * После сохранения 
+ * После сохранения
  */
-socket.on('cloud:image:saved', (data)=>{
-  if ( data && data.Location!==undefined ){
-    insertImageOnBoard(data.Location);
-  }
-})
+// socket.on('cloud:image:saved', (data) => {
+// if (data && data.Location !== undefined) {
+//   insertImageOnBoard(data.Location);
+// }
+// });
