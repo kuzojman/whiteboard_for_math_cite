@@ -1032,7 +1032,8 @@ function checkLoggedInCookie(){
 
   // если пользователь не залогинен - перенаправляем на страницу логина
   if ( user_id===undefined || !user_id || user_id==false||user_id==='-1' ){
-    window.location.href=serverHostDebug+"/auth?parametr_enter=email";
+    // window.location.href=serverHostDebug+"/auth?parametr_enter=email";
+    window.location.href=`${serverHostDebug}/board/auth?board_id=${board_id}`;
     return;
   }
   // сохраняем пользователя через сокеты
