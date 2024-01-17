@@ -18,7 +18,7 @@ const initExpressApp = (witeboardServiceHost) => {
     if (!board_id) {
       board_id = 1;
     }
-    res.render(path.join(__dirname, '../index.html'), {
+    res.render(path.join(__dirname, '../templates/index.html'), {
       board_id: board_id,
       siteAddress: encodeURIComponent(process.env.SITE_ADDRESS),
       backUrl: encodeURIComponent(process.env.BACK_URL),
