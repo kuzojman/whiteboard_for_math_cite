@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1,user-scalable=yes">
+  <title>Flask_Chat_App</title>
+  <link rel="icon" href="https://cdn.freecodecamp.org/universal/favicons/favicon.ico" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat&family=Open+Sans&family=Roboto&display=swap"
+    rel="stylesheet">
+  <link href="../static/css/index.css" rel="stylesheet" />
+  <!-- <link href="./test.css" rel="stylesheet"/> -->
+  <!-- Yandex.Metrika counter -->
+  <script type="text/javascript">
+    (function (m, e, t, r, i, k, a) {
+      m[i] = m[i] || function () { (m[i].a = m[i].a || []).push(arguments) };
+      m[i].l = 1 * new Date(); k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
+    })
+      (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+    ym(88316168, "init", {
+      clickmap: true,
+      trackLinks: true,
+      accurateTrackBounce: true,
+      webvisor: true
+    });
+
+  </script>
+  <noscript>
+    <div><img src="https://mc.yandex.ru/watch/88316168" style="position:absolute; left:-9999px;" alt="" /></div>
+  </noscript>
+  <!-- /Yandex.Metrika counter -->
+</head>
+
+<body>
+  <div id="waiting-overlay"
+    class="is-overlay is-hidden is-size-1 z-1020 wv-100 vh-100 is-white is-fullwidth is-fullheight has-background-white is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+    Отправлено подтверждение на доступ к доске, ожидайте...
+  </div>
+  <div id="board_id" board="{{ board_id }}" hidden></div>
+  <div class="top-panel">
+    <div class="top-panel__logo">
+      <h1 class="top-panel__logo-text">DrawingBoard</h1>
+      <div class="top-panel__functions">
+        <button class="top-panel__button-functions">
+          <svg class="top-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-arrow-down"></use>
+          </svg>
+        </button>
+        <div class="logo-menu">
+          <ul class="logo-menu__list">
+            <li class="logo-menu__item" onclick="clearBoard()">Очистить доску</li>
+            <li class="logo-menu__item" onclick="downloadImage()">Экспорт в PNG</li>
+            <li class="logo-menu__item" onclick="goUserBoard()">Выйти</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tool-panel">
+    <ul class="tool-panel__list">
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button tool-panel__item-button-selection" data-tool="selection"
+          id="selection_button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-selection-by-mouse-coloured"></use>
+          </svg>
+        </button>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button tool-panel__item-button-moving" data-tool="moving" id="moving_our_board">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-hand-yellow"></use>
+          </svg>
+        </button>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button" id="free_drawing_button" data-tool="freedraw">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-free-drawing-coloured"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="lasso_button" data-tool="lasso">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-lasso"></use>
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button" id="free_erasing_button" data-tool="erase">
+          <i class="fas fa-eraser fa-2x has-text-link" aria-hidden="true"></i>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="blade_button" data-tool="blade">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-blade-coloured"></use>
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button  tool-panel__item-button-uploader">
+
+          <label class="sub-tool-panel__item-list-file">
+            <svg class="tool-panel__item-icon-button">
+              <use xlink:href="./static/icons/sprite.svg#icon-download-coloured"></use>
+            </svg>
+            <input type="file" id="uploader">
+          </label>
+        </button>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button js-modal-trigger" id="modal_image_plugin" data-tool="modal"
+          data-target="modal_window">
+          <i class="fas fa-image fa-2x has-text-link" aria-hidden="true"></i>
+          <!-- <svg class="tool-panel__item-icon-button">
+          <use xlink:href="./static/icons/sprite.svg#icon-text"></use>
+        </svg> -->
+        </button>
+      </li>
+
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button" data-tool="insertsvg">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-volumetric-figures-hexagon-coloured"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="draw_cube">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-volumetric-figures-hexagon-svg"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="draw_hexagon_prism">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-volumetric-figures-prism"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="add_cylinder"> <!---  add_svg_picture-->
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-volumetric-figures-cylinder"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="add_conus">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-volumetric-figures-cone"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="add_sphere_picture">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-volumetric-figures-sphere"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="add_3d_hexagonal_pyramid">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-volumetric-figures-pyramid-hexagonal"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="add_3d_square_pyramid">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-pyramid-rectangular-base"></use>
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button" data-tool="insertline">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-horizontal-line-coloured"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="line_drawing_button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-horizontal-line "></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="line_drawing_button_dotted">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-line-dots"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="line_drawing_button_arrow">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-arrow"></use>
+                </svg>
+              </button>
+            </li>
+
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="line_drawing_button_arrowtwo">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-arrow-two"></use>
+                </svg>
+              </button>
+            </li>
+
+
+
+
+          </ul>
+        </div>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button" data-tool="insertfig">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-circle-with-solid-border-coloured"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="circle_drawing_empty_button" data-tool="insertfig">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-circle-with-solid-border"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="circle_with_stroke_line_button" data-tool="insertfig">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-circle-with-dotted-border"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="circle_filled" data-tool="insertfig">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-circle-filled"></use>
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </li>
+      <!--  !!!!!!!!!!!!     --->
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button" data-tool="insertrect">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-rectangle-coloured"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="rectangle_drawing_empty_button" data-tool="insertrect">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-rectangle"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="rectangle_with_stroke_line_button" data-tool="insertrect">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-rectangle-with-dotted-border"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button" id="rectangle_filled" data-tool="insertrect">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./static/icons/sprite.svg#icon-rectangle-filled"></use>
+                </svg>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button tool-panel__item-button-text" data-tool="text">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-text-coloured"></use>
+          </svg>
+        </button>
+
+
+
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button" id="button_change_width" data-tool="changewidth">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#line-thickness-svgrepo-com"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <label for="drawing-figure-width">толщина фигуры:
+                <!---  <label class="sub-tool-panel__item-list-color-selection"> -->
+                <input type="range" value="30" min="1" max="150" id="drawing-line-width">
+                <!--- </label> -->
+              </label>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button button__show-modal-window-desmos js-modal-trigger"
+          data-target="modal_window_desmos" data-tool="modal">
+          <img style="padding:5px;" src="static/images/desmos.png" alt="desmos API" />
+        </button>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button button__show-modal-window-formulas" data-tool="formula">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-formula"></use>
+          </svg>
+        </button>
+
+        <div class="form-formulas__wrapper">
+          <form class="form-formulas">
+            <math-field virtual-keyboard-mode=manual class="form-formulas__field" id="formula">
+              x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}
+            </math-field>
+            <button class="button__add-formulas">Добавить</button>
+            <button class="button__save-formulas d-none">Сохранить</button>
+            <button class="button__cancel-formulas d-none">Отмена</button>
+          </form>
+        </div>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button tool-panel__item-button-slider" data-tool="slider" id="slider_button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-slider"></use>
+          </svg>
+        </button>
+      </li>
+
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button js-modal-mobile-trigger" id="drawing-color" data-tool="color">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-color-palette"></use>
+          </svg>
+        </button>
+      </li>
+
+
+
+    </ul>
+  </div>
+
+  <div class="text-settings">
+
+    <div class="setting-item setting-item__font-family">
+      <button class="setting-item__button-font-family">Open Sans</button>
+      <div class="setting-item__font-family-list-wrapper">
+        <div>
+          <ul class="setting-item__font-family-list">
+            <li class="setting-item__font-family-item">Open Sans</li>
+            <li class="setting-item__font-family-item">Montserrat</li>
+            <li class="setting-item__font-family-item">Roboto</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="setting-item setting-item__font-size">
+      <p class="setting-item__font-size-value">40</p>
+      <button class="setting-item__button-font-size-up">↑</button>
+      <button class="setting-item__button-font-size-down">↓</button>
+    </div>
+    <div class="setting-item setting-item__font-style">
+      <button class="setting-item__button-font-style">B</button>
+      <div class="setting-item__font-style-wrapper">
+        <div>
+          <div class="setting-item__font-style-list">
+            <li class="setting-item__font-style-item" data-item="1">B</li>
+            <li class="setting-item__font-style-item" data-item="2">I</li>
+            <li class="setting-item__font-style-item" data-item="3">U</li>
+            <li class="setting-item__font-style-item" data-item="4">S</li>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="setting-item setting-item__font-color">
+      <button class="setting-item__button-font-color">А</button>
+      <div class="setting-item__font-color-list-wrapper">
+        <div>
+          <label class="setting-item__input-font-color">
+            <input type="color">
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+  <div class="scale">
+    <button class="scale__button scale__button-increase-scale">+</button>
+    <button class="scale__button scale__button-decrease-scale">-</button>
+    <div class="scale__content">
+      <p class="scale__subtitle">Масштаб</p>
+      <span class="scale__value">100%</span>
+    </div>
+  </div>
+
+
+  <div class="grid-panel">
+    <p class="grid-panel__title">Сетка</p>
+    <div class="grid-panel__list-wrapper">
+      <ul class="grid-panel__list">
+        <li class="grid-panel__item grid-panel__item-no-grid">без сетки</li>
+        <li class="grid-panel__item grid-panel__item-usual-grid">обычная (в клеточку)</li>
+        <li class="grid-panel__item grid-panel__item-triangular-grid">треугольная</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="modal" id="modal_window">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Выберите изображение</p>
+        <button class="delete" aria-label="close"></button>
+      </header>
+      <section class="modal-card-body">
+        <div class="tabs is-centered is-boxed is-medium">
+          <ul id="modal_list">
+            <li class="is-active" onclick="changeTab" data-target="modal-pictures">
+              <a>
+                <span class="is-small"><i class="fas fa-image  mr-2" aria-hidden="true"></i></span>
+                <span>Pictures</span>
+              </a>
+            </li>
+            <li onclick="changeTab" data-target="modal-music">
+              <a>
+                <span class="is-small"><i class="fas fa-music mr-2" aria-hidden="true"></i></span>
+                <span>Music</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div class=" modal_content">
+
+        </div>
+      </section>
+      <footer class="modal-card-foot">
+      </footer>
+    </div>
+  </div>
+
+
+  <div class="modal" id="modal_window_desmos">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">DESMOS</p>
+        <button class="delete" aria-label="close"></button>
+      </header>
+      <section class="modal-card-body" id="desmos_block" style="width: 100%; height: 60vh;">
+      </section>
+      <footer class="modal-card-foot">
+      </footer>
+    </div>
+  </div>
+
+  <div class="slider_menu" id="slider_menu">
+    <ul>
+      <li>
+        <button class="prev-button" id="slider_menu_prev_button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-left-chevron"></use>
+          </svg>
+        </button>
+      </li>
+      <li>
+        <div id="current_slide" class="slide_text"></div>
+      </li>
+      <li>
+        <div id="all_slides" class="slide_text"></div>
+      </li>
+      <li>
+        <button class="next-button" id="slider_menu_next_button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./static/icons/sprite.svg#icon-right-chevron"></use>
+          </svg>
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="notification is-info is-light is-size-3  is-hidden" id="accept_user_notify">
+    Пользователь <strong id="user_name"></strong> запрашивает доступ к доске.
+    <div class="buttons mt-2">
+      <button class="button is-primary is-size-5" id="button-accept" data-board="" data-user="">Разрешить</button>
+      <button class="button is-link ml-2 is-size-5" id="button-decline" data-board="" data-user="">Отклонить</button>
+    </div>
+  </div>
+
+  <div class="canvasWrapper">
+    <canvas id="canvasId"></canvas>
+    <canvas id="canvasId_bg"></canvas>
+  </div>
+
+
+  <script>
+    let siteAddress = decodeURIComponent("{{ siteAddress }}");
+    let backUrl = decodeURIComponent("{{ backUrl }}");
+    let witeboardServiceHost = decodeURIComponent("{{ witeboardServiceHost }}");
+  </script>
+  <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"
+    integrity="sha384-1fOn6VtTq3PWwfsOrk45LnYcGosJwzMHv+Xh/Jx5303FVOXzEnw0EpLv30mtjmlj"
+    crossorigin="anonymous"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+    integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script src="//cdn.rawgit.com/dcodeIO/protobuf.js/6.X.X/dist/protobuf.js"></script>
+  <script src="./vanilla-picker.min.js"></script>
+  <script src="./fabric.js"></script>
+  <!-- <script type="module" src="./gif.min.js"></script> -->
+  <script src="./lasso.mixin.js"></script>
+  <script src="./slider_object.mixin.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <script src="https://www.desmos.com/api/v1.7/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <!-- <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script> -->
+  <script defer src="//unpkg.com/mathlive/dist/mathlive.min.js"></script>
+  <script src="fabric_plugin_undo_redo.js"></script>
+  <script type="module" src="./fabric_modal.js"></script>
+  <!-- <script src="fabric.FText.js" ></script> -->
+  <script src="adding_figures_on_board.js"></script>
+  <script src="change_grid.js"></script>
+  <script src="fit_curve.js"></script>
+  <script src="js.cookie.min.js"></script>
+  <script src="serializing_function.js"></script>
+  <script src="frontend.js"></script>
+  <script src="formula_adding.js"></script>
+  <script src="work_with_text.js"></script>
+  <script src="copy_paste_and_other_commands.js"></script>
+
+
+
+</body>
+
+</html>
