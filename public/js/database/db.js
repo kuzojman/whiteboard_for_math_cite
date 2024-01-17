@@ -1,19 +1,18 @@
-require('dotenv').config();
-const { Client } = require('pg');
+import pg from 'pg';
+import { dbUser, dbPassword, dbBase, dbHost, dbPort } from '../envs.js';
 
-const db_client = new Client({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_DB,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+
+const { Client } = pg;
+
+
+export const db_client = new Client({
+  user: dbUser,
+  host: dbHost,
+  database: dbBase,
+  password: dbPassword,
+  port: dbPort,
 });
 
-async function initdb() {
+export async function initdb() {
   await db_client.connect();
 }
-
-module.exports = {
-  initdb,
-  db_client,
-};

@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "draw_dynamic_3",
   "version": "1.0.0",
   "description": "",

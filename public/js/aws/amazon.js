@@ -1,4 +1,6 @@
-const AWS = require('aws-sdk');
+import AWS from 'aws-sdk';
+import { s3AwsAccessKeyID, s3AwsSecretAccessKey, s3Bucket, s3EndpointUrl } from '../envs.js';
+
 
 class AmazonCloud {
   constructor({ endpoint, accessKeyId, secretAccessKey, bucket }) {
@@ -37,4 +39,9 @@ class AmazonCloud {
   };
 }
 
-module.exports = AmazonCloud;
+export const AWSCloud = new AmazonCloud({
+  endpoint: s3EndpointUrl,
+  accessKeyId: s3AwsAccessKeyID,
+  secretAccessKey: s3AwsSecretAccessKey,
+  bucket: s3Bucket,
+});
