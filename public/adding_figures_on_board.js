@@ -113,48 +113,40 @@ document.getElementById('uploader').onchange = function (e) {
 
 const svgAddSphereButton = document.querySelector('#add_sphere_picture');
 svgAddSphereButton.addEventListener('click', (e) => {
-  adding_svg_figure(
-    './static/icons/3d-shape-3d-sphere-geometric-geometry-round-shape-2-svgrepo-com.svg'
-  );
+  adding_svg_figure('./icons/3d-shape-3d-sphere-geometric-geometry-round-shape-2-svgrepo-com.svg');
 });
 
 const svgAdd3dHexagonalPyramidButton = document.querySelector('#add_3d_hexagonal_pyramid');
 svgAdd3dHexagonalPyramidButton.addEventListener('click', (e) => {
   adding_svg_figure(
-    './static/icons/3d-hexagonal-pyramid-3d-shape-geometric-geometry-hexagon-pyramid-svgrepo-com.svg'
+    './icons/3d-hexagonal-pyramid-3d-shape-geometric-geometry-hexagon-pyramid-svgrepo-com.svg'
   );
 });
 
 const svgAddConusButton = document.querySelector('#add_conus');
 svgAddConusButton.addEventListener('click', (e) => {
-  adding_svg_figure(
-    './static/icons/3d-cone-3d-design-3d-shape-cone-geometric-geometry-svgrepo-com.svg'
-  );
+  adding_svg_figure('./icons/3d-cone-3d-design-3d-shape-cone-geometric-geometry-svgrepo-com.svg');
 });
 
 const svgAddCubeButton = document.querySelector('#draw_cube');
 svgAddCubeButton.addEventListener('click', (e) => {
-  adding_svg_figure(
-    './static/icons/3d-cube-3d-design-3d-shape-cube-geometric-geometry-2-svgrepo-com.svg'
-  );
+  adding_svg_figure('./icons/3d-cube-3d-design-3d-shape-cube-geometric-geometry-2-svgrepo-com.svg');
 });
 
 const svgAddHexagonButton = document.querySelector('#draw_hexagon_prism');
 svgAddHexagonButton.addEventListener('click', (e) => {
-  adding_svg_figure(
-    './static/icons/3d-shape-3d-hexagon-geometric-geometry-shape-2-svgrepo-com.svg'
-  );
+  adding_svg_figure('./icons/3d-shape-3d-hexagon-geometric-geometry-shape-2-svgrepo-com.svg');
 });
 
 const svgAdd3dSquarePyramidButton = document.querySelector('#add_3d_square_pyramid');
 svgAdd3dSquarePyramidButton.addEventListener('click', (e) => {
-  adding_svg_figure('./static/icons/pyramid.svg');
+  adding_svg_figure('./icons/pyramid.svg');
 });
 
 const svgAdd3dCylinderButton = document.querySelector('#add_cylinder');
 svgAdd3dCylinderButton.addEventListener('click', (e) => {
   adding_svg_figure(
-    './static/icons/3d-cylinder-3d-design-3d-shape-cylinder-geometric-geometry-svgrepo-com.svg'
+    './icons/3d-cylinder-3d-design-3d-shape-cylinder-geometric-geometry-svgrepo-com.svg'
   );
 });
 
@@ -217,7 +209,7 @@ function svgFileToString(iconpath) {
 }
 
 function add_svg() {
-  fabric.Image.fromURL('./static/icons/pug_small_2.jpg', function (myImg) {
+  fabric.Image.fromURL('./icons/pug_small_2.jpg', function (myImg) {
     //i create an extra var for to change some image properties
     var img1 = myImg.set({ left: 0, top: 0, width: 250, height: 250 });
     canvas.add(img1);
@@ -228,7 +220,7 @@ function add_svg() {
 
 const svgAddButton = document.querySelector('#add_svg_picture');
 svgAddButton?.addEventListener('click', (e) => {
-  fabric.Image.fromURL('./static/icons/pug_small_2.jpg', function (myImg) {
+  fabric.Image.fromURL('./icons/pug_small_2.jpg', function (myImg) {
     //i create an extra var for to change some image properties
     var img1 = myImg.set({ left: 0, top: 0, width: 250, height: 250 });
     canvas.add(img1);

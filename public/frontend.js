@@ -403,9 +403,9 @@ function setObjectToCanvasCenter(obj) {
  * @param {*} curname название инструмента и файла с курсором
  */
 function setCursor(curname) {
-  canvas.hoverCursor = 'url("./static/icons/' + curname + '.cur"), auto';
-  canvas.defaultCursor = 'url("./static/icons/' + curname + '.cur"), auto';
-  canvas.freeDrawingCursor = 'url("./static/icons/' + curname + '.cur"), auto';
+  canvas.hoverCursor = 'url("./icons/' + curname + '.cur"), auto';
+  canvas.defaultCursor = 'url("./icons/' + curname + '.cur"), auto';
+  canvas.freeDrawingCursor = 'url("./icons/' + curname + '.cur"), auto';
 }
 
 /**
@@ -773,8 +773,8 @@ var elt = document.getElementById('desmos_block');
 var calculator = Desmos.GraphingCalculator(elt);
 calculator.setExpression({ id: 'graph1', latex: 'y=x^2' });
 
-const pathUsualGrid = './static/images/grids/usual-grid.svg';
-const pathTriangularGrid = './static/images/grids/triangular-grid.svg';
+const pathUsualGrid = './images/grids/usual-grid.svg';
+const pathTriangularGrid = './images/grids/triangular-grid.svg';
 
 /**
  * Переопределение функции переключения режимов навигация/редактирование объектов
