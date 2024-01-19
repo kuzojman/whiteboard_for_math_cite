@@ -1,199 +1,202 @@
 <html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Test</title>
-    <link rel="stylesheet" href="./test.css">
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Test</title>
+  <link rel="stylesheet" href="./test.css">
 </head>
+
 <body>
 
-    <div class="top-panel">
-        <div class="top-panel__logo">
-            <h1 class="top-panel__logo-text">DrawingBoard</h1>
-            <div class="top-panel__functions">
-                <button class="top-panel__button-functions">
-                    <svg class="top-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-arrow-down"></use>
-                    </svg>
-                </button>
-                <div class="logo-menu">
-                    <ul class="logo-menu__list">
-                        <li class="logo-menu__item">Очистить доску</li>
-                        <li class="logo-menu__item">Экспорт в PDF</li>
-                        <li class="logo-menu__item">Личный кабинет</li>
-                    </ul>
-                </div>
-            </div>
+  <div class="top-panel">
+    <div class="top-panel__logo">
+      <h1 class="top-panel__logo-text">DrawingBoard</h1>
+      <div class="top-panel__functions">
+        <button class="top-panel__button-functions">
+          <svg class="top-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-arrow-down"></use>
+          </svg>
+        </button>
+        <div class="logo-menu">
+          <ul class="logo-menu__list">
+            <li class="logo-menu__item">Очистить доску</li>
+            <li class="logo-menu__item">Экспорт в PDF</li>
+            <li class="logo-menu__item">Личный кабинет</li>
+          </ul>
         </div>
+      </div>
     </div>
-    <div class="tool-panel">
-        <ul class="tool-panel__list">
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button tool-panel__item-button-moving">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-hand"></use>
-                    </svg>
-                </button>
+  </div>
+  <div class="tool-panel">
+    <ul class="tool-panel__list">
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button tool-panel__item-button-moving">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-hand"></use>
+          </svg>
+        </button>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-free-drawing"></use>
+          </svg>
+        </button>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-download"></use>
+          </svg>
+        </button>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-text"></use>
+          </svg>
+        </button>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-hexagon"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-hexagon"></use>
+                </svg>
+              </button>
             </li>
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-free-drawing"></use>
-                    </svg>
-                </button>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-prism"></use>
+                </svg>
+              </button>
             </li>
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-download"></use>
-                    </svg>
-                </button>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-cylinder"></use>
+                </svg>
+              </button>
             </li>
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-text"></use>
-                    </svg>
-                </button>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-cone"></use>
+                </svg>
+              </button>
             </li>
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-hexagon"></use>
-                    </svg>
-                </button>
-                <div class="sub-tool-panel">
-                    <ul class="sub-tool-panel__list">
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-hexagon"></use>
-                                </svg>
-                            </button>
-                        </li>
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-prism"></use>
-                                </svg>
-                            </button>
-                        </li>
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-cylinder"></use>
-                                </svg>
-                            </button>
-                        </li>
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-volumetric-figures-cone"></use>
-                                </svg>
-                            </button>
-                        </li>
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-pyramid-rectangular-base"></use>
-                                </svg>
-                            </button>
-                        </li>
-                    </ul>
-                </div>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-pyramid-rectangular-base"></use>
+                </svg>
+              </button>
             </li>
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-horizontal-line"></use>
-                    </svg>
-                </button>
-                <div class="sub-tool-panel">
-                    <ul class="sub-tool-panel__list">
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-horizontal-line"></use>
-                                </svg>
-                            </button>
-                        </li>
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-line-dots"></use>
-                                </svg>
-                            </button>
-                        </li>
+          </ul>
+        </div>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-horizontal-line"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-horizontal-line"></use>
+                </svg>
+              </button>
+            </li>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-line-dots"></use>
+                </svg>
+              </button>
+            </li>
 
-                    </ul>
-                </div>
+          </ul>
+        </div>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-circle-with-solid-border"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-circle-with-solid-border"></use>
+                </svg>
+              </button>
             </li>
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-circle-with-solid-border"></use>
-                    </svg>
-                </button>
-                <div class="sub-tool-panel">
-                    <ul class="sub-tool-panel__list">
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-circle-with-solid-border"></use>
-                                </svg>
-                            </button>
-                        </li>
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-circle-with-dotted-border"></use>
-                                </svg>
-                            </button>
-                        </li>
-                        <li class="sub-tool-panel__item-list">
-                            <button class="sub-tool-panel__item-button">
-                                <svg class="sub-tool-panel__item-icon-button">
-                                    <use xlink:href="./icons/sprite.svg#icon-circle-filled"></use>
-                                </svg>
-                            </button>
-                        </li>
-                    </ul>
-                </div>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-circle-with-dotted-border"></use>
+                </svg>
+              </button>
             </li>
-            <li class="tool-panel__item">
-                <button class="tool-panel__item-button">
-                    <svg class="tool-panel__item-icon-button">
-                        <use xlink:href="./icons/sprite.svg#icon-color-palette"></use>
-                    </svg>
-                </button>
-                <div class="sub-tool-panel">
-                    <ul class="sub-tool-panel__list">
-                        <li class="sub-tool-panel__item-list">
-                            <label class="sub-tool-panel__item-list-color-selection">
-                                <input type="color">
-                            </label>
-                        </li>
-<!--                        <li class="sub-tool-panel__item-list">-->
-
-<!--                        </li>-->
-<!--                        <li class="sub-tool-panel__item-list">-->
-
-<!--                        </li>-->
-<!--                        <li class="sub-tool-panel__item-list">-->
-
-<!--                        </li>-->
-                    </ul>
-                </div>
+            <li class="sub-tool-panel__item-list">
+              <button class="sub-tool-panel__item-button">
+                <svg class="sub-tool-panel__item-icon-button">
+                  <use xlink:href="./icons/sprite.svg#icon-circle-filled"></use>
+                </svg>
+              </button>
             </li>
-        </ul>
-    </div>
-    <div class="scale-panel">
-        <p class="scale-panel__subtitle">Масштаб:</p>
-        <span class="scale-panel__value">100%</span>
-    </div>
+          </ul>
+        </div>
+      </li>
+      <li class="tool-panel__item">
+        <button class="tool-panel__item-button">
+          <svg class="tool-panel__item-icon-button">
+            <use xlink:href="./icons/sprite.svg#icon-color-palette"></use>
+          </svg>
+        </button>
+        <div class="sub-tool-panel">
+          <ul class="sub-tool-panel__list">
+            <li class="sub-tool-panel__item-list">
+              <label class="sub-tool-panel__item-list-color-selection">
+                <input type="color">
+              </label>
+            </li>
+            <!--                        <li class="sub-tool-panel__item-list">-->
 
-    <script src="./test.js"></script>
+            <!--                        </li>-->
+            <!--                        <li class="sub-tool-panel__item-list">-->
+
+            <!--                        </li>-->
+            <!--                        <li class="sub-tool-panel__item-list">-->
+
+            <!--                        </li>-->
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="scale-panel">
+    <p class="scale-panel__subtitle">Масштаб:</p>
+    <span class="scale-panel__value">100%</span>
+  </div>
+
+  <script src="./test.js"></script>
 </body>
+
 </html>
